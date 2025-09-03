@@ -88,8 +88,10 @@ class DocumentService
     {
         $re = new WarehouseRequest(code:$code,warehouse_title:$title,date: $date);
         $res = new Warehouse();
+
         $send = [];
         $response = $res->send($re);
+        dd($response->body(),$response->status());
         if ($response->successful()){
             $clean = str_replace('﻿','',$response->body());
             $items = json_decode($clean,true);

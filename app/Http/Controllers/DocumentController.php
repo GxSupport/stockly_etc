@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Services\DocumentService;
 use App\Services\WarehouseService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class DocumentController extends Controller
@@ -31,19 +32,22 @@ class DocumentController extends Controller
     public function create(Request $request)
     {
         $user = auth()->user();
+
         $warehouse = $this->warehouseService->getWarehouseByUserId($user->id);
-        $date = ($request->date)??date('d.m.Y');
-        $date = date('d.m.Y',strtotime($date));
         if(!$warehouse){
             return redirect()->route('documents.index')->with('error', 'Склад не найден. Обратитесь к администратору.');
         }
+        $date = ($request->date)??date('d.m.Y');
+        $date = date('d.m.Y',strtotime($date));
         $code = $warehouse->warehouse->code;
         $title = $warehouse->warehouse->title;
+
         $documentTypes = DocumentType::all();
         try {
             $products = $this->documentService->getGoods($code, $title, $date);
         } catch (\ErrorException $e) {
             $products = [];
+            Log::error($e->getMessage());
         }
         return Inertia::render('documents/create', [
             'documentTypes' => $documentTypes,

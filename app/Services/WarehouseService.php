@@ -49,7 +49,7 @@ class WarehouseService
     {
         return UserWarehouse::query()
             ->where('user_id', $user_id)
-            ->with(['warehouse'])
+            ->with('warehouse')
             ->first();
     }
 

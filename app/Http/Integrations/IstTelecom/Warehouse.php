@@ -41,7 +41,7 @@ class Warehouse extends Connector
     protected function defaultConfig(): array
     {
         return [
-            'proxy' => (config('services.app.local') == 'local') ? 'socks5://host.docker.internal:8089' : ''
+            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : ''
         ];
     }
 }
