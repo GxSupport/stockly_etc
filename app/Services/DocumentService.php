@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use App\Data\Controller\ProductData;
-use App\Data\Controller\ProductServiceData;
+
+use App\Data\ProductData;
+use App\Data\ProductServiceData;
 use App\Http\Integrations\IstTelecom\Requests\GetGoodsRequest;
 use App\Http\Integrations\IstTelecom\Requests\WarehouseRequest;
 use App\Http\Integrations\IstTelecom\Warehouse;
