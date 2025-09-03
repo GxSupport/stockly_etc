@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\UserWarehouse;
 use App\Models\Warehouse;
 use App\Models\WarehouseType;
 use Illuminate\Database\Eloquent\Collection;
@@ -12,7 +13,7 @@ class WarehouseService
     {
         $query = Warehouse::query();
         $query->with(['type_info']);
-        
+
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
@@ -38,11 +39,18 @@ class WarehouseService
     {
         // Convert code to uppercase
         $data['code'] = strtoupper($data['code']);
-        
+
         // Set default active status
         $data['is_active'] = $data['is_active'] ?? true;
 
         return Warehouse::create($data);
+    }
+    public function getWarehouseByUserId($user_id): ?UserWarehouse
+    {
+        return UserWarehouse::query()
+            ->where('user_id', $user_id)
+            ->with(['warehouse'])
+            ->first();
     }
 
     public function getWarehouseTypes(): Collection

@@ -8,25 +8,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { type BreadcrumbItem } from '@/types';
 import { Plus, Calendar } from 'lucide-react';
 
+
 interface Document {
     id: number;
     number: string;
-    document_type: string;
+    document_type: {
+        title: string;
+    };
     total_amount: number;
     date_order: string;
-    status: 'draft' | 'sent' | 'return';
+    is_finished: boolean;
 }
 
 interface PaginatedData {
-    documents: Document[];
+    data: Document[];
     total: number;
-    page: number;
-    perPage: number;
+    current_page: number;
+    per_page: number;
+    last_page: number;
+    from: number;
+    to: number;
+}
+
+interface DocumentsPageProps {
+    documents: PaginatedData;
     search: string | null;
     status: 'draft' | 'sent' | 'return';
 }
-
-type DocumentsPageProps = PaginatedData;
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -35,94 +43,24 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// Fake data - static to prevent recreation
-const allFakeDocuments: Document[] = [
-    // Draft documents
-    { id: 1, number: '2025/001', document_type: 'Счет-фактура', total_amount: 150000, date_order: '2025-09-01', status: 'draft' },
-    { id: 2, number: '2025/002', document_type: 'Приходная накладная', total_amount: 75000, date_order: '2025-09-02', status: 'draft' },
-    { id: 3, number: '2025/003', document_type: 'Заказ на поставку', total_amount: 320000, date_order: '2025-09-03', status: 'draft' },
-    
-    // Sent documents  
-    { id: 4, number: '2025/004', document_type: 'Расходная накладная', total_amount: 89500, date_order: '2025-08-28', status: 'sent' },
-    { id: 5, number: '2025/005', document_type: 'Документ возврата', total_amount: 45000, date_order: '2025-08-29', status: 'sent' },
-    { id: 6, number: '2025/006', document_type: 'Перемещение товара', total_amount: 125000, date_order: '2025-08-30', status: 'sent' },
-    { id: 7, number: '2025/007', document_type: 'Инвентаризация', total_amount: 200000, date_order: '2025-08-31', status: 'sent' },
-    
-    // Return documents
-    { id: 8, number: '2025/008', document_type: 'Списание товара', total_amount: 35000, date_order: '2025-08-25', status: 'return' },
-    { id: 9, number: '2025/009', document_type: 'Корректировка остатков', total_amount: 67800, date_order: '2025-08-26', status: 'return' },
-    { id: 10, number: '2025/010', document_type: 'Заказ на закупку', total_amount: 95000, date_order: '2025-08-27', status: 'return' },
-];
-
-export default function Documents({ 
-    documents: initialDocuments = [], 
-    total: initialTotal = 0, 
-    page = 1, 
-    perPage = 10, 
-    search, 
-    status: initialStatus = 'draft' 
-}: DocumentsPageProps) {
-    const [activeTab, setActiveTab] = useState<'draft' | 'sent' | 'return'>(initialStatus);
+export default function Documents({ documents, search, status = 'draft' }: DocumentsPageProps) {
     const [searchQuery, setSearchQuery] = useState(search || '');
-    
-    // Filter documents based on current state
-    const getFilteredDocuments = () => {
-        if (initialDocuments.length > 0) {
-            return initialDocuments;
-        }
-        
-        let filtered = allFakeDocuments.filter(doc => doc.status === activeTab);
-        
-        if (searchQuery) {
-            filtered = filtered.filter(doc => 
-                doc.number.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-        }
-        
-        return filtered;
-    };
-
-    const filteredDocs = getFilteredDocuments();
-    const currentTotal = initialDocuments.length > 0 ? initialTotal : filteredDocs.length;
-    const totalPages = Math.ceil(currentTotal / perPage);
-    const startIndex = (page - 1) * perPage;
-    
-    const [localDocuments, setLocalDocuments] = useState<Document[]>(filteredDocs);
-
-    // Update documents when tab changes
-    useEffect(() => {
-        setLocalDocuments(getFilteredDocuments());
-    }, [activeTab, searchQuery]);
 
     const handleSearch = (value: string) => {
         setSearchQuery(value);
-        router.get('/documents', { search: value, page: 1, status: activeTab }, { preserveState: false });
+        router.get(`/documents/${status}`, { search: value, page: 1 }, { preserveState: true, replace: true });
     };
 
     const handlePageChange = (newPage: number) => {
-        router.get('/documents', { search: searchQuery || undefined, page: newPage, status: activeTab }, { preserveState: false });
+        router.get(`/documents/${status}`, { search: searchQuery || undefined, page: newPage }, { preserveState: true, replace: true });
     };
 
-    const handleTabChange = (newStatus: string) => {
-        const status = newStatus as 'draft' | 'sent' | 'return';
-        setActiveTab(status);
-        router.get('/documents', { search: searchQuery || undefined, page: 1, status }, { preserveState: false });
+    const getStatusLabel = (is_finished: boolean) => {
+        return is_finished ? 'Отправлен' : 'Черновик';
     };
 
-    const getStatusLabel = (status: 'draft' | 'sent' | 'return') => {
-        switch (status) {
-            case 'draft': return 'Черновик';
-            case 'sent': return 'Отправлен';
-            case 'return': return 'Возврат';
-        }
-    };
-
-    const getStatusVariant = (status: 'draft' | 'sent' | 'return') => {
-        switch (status) {
-            case 'draft': return 'secondary' as const;
-            case 'sent': return 'default' as const;
-            case 'return': return 'destructive' as const;
-        }
+    const getStatusVariant = (is_finished: boolean) => {
+        return is_finished ? 'default' as const : 'secondary' as const;
     };
 
     const formatAmount = (amount: number) => {
@@ -161,14 +99,14 @@ export default function Documents({
                     </div>
                 </div>
 
-                <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+                <Tabs value={status} onValueChange={(value) => router.visit('/documents/' + value)} className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="draft">Черновик</TabsTrigger>
                         <TabsTrigger value="sent">Отправлен</TabsTrigger>
                         <TabsTrigger value="return">Возврат</TabsTrigger>
                     </TabsList>
-                    
-                    <TabsContent value={activeTab} className="mt-4">
+
+                    <TabsContent value={status} className="mt-4">
                         <div className="rounded-md border">
                             <div className="overflow-x-auto">
                                 <table className="w-full">
@@ -192,8 +130,8 @@ export default function Documents({
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {localDocuments.length > 0 ? (
-                                            localDocuments.map((document) => (
+                                        {documents.data.length > 0 ? (
+                                            documents.data.map((document) => (
                                                 <tr key={document.id} className="border-b">
                                                     <td className="h-12 px-4 align-middle">
                                                         <div className="font-medium font-mono text-sm">
@@ -201,7 +139,7 @@ export default function Documents({
                                                         </div>
                                                     </td>
                                                     <td className="h-12 px-4 align-middle">
-                                                        <div className="font-medium">{document.document_type}</div>
+                                                        <div className="font-medium">{document.document_type.title}</div>
                                                     </td>
                                                     <td className="h-12 px-4 align-middle">
                                                         <div className="font-medium">{formatAmount(document.total_amount)}</div>
@@ -213,8 +151,8 @@ export default function Documents({
                                                         </div>
                                                     </td>
                                                     <td className="h-12 px-4 align-middle">
-                                                        <Badge variant={getStatusVariant(document.status)}>
-                                                            {getStatusLabel(document.status)}
+                                                        <Badge variant={getStatusVariant(document.is_finished)}>
+                                                            {getStatusLabel(document.is_finished)}
                                                         </Badge>
                                                     </td>
                                                 </tr>
@@ -233,18 +171,18 @@ export default function Documents({
                             </div>
                         </div>
 
-                        {totalPages > 1 && (
+                        {documents.last_page > 1 && (
                             <div className="flex items-center justify-between mt-4">
                                 <div className="text-sm text-muted-foreground">
-                                    Показано {startIndex + 1}-{Math.min(startIndex + perPage, currentTotal)} из {currentTotal} записей
+                                    Показано {documents.from}-{documents.to} из {documents.total} записей
                                 </div>
 
                                 <div className="flex items-center gap-2">
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => handlePageChange(Math.max(page - 1, 1))}
-                                        disabled={page === 1}
+                                        onClick={() => handlePageChange(Math.max(documents.current_page - 1, 1))}
+                                        disabled={documents.current_page === 1}
                                     >
                                         Предыдущая
                                     </Button>
@@ -253,20 +191,20 @@ export default function Documents({
                                         {(() => {
                                             const maxVisiblePages = 5;
                                             const halfVisible = Math.floor(maxVisiblePages / 2);
-                                            
-                                            let startPage = Math.max(1, page - halfVisible);
-                                            let endPage = Math.min(totalPages, page + halfVisible);
-                                            
+
+                                            let startPage = Math.max(1, documents.current_page - halfVisible);
+                                            let endPage = Math.min(documents.last_page, documents.current_page + halfVisible);
+
                                             if (endPage - startPage + 1 < maxVisiblePages) {
                                                 if (startPage === 1) {
-                                                    endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                                                    endPage = Math.min(documents.last_page, startPage + maxVisiblePages - 1);
                                                 } else {
                                                     startPage = Math.max(1, endPage - maxVisiblePages + 1);
                                                 }
                                             }
-                                            
+
                                             const pages = [];
-                                            
+
                                             if (startPage > 1) {
                                                 pages.push(
                                                     <Button
@@ -279,7 +217,7 @@ export default function Documents({
                                                         1
                                                     </Button>
                                                 );
-                                                
+
                                                 if (startPage > 2) {
                                                     pages.push(
                                                         <span key="start-ellipsis" className="px-2 text-muted-foreground">
@@ -288,12 +226,12 @@ export default function Documents({
                                                     );
                                                 }
                                             }
-                                            
+
                                             for (let i = startPage; i <= endPage; i++) {
                                                 pages.push(
                                                     <Button
                                                         key={i}
-                                                        variant={page === i ? "default" : "outline"}
+                                                        variant={documents.current_page === i ? "default" : "outline"}
                                                         size="sm"
                                                         onClick={() => handlePageChange(i)}
                                                         className="w-8"
@@ -302,29 +240,29 @@ export default function Documents({
                                                     </Button>
                                                 );
                                             }
-                                            
-                                            if (endPage < totalPages) {
-                                                if (endPage < totalPages - 1) {
+
+                                            if (endPage < documents.last_page) {
+                                                if (endPage < documents.last_page - 1) {
                                                     pages.push(
                                                         <span key="end-ellipsis" className="px-2 text-muted-foreground">
                                                             ...
                                                         </span>
                                                     );
                                                 }
-                                                
+
                                                 pages.push(
                                                     <Button
-                                                        key={totalPages}
+                                                        key={documents.last_page}
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => handlePageChange(totalPages)}
+                                                        onClick={() => handlePageChange(documents.last_page)}
                                                         className="w-8"
                                                     >
-                                                        {totalPages}
+                                                        {documents.last_page}
                                                     </Button>
                                                 );
                                             }
-                                            
+
                                             return pages;
                                         })()}
                                     </div>
@@ -332,8 +270,8 @@ export default function Documents({
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => handlePageChange(Math.min(page + 1, totalPages))}
-                                        disabled={page === totalPages}
+                                        onClick={() => handlePageChange(Math.min(documents.current_page + 1, documents.last_page))}
+                                        disabled={documents.current_page === documents.last_page}
                                     >
                                         Следующая
                                     </Button>

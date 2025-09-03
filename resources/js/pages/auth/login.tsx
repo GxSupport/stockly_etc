@@ -9,6 +9,7 @@ import AuthLayout from '@/layouts/auth-layout';
 import { request } from '@/routes/password';
 import { Form, Head } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
+import { useState } from 'react';
 
 interface LoginProps {
     status?: string;
@@ -16,6 +17,31 @@ interface LoginProps {
 }
 
 export default function Login({ status, canResetPassword }: LoginProps) {
+    const [phone, setPhone] = useState('+998 ');
+
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let value = e.target.value.replace(/[^\d]/g, '');
+        if (value.length < 3) {
+            value = '998';
+        }
+        value = value.substring(3);
+
+        let formattedValue = '+998 ';
+        if (value.length > 0) {
+            formattedValue += value.substring(0, 2);
+        }
+        if (value.length > 2) {
+            formattedValue += ' ' + value.substring(2, 5);
+        }
+        if (value.length > 5) {
+            formattedValue += ' ' + value.substring(5, 7);
+        }
+        if (value.length > 7) {
+            formattedValue += ' ' + value.substring(7, 9);
+        }
+
+        setPhone(formattedValue);
+    };
     return (
         <AuthLayout title="
         Войти в аккаунт
@@ -40,7 +66,8 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                     autoFocus
                                     tabIndex={1}
                                     autoComplete="phone"
-                                    placeholder="+998 (99) 999-99-99"
+                                    value={phone}
+                                    onChange={handlePhoneChange}
                                 />
                                 <InputError message={errors.phone} />
                             </div>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\EmployeController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\WarehouseController;
@@ -46,14 +47,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/create', [DocumentTypeController::class, 'store'])->name('document-types.store');
     });
     
-    // Temporary routes for documents - will be replaced with controller in backend phase
     Route::prefix('documents')->group(function () {
-        Route::get('/', function () {
-            return Inertia::render('documents');
-        })->name('documents.index');
-        Route::get('/create', function () {
-            return Inertia::render('documents/create');
-        })->name('documents.create');
+        Route::get('/{status?}', [DocumentController::class, 'index'])
+            ->where('status', 'draft|sent|return')
+            ->name('documents.index');
+        Route::get('/create', [DocumentController::class, 'create'])->name('documents.create');
+        Route::post('/create', [DocumentController::class, 'store'])->name('documents.store');
     });
 });
 

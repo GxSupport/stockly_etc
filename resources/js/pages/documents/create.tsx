@@ -27,6 +27,11 @@ interface Product {
     nomenclature: string;
 }
 
+interface CreateDocumentProps {
+    documentTypes: DocumentType[];
+    products: Product[];
+}
+
 interface ProductItem {
     id: string;
     product_id: number | null;
@@ -48,28 +53,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// Fake document types
-const fakeDocumentTypes: DocumentType[] = [
-    { id: 1, code: 'INV', title: 'Счет-фактура' },
-    { id: 2, code: 'REC', title: 'Приходная накладная' },
-    { id: 3, code: 'EXP', title: 'Расходная накладная' },
-    { id: 4, code: 'ORD', title: 'Заказ на поставку' },
-    { id: 5, code: 'RET', title: 'Документ возврата' },
-];
-
-// Fake products
-const fakeProducts: Product[] = [
-    { id: 1, name: 'Ноутбук Dell Latitude', measure: 'шт', price: 12500000, nomenclature: 'DELL-LAT-001' },
-    { id: 2, name: 'Монитор Samsung 24"', measure: 'шт', price: 3200000, nomenclature: 'SAM-MON-24' },
-    { id: 3, name: 'Клавиатура Logitech', measure: 'шт', price: 850000, nomenclature: 'LOG-KEY-001' },
-    { id: 4, name: 'Мышь беспроводная', measure: 'шт', price: 450000, nomenclature: 'WIR-MOU-001' },
-    { id: 5, name: 'Принтер HP LaserJet', measure: 'шт', price: 4500000, nomenclature: 'HP-LAS-001' },
-    { id: 6, name: 'Бумага офисная А4', measure: 'пачка', price: 85000, nomenclature: 'PAP-A4-001' },
-    { id: 7, name: 'Ручка шариковая', measure: 'шт', price: 15000, nomenclature: 'PEN-BAL-001' },
-    { id: 8, name: 'Папка для документов', measure: 'шт', price: 35000, nomenclature: 'FOL-DOC-001' },
-];
-
-export default function CreateDocument() {
+export default function CreateDocument({ documentTypes, products: allProducts }: CreateDocumentProps) {
     const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType | null>(null);
     const [documentNumber, setDocumentNumber] = useState('2025/');
     const [products, setProducts] = useState<ProductItem[]>([]);
@@ -98,10 +82,10 @@ export default function CreateDocument() {
         setProducts(products.map(p => {
             if (p.id === id) {
                 const updated = { ...p, [field]: value };
-                
+
                 // Auto-fill fields when product is selected
                 if (field === 'product_id' && value) {
-                    const selectedProduct = fakeProducts.find(fp => fp.id === value);
+                    const selectedProduct = allProducts.find(fp => fp.id === value);
                     if (selectedProduct) {
                         updated.product_name = selectedProduct.name;
                         updated.measure = selectedProduct.measure;
@@ -109,15 +93,15 @@ export default function CreateDocument() {
                         updated.nomenclature = selectedProduct.nomenclature;
                     }
                 }
-                
+
                 // Recalculate amount when quantity changes
                 if (field === 'quantity' && p.product_id) {
-                    const selectedProduct = fakeProducts.find(fp => fp.id === p.product_id);
+                    const selectedProduct = allProducts.find(fp => fp.id === p.product_id);
                     if (selectedProduct) {
                         updated.amount = selectedProduct.price * value;
                     }
                 }
-                
+
                 return updated;
             }
             return p;
@@ -152,12 +136,12 @@ export default function CreateDocument() {
         // Form will be submitted via Inertia
     };
 
-    const documentTypeOptions = fakeDocumentTypes.map(docType => ({
+    const documentTypeOptions = documentTypes.map(docType => ({
         value: docType.id.toString(),
         label: docType.title,
     }));
 
-    const productOptions = fakeProducts.map(product => ({
+    const productOptions = allProducts.map(product => ({
         value: product.id.toString(),
         label: product.name,
     }));
