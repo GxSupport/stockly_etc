@@ -27,6 +27,9 @@ return [
     'resend' => [
         'key' => env('RESEND_KEY'),
     ],
+    'app'=>[
+        'local'=> env('APP_ENV','production')
+    ],
 
     'slack' => [
         'notifications' => [
