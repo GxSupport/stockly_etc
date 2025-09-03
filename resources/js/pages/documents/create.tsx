@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import InputError from '@/components/input-error';
-import SearchableSelect from '@/components/searchable-select';
+import { SearchableSelect } from '@/components/searchable-select';
 import { type BreadcrumbItem } from '@/types';
 
 interface DocumentType {
@@ -152,6 +152,16 @@ export default function CreateDocument() {
         // Form will be submitted via Inertia
     };
 
+    const documentTypeOptions = fakeDocumentTypes.map(docType => ({
+        value: docType.id.toString(),
+        label: docType.title,
+    }));
+
+    const productOptions = fakeProducts.map(product => ({
+        value: product.id.toString(),
+        label: product.name,
+    }));
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Добавить АКТ" />
@@ -188,13 +198,14 @@ export default function CreateDocument() {
                                         <div className="grid gap-2">
                                             <Label>Тип документа *</Label>
                                             <SearchableSelect
-                                                items={fakeDocumentTypes}
-                                                value={selectedDocumentType}
-                                                onValueChange={setSelectedDocumentType}
+                                                options={documentTypeOptions}
+                                                value={selectedDocumentType?.id.toString()}
+                                                onValueChange={(value) => {
+                                                    const docType = fakeDocumentTypes.find(d => d.id.toString() === value);
+                                                    setSelectedDocumentType(docType || null);
+                                                }}
                                                 placeholder="Выберите тип документа"
                                                 searchPlaceholder="Поиск типа документа..."
-                                                getItemLabel={(item) => item.title}
-                                                getItemValue={(item) => item.id.toString()}
                                             />
                                             <InputError message={errors.document_type} />
                                         </div>
@@ -284,15 +295,13 @@ export default function CreateDocument() {
                                                         <div className="grid gap-2 md:col-span-2">
                                                             <Label>Товар *</Label>
                                                             <SearchableSelect
-                                                                items={fakeProducts}
-                                                                value={fakeProducts.find(p => p.id === product.product_id) || null}
-                                                                onValueChange={(selectedProduct) => {
-                                                                    updateProduct(product.id, 'product_id', selectedProduct?.id || null);
+                                                                options={productOptions}
+                                                                value={product.product_id?.toString()}
+                                                                onValueChange={(value) => {
+                                                                    updateProduct(product.id, 'product_id', value ? parseInt(value) : null);
                                                                 }}
                                                                 placeholder="Выберите товар"
                                                                 searchPlaceholder="Поиск товара..."
-                                                                getItemLabel={(item) => item.name}
-                                                                getItemValue={(item) => item.id.toString()}
                                                             />
                                                         </div>
 
