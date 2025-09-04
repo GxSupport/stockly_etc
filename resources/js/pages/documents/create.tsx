@@ -185,7 +185,7 @@ export default function CreateDocument({ documentTypes, products: allProducts }:
                                                 options={documentTypeOptions}
                                                 value={selectedDocumentType?.id.toString()}
                                                 onValueChange={(value) => {
-                                                    const docType = fakeDocumentTypes.find(d => d.id.toString() === value);
+                                                    const docType = documentTypes.find(d => d.id.toString() === value);
                                                     setSelectedDocumentType(docType || null);
                                                 }}
                                                 placeholder="Выберите тип документа"
@@ -345,6 +345,22 @@ export default function CreateDocument({ documentTypes, products: allProducts }:
                                 </CardContent>
                             </Card>
 
+                            {/* Hidden fields */}
+                            <input type="hidden" name="type" value={selectedDocumentType?.id || ''} />
+                            <input type="hidden" name="date_order" value={new Date().toISOString().split('T')[0]} />
+                            <input type="hidden" name="total_amount" value={totalAmount} />
+                            
+                            {/* Product fields */}
+                            {products.map((product, index) => (
+                                <div key={product.id} style={{ display: 'none' }}>
+                                    <input name={`products[${index}][title]`} value={product.product_name} readOnly />
+                                    <input name={`products[${index}][measure]`} value={product.measure} readOnly />
+                                    <input name={`products[${index}][quantity]`} value={product.quantity} readOnly />
+                                    <input name={`products[${index}][amount]`} value={product.amount} readOnly />
+                                    <input name={`products[${index}][nomenclature]`} value={product.nomenclature} readOnly />
+                                </div>
+                            ))}
+
                             <div className="flex gap-4 pt-4 max-w-6xl">
                                 <Button
                                     type="button"
@@ -353,7 +369,7 @@ export default function CreateDocument({ documentTypes, products: allProducts }:
                                 >
                                     Отменить
                                 </Button>
-                                <Button type="submit" disabled={processing || products.length === 0}>
+                                <Button type="submit" disabled={processing || products.length === 0 || !selectedDocumentType}>
                                     {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                                     Сохранить документ
                                 </Button>

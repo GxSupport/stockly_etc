@@ -7,8 +7,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+
 /**
  * App\Models\Documents Hujjatlar modeli
+ *
  * @property int $id ID raqami
  * @property int $user_id Foydalanuvchi ID
  * @property string $number Hujjat raqami
@@ -35,10 +37,12 @@ class Documents extends Model
     use HasFactory;
 
     protected $table = 'documents';
+
     protected $fillable = [
         'user_id',
         'number',
         'type',
+        'main_tool',
         'subscriber_title',
         'address',
         'date_order',
@@ -46,12 +50,15 @@ class Documents extends Model
         'status',
         'level',
         'total_amount',
-        'is_finished'
+        'is_draft',
+        'is_finished',
+        'is_returned',
     ];
+
     public static array $type = [
         1 => 'смонтированных',
         2 => 'демонтажа',
-        3 => 'списания'
+        3 => 'списания',
     ];
 
     public function user_info(): HasOne
@@ -66,10 +73,12 @@ class Documents extends Model
             'document_id',
             'id');
     }
+
     public function document_type(): HasOne
     {
-        return $this->hasOne(DocumentType::class,'id','type');
+        return $this->hasOne(DocumentType::class, 'id', 'type');
     }
+
     public function notes(): HasMany
     {
         return $this->hasMany(
@@ -84,12 +93,14 @@ class Documents extends Model
             DocumentStatusLog::class,
             'document_id',
             'id')
-            ->where('is_active','=', 1)
+            ->where('is_active', '=', 1)
             ->with('user_info');
     }
-    public function priority(){
-        return $this->hasMany(DocumentPriority::class,'document_id','id')
-            ->where('is_active',1)
-            ->orderBy('ordering','ASC');
+
+    public function priority()
+    {
+        return $this->hasMany(DocumentPriority::class, 'document_id', 'id')
+            ->where('is_active', 1)
+            ->orderBy('ordering', 'ASC');
     }
 }
