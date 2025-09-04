@@ -12,7 +12,7 @@ class CompositionData extends Data
         public string $subconto_dt1,
         public string $subconto_kt1,
         public string $subconto_kt3,
-        public string $sum_turnover,
-        public string $quantity_turnover_kt
-    ){}
+        public float $sum_turnover,
+        public float $quantity_turnover_kt
+    ) {}
 }

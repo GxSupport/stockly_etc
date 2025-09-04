@@ -61,15 +61,61 @@ class DocumentService
 
     public function list(Request $request, $status)
     {
-        $query = Documents::with(['user_info', 'document_type', 'products']);
-
+        // For draft and return, the logic is simple and correct.
         if ($status === 'draft') {
-            $query->where('is_finished', false);
-        } elseif ($status === 'sent') {
-            $query->where('is_finished', true);
+            return Documents::with(['user_info', 'document_type', 'products'])
+                ->where('is_draft', 1)
+                ->where('user_id', $this->user->id)
+                ->latest()
+                ->paginate(10);
         }
 
-        return $query->latest()->paginate(10);
+        if ($status === 'return') {
+            return Documents::with(['user_info', 'document_type', 'products'])
+                ->where('is_returned', 1)
+                ->where('user_id', $this->user->id)
+                ->latest()
+                ->paginate(10);
+        }
+
+        // For 'sent', we implement the detailed logic from the old service.
+        if ($status === 'sent') {
+            $roleStatusMap = [
+                'admin' => 0,
+                'frp' => 1,
+                'header_frp' => 2,
+                'buxgalter' => 3,
+                'director' => 4,
+            ];
+            $min_status = $roleStatusMap[$this->user->type] ?? 0;
+
+            $priorityWhere = [
+                ['user_role', $this->user->type],
+                ['is_active', 1]
+            ];
+
+            // Get the document IDs from the DocumentPriority table
+            $documentIds = DocumentPriority::where($priorityWhere)
+                ->where(function ($query) {
+                    $query->whereNull('user_id')
+                          ->orWhere('user_id', $this->user->id);
+                })
+                ->whereHas('document', function ($query) use ($min_status) {
+                    $query->where('is_draft', 0)
+                          ->where('is_returned', 0) // Also ensure it's not a returned doc
+                          ->where('status', '>=', $min_status);
+                })
+                ->pluck('document_id');
+
+            // Now, fetch the documents with those IDs
+            return Documents::with(['user_info', 'document_type', 'products', 'priority'])
+                ->whereIn('id', $documentIds)
+                ->latest()
+                ->paginate(10);
+        }
+
+        // Fallback for any other status, though the route is constrained.
+        return Documents::query()->where('id', -1)->paginate(10);
     }
 
     public function create(Request $request)

@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * App\Models\User
+ *
  * @property int $id Foydalanuvchi ID raqami
  * @property string $name Foydalanuvchi ismi
  * @property string $password Foydalanuvchi paroli
@@ -41,6 +42,7 @@ class User extends Authenticatable
         'phone',
         'chat_id',
         'senior_id',
+        'dep_code',
     ];
 
     /**
@@ -52,18 +54,23 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
-    public function role(){
+
+    public function role()
+    {
         return $this->hasOne(
             UserRoles::class,
             'title',
-            'type')->select('id','title','name');
+            'type')->select('id', 'title', 'name');
     }
-    public function warehouse(){
+
+    public function warehouse()
+    {
         return $this->hasOne(
             UserWarehouse::class,
             'user_id',
-            'id')->select('user_id','warehouse_id');
+            'id')->select('user_id', 'warehouse_id');
     }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -72,7 +79,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'phone'=>'string',
+            'phone' => 'string',
             'password' => 'hashed',
         ];
     }

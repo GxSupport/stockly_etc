@@ -97,6 +97,47 @@ This is a Laravel project with a React frontend. The project appears to be a sto
 *   **Validation**: Required code/title/type, type selection with searchable dropdown
 *   **Files**: `warehouses.tsx`, `warehouses/create.tsx`, `WarehouseController.php`, `WarehouseService.php`
 
+### Document Management
+
+This is a core feature for managing acts of installation, dismantling, and write-offs.
+
+*   **Models**:
+    *   `Documents`: The main model for the document.
+    *   `DocumentPriority`: This model is crucial as it defines the workflow/approval chain for each document. The "status" of a document is represented by a series of `DocumentPriority` records.
+
+*   **Backend Logic**:
+    *   The business logic is heavily abstracted into `DocumentService`.
+    *   The `list` method in the service for the `sent` tab uses a complex query joining `Documents` with `DocumentPriority` to determine which documents are visible to which user role.
+    *   The backend now correctly eager-loads the `priority` relationship so the frontend can display the workflow status.
+
+*   **Frontend UI & Logic**:
+    *   **List Page (`documents.tsx`)**:
+        *   Features a tabbed view for `draft`, `sent`, and `return` statuses.
+        *   Tab visibility is role-based (typically for `admin` and `frp` roles).
+        *   The "Статус" (Status) column displays the approval chain by iterating over the `document.priority` array and showing a `<Badge>` for each step. The badge is green (`default`) if approved (`user_id` exists) and grey (`secondary`) otherwise.
+        *   The entire table row is clickable. The navigation logic is complex:
+            *   In the `draft` and `return` tabs, a click always navigates to the `edit` page.
+            *   In the `sent` tab, a click navigates to the `edit` page if `document.status` is 0 or 3, and to the `show` page otherwise.
+    *   **Create/Edit Forms (`DocumentForm.tsx`)**:
+        *   The form logic is encapsulated in a reusable component located at `resources/js/components/documents/DocumentForm.tsx`.
+        *   The `create.tsx` and `edit.tsx` pages are simple wrappers around this reusable form.
+        *   The form handles different document types (installation, dismantling, write-off) with conditional UI fields.
+        *   It uses the `useForm` hook from Inertia for state management.
+        *   The document number is dynamically prefixed with the current year.
+        *   It contains special logic for "dismantling" (type 2) that involves fetching a `composition` list from the server.
+        *   It transforms data before submission (e.g., clearing the `measure` field for dismantling documents).
+
+*   **Key Files**:
+    *   `routes/web.php`: Defines the routes for `/documents`.
+    *   `app/Http/Controllers/DocumentController.php`: Handles the HTTP requests.
+    *   `app/Services/DocumentService.php`: Contains the core backend business logic.
+    *   `app/Models/Documents.php`: Eloquent model.
+    *   `app/Models/DocumentPriority.php`: Eloquent model for the workflow status.
+    *   `resources/js/pages/documents.tsx`: The main list view.
+    *   `resources/js/pages/documents/create.tsx`: Wrapper for creating documents.
+    *   `resources/js/pages/documents/edit.tsx`: Wrapper for editing documents.
+    *   `resources/js/components/documents/DocumentForm.tsx`: The reusable form component.
+
 ### Common Features
 
 *   Server-side pagination with smart UI (max 5 visible pages + ellipsis)
