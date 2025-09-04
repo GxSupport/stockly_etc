@@ -20,10 +20,11 @@ interface DocumentType {
 }
 
 interface Product {
-    id: number;
     name: string;
+    warehouse: string;
     measure: string;
     price: number;
+    count: string;
     nomenclature: string;
 }
 
@@ -34,12 +35,13 @@ interface CreateDocumentProps {
 
 interface ProductItem {
     id: string;
-    product_id: number | null;
+    selected_product: Product | null;
     product_name: string;
     measure: string;
     quantity: number;
     amount: number;
     nomenclature: string;
+    max_quantity: number;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -64,12 +66,13 @@ export default function CreateDocument({ documentTypes, products: allProducts }:
     const addProduct = () => {
         const newProduct: ProductItem = {
             id: Math.random().toString(36).substr(2, 9),
-            product_id: null,
+            selected_product: null,
             product_name: '',
             measure: '',
             quantity: 1,
             amount: 0,
             nomenclature: '',
+            max_quantity: 0,
         };
         setProducts([...products, newProduct]);
     };
@@ -84,22 +87,30 @@ export default function CreateDocument({ documentTypes, products: allProducts }:
                 const updated = { ...p, [field]: value };
 
                 // Auto-fill fields when product is selected
-                if (field === 'product_id' && value) {
-                    const selectedProduct = allProducts.find(fp => fp.id === value);
+                if (field === 'selected_product' && value) {
+                    const selectedProduct = allProducts.find(fp => fp.nomenclature === value);
                     if (selectedProduct) {
+                        updated.selected_product = selectedProduct;
                         updated.product_name = selectedProduct.name;
                         updated.measure = selectedProduct.measure;
                         updated.amount = selectedProduct.price * updated.quantity;
                         updated.nomenclature = selectedProduct.nomenclature;
+                        updated.max_quantity = parseInt(selectedProduct.count);
+                        // Agar joriy quantity max dan ko'p bo'lsa, max ga o'rnatamiz
+                        if (updated.quantity > parseInt(selectedProduct.count)) {
+                            updated.quantity = parseInt(selectedProduct.count);
+                            updated.amount = selectedProduct.price * updated.quantity;
+                        }
                     }
                 }
 
                 // Recalculate amount when quantity changes
-                if (field === 'quantity' && p.product_id) {
-                    const selectedProduct = allProducts.find(fp => fp.id === p.product_id);
-                    if (selectedProduct) {
-                        updated.amount = selectedProduct.price * value;
-                    }
+                if (field === 'quantity' && p.selected_product) {
+                    // Quantity validation - max_quantity dan ko'p bo'lsa cheklaymiz
+                    const maxQty = p.max_quantity;
+                    const validatedQuantity = Math.max(1, Math.min(value, maxQty));
+                    updated.quantity = validatedQuantity;
+                    updated.amount = p.selected_product.price * validatedQuantity;
                 }
 
                 return updated;
@@ -141,10 +152,16 @@ export default function CreateDocument({ documentTypes, products: allProducts }:
         label: docType.title,
     }));
 
-    const productOptions = allProducts.map(product => ({
-        value: product.id.toString(),
-        label: product.name,
-    }));
+    const productOptions = allProducts.map(product => {
+        const truncatedName = product.name.length > 50
+            ? product.name.substring(0, 50) + '...'
+            : product.name;
+
+        return {
+            value: product.nomenclature,
+            label: `${truncatedName} | ${product.measure} | ${formatAmount(product.price)} | Склад: ${product.count}`,
+        };
+    });
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -153,9 +170,9 @@ export default function CreateDocument({ documentTypes, products: allProducts }:
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
+                        <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => router.visit('/documents')}
                             className="gap-2"
                         >
@@ -275,47 +292,56 @@ export default function CreateDocument({ documentTypes, products: allProducts }:
                                                         </Button>
                                                     </div>
 
-                                                    <div className="grid gap-4 md:grid-cols-5">
-                                                        <div className="grid gap-2 md:col-span-2">
-                                                            <Label>Товар *</Label>
+                                                    <div className="flex gap-4 items-start">
+                                                        <div className="flex-1 min-w-0">
+                                                            <Label className="block mb-2">Товар *</Label>
                                                             <SearchableSelect
                                                                 options={productOptions}
-                                                                value={product.product_id?.toString()}
+                                                                value={product.selected_product?.nomenclature}
                                                                 onValueChange={(value) => {
-                                                                    updateProduct(product.id, 'product_id', value ? parseInt(value) : null);
+                                                                    updateProduct(product.id, 'selected_product', value);
                                                                 }}
                                                                 placeholder="Выберите товар"
                                                                 searchPlaceholder="Поиск товара..."
                                                             />
                                                         </div>
 
-                                                        <div className="grid gap-2">
-                                                            <Label>Мера</Label>
+                                                        <div className="w-24">
+                                                            <Label className="block mb-2">Ед.изм.</Label>
                                                             <Input
                                                                 value={product.measure}
                                                                 readOnly
-                                                                className="bg-muted"
-                                                                placeholder="Авто"
+                                                                className="bg-muted h-10"
+                                                                placeholder="шт"
                                                             />
                                                         </div>
 
-                                                        <div className="grid gap-2">
-                                                            <Label>Количество *</Label>
-                                                            <Input
-                                                                type="number"
-                                                                min="1"
-                                                                value={product.quantity}
-                                                                onChange={(e) => updateProduct(product.id, 'quantity', parseInt(e.target.value) || 1)}
-                                                                placeholder="1"
-                                                            />
+                                                        <div className="w-32">
+                                                            <Label className="block mb-2">Количество *</Label>
+                                                            <div className="space-y-1">
+                                                                <Input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    max={product.max_quantity > 0 ? product.max_quantity : undefined}
+                                                                    value={product.quantity}
+                                                                    onChange={(e) => updateProduct(product.id, 'quantity', parseInt(e.target.value) || 1)}
+                                                                    placeholder="1"
+                                                                    className={`h-10 ${product.max_quantity > 0 && product.quantity > product.max_quantity ? 'border-red-500' : ''}`}
+                                                                />
+                                                                {product.max_quantity > 0 && (
+                                                                    <div className="text-xs text-green-600 whitespace-nowrap">
+                                                                        Макс: {product.max_quantity}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
 
-                                                        <div className="grid gap-2">
-                                                            <Label>Сумма</Label>
+                                                        <div className="w-40">
+                                                            <Label className="block mb-2">Сумма</Label>
                                                             <Input
                                                                 value={formatAmount(product.amount)}
                                                                 readOnly
-                                                                className="bg-muted font-mono"
+                                                                className="bg-muted font-mono h-10"
                                                                 placeholder="0"
                                                             />
                                                         </div>
@@ -349,7 +375,7 @@ export default function CreateDocument({ documentTypes, products: allProducts }:
                             <input type="hidden" name="type" value={selectedDocumentType?.id || ''} />
                             <input type="hidden" name="date_order" value={new Date().toISOString().split('T')[0]} />
                             <input type="hidden" name="total_amount" value={totalAmount} />
-                            
+
                             {/* Product fields */}
                             {products.map((product, index) => (
                                 <div key={product.id} style={{ display: 'none' }}>

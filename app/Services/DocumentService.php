@@ -17,6 +17,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use GuzzleHttp\Client;
 
 class DocumentService
 {
@@ -124,6 +126,7 @@ class DocumentService
 
             return response()->json(['success' => true, 'data' => ['id' => $document->id]], $status);
         } catch (QueryException $e) {
+
             DB::rollback();
 
             return response()->json(['success' => false, 'message' => $e->getMessage()], 503);
@@ -227,32 +230,102 @@ class DocumentService
 
     public function getGoods($code, $title, $date): array
     {
-        $re = new WarehouseRequest(code: $code, warehouse_title: $title, date: $date);
-        $res = new Warehouse;
+        // Use direct Guzzle instead of Saloon for testing
+        $client = new Client([
+            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
+            'timeout' => 30,
+            'connect_timeout' => 10,
+            'verify' => false,
+        ]);
 
-        $send = [];
+        $baseUrl = 'http://89.236.216.12:8083';
+        $endpoint = '/base2/hs/CarData/os/empl';
 
-//        dd($re->resolveEndpoint(),$re->query(),$res->resolveBaseUrl(),$res->headers(),$res->config());
-        $response = $res->send($re);
-        if ($response->successful()) {
-            $clean = str_replace('﻿', '', $response->body());
-            $items = json_decode($clean, true);
-            foreach ($items as $value) {
-                $send[] = new ProductData(
-                    $value['Номенклатура'],
-                    $value['Склад'],
-                    $value['ЕдИзм'],
-                    $this->numberFromStringForProduct($value['СуммаОстаток']),
-                    $value['КоличествоОстаток'],
-                    $value['КодНоменклатуры']
-                );
+        $queryParams = [
+            'm' => 'get_stock_leftover',
+            'code' => $code,
+            'wh_name' => $title, // Raw title without encoding
+            'date' => $date,
+        ];
+
+        $fullUrl = $baseUrl . $endpoint . '?' . http_build_query($queryParams);
+
+        Log::info('1C Integration Request (Guzzle)', [
+            'base_url' => $baseUrl,
+            'endpoint' => $endpoint,
+            'query_params' => $queryParams,
+            'full_url' => $fullUrl,
+            'raw_title' => $title,
+        ]);
+
+        try {
+            $response = $client->get($endpoint, [
+                'base_uri' => $baseUrl,
+                'query' => $queryParams,
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Accept' => '*/*',
+                    'Authorization' => 'Basic aHR0cGJvdDpodHRwYm90',
+                ],
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $body = $response->getBody()->getContents();
+
+            Log::info('1C Integration Response (Guzzle)', [
+                'status' => $statusCode,
+                'successful' => $statusCode >= 200 && $statusCode < 300,
+                'body_length' => strlen($body),
+                'body_preview' => substr($body, 0, 500),
+                'raw_body' => $body,
+            ]);
+
+            $send = [];
+
+            if ($statusCode >= 200 && $statusCode < 300) {
+                $clean = str_replace('﻿', '', $body);
+                $items = json_decode($clean, true);
+
+                Log::info('1C Integration Parsed Data (Guzzle)', [
+                    'cleaned_body' => $clean,
+                    'json_decode_result' => $items,
+                    'items_count' => is_array($items) ? count($items) : 'not_array',
+                ]);
+
+                if (is_array($items)) {
+                    foreach ($items as $value) {
+                        $send[] = new ProductData(
+                            $value['Номенклатура'],
+                            $value['Склад'],
+                            $value['ЕдИзм'],
+                            $this->numberFromStringForProduct($value['СуммаОстаток']),
+                            $value['КоличествоОстаток'],
+                            $value['КодНоменклатуры']
+                        );
+                    }
+                } else {
+                    Log::warning('1C Integration: items is not array (Guzzle)', ['items' => $items]);
+                }
+            } else {
+                Log::error('1C Integration Failed (Guzzle)', [
+                    'status' => $statusCode,
+                    'body' => $body,
+                    'url' => $fullUrl,
+                ]);
+                throw new \ErrorException('Ошибка подключения к серверу,ошибка: ' . $statusCode);
             }
-        } else {
-            $status = $response->status();
-            throw new \ErrorException('Ошибка подключения к серверу,ошибка: '.$status);
-        }
 
-        return $send;
+            Log::info('1C Integration Final Result (Guzzle)', ['products_count' => count($send)]);
+
+            return $send;
+
+        } catch (\Exception $e) {
+            Log::error('1C Integration Exception (Guzzle)', [
+                'message' => $e->getMessage(),
+                'url' => $fullUrl,
+            ]);
+            throw new \ErrorException('Ошибка подключения к серверу: ' . $e->getMessage());
+        }
     }
 
     // Workflow methods from old DocumentService

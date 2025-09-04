@@ -37,13 +37,13 @@ class DocumentController extends Controller
         if (! $warehouse) {
             return redirect()->route('documents.index')->with('error', 'Склад не найден. Обратитесь к администратору.');
         }
-        $date = ($request->date) ?? date('d.m.Y');
+        $date = $request->date ?? date('d.m.Y');
         $date = date('d.m.Y', strtotime($date));
         $code = $warehouse->warehouse->code;
         $title = $warehouse->warehouse->title;
-        $products = $this->documentService->getGoods($code, $title, $date);
         $documentTypes = DocumentType::all();
         try {
+            $products = $this->documentService->getGoods($code, $title, $date);
 
         } catch (\ErrorException $e) {
             $products = [];
@@ -58,9 +58,10 @@ class DocumentController extends Controller
 
     public function store(StoreDocumentRequest $request)
     {
-        try {
-            $response = $this->documentService->create($request);
 
+        try {
+
+            $response = $this->documentService->create($request);
             if ($response->getStatusCode() === 201) {
                 return redirect()->route('documents.index')
                     ->with('success', 'Документ успешно создан');

@@ -11,8 +11,6 @@ class Warehouse extends Connector
 
     /**
      * The Base URL of the API
-     *
-     * @return string
      */
     public function resolveBaseUrl(): string
     {
@@ -28,8 +26,8 @@ class Warehouse extends Connector
     {
         return [
             'Content-Type' => 'application/json',
-            'Accept'=>'*/*',
-            'Authorization'=>'Basic aHR0cGJvdDpodHRwYm90'
+            'Accept' => '*/*',
+            'Authorization' => 'Basic aHR0cGJvdDpodHRwYm90',
         ];
     }
 
@@ -41,7 +39,10 @@ class Warehouse extends Connector
     protected function defaultConfig(): array
     {
         return [
-            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : ''
+            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
+            'timeout' => 30,
+            'connect_timeout' => 10,
+            'verify' => false, // SSL verification off for local development
         ];
     }
 }
