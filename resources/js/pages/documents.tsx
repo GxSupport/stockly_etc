@@ -5,13 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { type BreadcrumbItem } from '@/types';
 import { Plus, Calendar } from 'lucide-react';
 
 // Updated Interfaces
+interface RoleInfo {
+    name: string;
+}
+
 interface Priority {
     user_id: number | null;
     user_role: string;
+    is_success: boolean;
+    role_info: RoleInfo | null;
 }
 
 interface Document {
@@ -23,8 +30,9 @@ interface Document {
     total_amount: number;
     date_order: string;
     is_finished: boolean;
-    status: number; // Detailed status field
-    priority: Priority[]; // Added priority relationship
+    is_returned: boolean;
+    status: number;
+    priority: Priority[];
 }
 
 interface PaginatedData {
@@ -46,6 +54,35 @@ interface DocumentsPageProps {
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'АКТ', href: '/documents' },
 ];
+
+const DocumentStatus = ({ document }: { document: Document }) => {
+
+    if (document.is_returned) {
+        return <Badge variant="destructive">Возвращено</Badge>;
+    }
+
+    if (!document.priority || document.priority.length === 0) {
+        return <Badge variant="outline">Черновик</Badge>;
+    }
+
+    return (
+        <TooltipProvider>
+            <div className="flex items-center gap-1">
+                {document.priority.map((p, index) => (
+                    <Tooltip key={index}>
+                        <TooltipTrigger>
+                            <div className={`h-4 w-4 rounded-sm ${p.is_success ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{p.role_info?.name ?? p.user_role}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                ))}
+            </div>
+        </TooltipProvider>
+    );
+};
+
 
 export default function Documents({ documents, search, status: currentTab }: DocumentsPageProps) {
     const { auth } = usePage().props as any;
@@ -138,13 +175,7 @@ export default function Documents({ documents, search, status: currentTab }: Doc
                                                         </div>
                                                     </td>
                                                     <td className="h-12 px-4 align-middle">
-                                                        <div className="flex items-center gap-1 flex-wrap">
-                                                            {document.priority && document.priority.map((p, index) => (
-                                                                <Badge key={index} variant={p.user_id ? 'default' : 'secondary'}>
-                                                                    {p.user_role}
-                                                                </Badge>
-                                                            ))}
-                                                        </div>
+                                                        <DocumentStatus document={document} />
                                                     </td>
                                                 </tr>
                                             ))

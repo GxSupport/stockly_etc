@@ -13,6 +13,8 @@ use Illuminate\Support\Carbon;
  * @property int $ordering Ustuvorlik tartibi
  * @property int $user_id Foydalanuvchi ID
  * @property string $user_role Foydalanuvchi roli
+ * @property User|null $user_info Foydalanuvchi haqida ma'lumot
+ * @property UserRoles|null $role_info Foydalanuvchi roli haqida ma
  * @property bool $is_success Muvaffaqiyat holati (0 yoki 1)
  * @property bool $is_active Faollik holati (0 yoki 1)
  * @property Carbon|null $created_at Yaratilgan vaqt
@@ -35,6 +37,9 @@ class DocumentPriority extends Model
     }
     public function user_info(){
         return $this->hasOne(User::class,'id','user_id');
+    }
+    public function role_info(){
+        return $this->hasOne(UserRoles::class,'title','user_role');
     }
     public function return_info(){
         return $this->hasMany(DocumentReturned::class,'priority_id','id');

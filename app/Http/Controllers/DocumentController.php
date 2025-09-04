@@ -26,7 +26,6 @@ class DocumentController extends Controller
     public function index(Request $request, $status = 'draft')
     {
         $documents = $this->documentService->list($request, $status);
-
         return Inertia::render('documents', [
             'documents' => $documents,
             'status' => $status,

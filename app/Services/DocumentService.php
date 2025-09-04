@@ -108,7 +108,7 @@ class DocumentService
                 ->pluck('document_id');
 
             // Now, fetch the documents with those IDs
-            return Documents::with(['user_info', 'document_type', 'products', 'priority'])
+            return Documents::with(['user_info', 'document_type', 'products', 'priority.role_info'])
                 ->whereIn('id', $documentIds)
                 ->latest()
                 ->paginate(10);
