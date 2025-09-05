@@ -38,7 +38,7 @@ export default function CreateDocument({ documentTypes, products, services }: Cr
                 ? data.products.map(p => ({ ...p, measure: '' }))
                 : data.products,
         };
-        post('/documents', { data: submissionData } as any);
+        post('/documents/create', { data: submissionData } as any);
     };
 
     return (

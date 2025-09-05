@@ -6,17 +6,17 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { type BreadcrumbItem } from '@/types';
-import { 
-    BookOpen, 
-    Clock, 
-    Search, 
-    Users, 
-    ClipboardList, 
-    Warehouse, 
-    Building2, 
-    Archive, 
+import {
+    BookOpen,
+    Clock,
+    Search,
+    Users,
+    ClipboardList,
+    Warehouse,
+    Building2,
+    Archive,
     FileText,
-    HelpCircle 
+    HelpCircle
 } from 'lucide-react';
 
 interface Guide {
@@ -76,7 +76,7 @@ export default function UserGuidesIndex({ guides }: UserGuidesProps) {
                              guide.description.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesCategory = !selectedCategory || guide.category === selectedCategory;
         const matchesDifficulty = !selectedDifficulty || guide.difficulty === selectedDifficulty;
-        
+
         return matchesSearch && matchesCategory && matchesDifficulty;
     });
 
@@ -88,7 +88,7 @@ export default function UserGuidesIndex({ guides }: UserGuidesProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Руководство пользователя" />
 
-            <div className="space-y-6">
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header */}
                 <div className="flex flex-col space-y-4">
                     <div className="flex items-center justify-between">
@@ -101,7 +101,7 @@ export default function UserGuidesIndex({ guides }: UserGuidesProps) {
                         <div className="text-right">
                             <div className="text-2xl font-bold text-primary">{filteredGuides.length}</div>
                             <div className="text-sm text-muted-foreground">
-                                {filteredGuides.length === 1 ? 'руководство' : 
+                                {filteredGuides.length === 1 ? 'руководство' :
                                  filteredGuides.length < 5 ? 'руководства' : 'руководств'}
                             </div>
                         </div>
@@ -179,7 +179,7 @@ export default function UserGuidesIndex({ guides }: UserGuidesProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredGuides.map((guide) => {
                             const IconComponent = iconMap[guide.icon as keyof typeof iconMap] || BookOpen;
-                            
+
                             return (
                                 <Card key={guide.slug} className="group hover:shadow-md transition-all duration-200">
                                     <CardHeader className="space-y-3">
@@ -188,15 +188,15 @@ export default function UserGuidesIndex({ guides }: UserGuidesProps) {
                                                 <IconComponent className="h-6 w-6 text-primary" />
                                             </div>
                                             <div className="flex flex-col gap-1 items-end">
-                                                <Badge 
-                                                    variant="secondary" 
+                                                <Badge
+                                                    variant="secondary"
                                                     className={difficultyColors[guide.difficulty]}
                                                 >
                                                     {guide.difficulty}
                                                 </Badge>
                                             </div>
                                         </div>
-                                        
+
                                         <div>
                                             <CardTitle className="group-hover:text-primary transition-colors">
                                                 {guide.title}
@@ -213,7 +213,7 @@ export default function UserGuidesIndex({ guides }: UserGuidesProps) {
                                                 <Clock className="h-4 w-4" />
                                                 <span>{guide.estimatedTime}</span>
                                             </div>
-                                            <Badge 
+                                            <Badge
                                                 variant="outline"
                                                 className={categoryColors[guide.category] || categoryColors['Общие']}
                                             >

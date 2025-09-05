@@ -92,7 +92,6 @@ class ProductService
                 'status' => $statusCode,
                 'successful' => $statusCode >= 200 && $statusCode < 300,
                 'body_length' => strlen($body),
-                'body_preview' => substr($body, 0, 500),
             ]);
 
             $services = [];
@@ -194,7 +193,6 @@ class ProductService
                 'status' => $statusCode,
                 'successful' => $statusCode >= 200 && $statusCode < 300,
                 'body_length' => strlen($body),
-                'body_preview' => substr($body, 0, 500),
             ]);
 
             $composition = [];

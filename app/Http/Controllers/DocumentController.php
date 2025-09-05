@@ -25,6 +25,10 @@ class DocumentController extends Controller
 
     public function index(Request $request, $status = 'draft')
     {
+        $user = auth()->user();
+        if($user->type!='frp'){
+            $status='sent';
+        }
         $documents = $this->documentService->list($request, $status);
         return Inertia::render('documents', [
             'documents' => $documents,
@@ -94,7 +98,8 @@ class DocumentController extends Controller
     {
 
         try {
-
+            $request['is_draft'] = !$request->has('is_draft') || $request->is_draft;
+            $request['type']= $request->document_type_id;
             $response = $this->documentService->create($request);
             if ($response->getStatusCode() === 201) {
                 return redirect()->route('documents.index')
@@ -110,12 +115,37 @@ class DocumentController extends Controller
 
     public function show($id)
     {
+
         try {
             $documentService = new DocumentService($id);
             $document = $documentService->document;
 
+            // Get document history
+            $history = [];
+            try {
+                $historyResponse = $documentService->getHistory();
+                if ($historyResponse && isset($historyResponse['data'])) {
+                    $history = $historyResponse['data'];
+                }
+            } catch (\Exception $e) {
+                Log::error('Error getting document history: ' . $e->getMessage());
+            }
+
+            // Get staff list for director info
+            $staff = [];
+            try {
+                $staffResponse = $documentService->getStaffList();
+                if ($staffResponse && isset($staffResponse['data'])) {
+                    $staff = $staffResponse['data'];
+                }
+            } catch (\Exception $e) {
+                Log::error('Error getting staff list: ' . $e->getMessage());
+            }
             return Inertia::render('documents/show', [
-                'document' => $document->load(['products', 'document_type', 'user_info']),
+                'document' => $document->load(['products', 'document_type', 'user_info', 'notes','priority']),
+                'history' => $history,
+                'staff' => $staff,
+                'user' => auth()->user(),
             ]);
         } catch (\Exception $e) {
             return redirect()->route('documents.index')
@@ -164,7 +194,7 @@ class DocumentController extends Controller
             }
 
             return Inertia::render('documents/edit', [
-                'document' => $document->load(['products', 'document_type', 'user_info']),
+                'document' => $document->load(['products', 'document_type', 'user_info', 'notes']),
                 'documentTypes' => $documentTypes,
                 'products' => $products,
                 'services' => $services,
@@ -210,5 +240,203 @@ class DocumentController extends Controller
     public function typeList()
     {
         return DocumentType::all();
+    }
+
+    public function checkSmsRequired($id)
+    {
+        try {
+            $documentService = new DocumentService($id);
+            $document = $documentService->document;
+
+            // Check if SMS is required for this document/user
+            // This is just a placeholder - implement your SMS logic here
+            $smsRequired = true; // You can implement your own logic here
+
+            return response()->json([
+                'sms_required' => $smsRequired,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function sendOtp(Request $request)
+    {
+        $request->validate([
+            'document_id' => 'required|integer',
+            'type' => 'required|string',
+        ]);
+
+        try {
+            // Generate OTP token
+            $token = bin2hex(random_bytes(16));
+            $otp = rand(100000, 999999);
+
+            // Store OTP in session or database
+            session([
+                'otp_token' => $token,
+                'otp_code' => $otp,
+                'document_id' => (int)$request->document_id,
+            ]);
+
+            // Here you would send the OTP via SMS/Telegram
+            // For now, we'll just return success
+            Log::info('OTP sent for document: ' . $request->document_id . ', Code: ' . $otp);
+
+            return response()->json([
+                'success' => true,
+                'token' => $token,
+                'message' => 'Код подтверждения отправлен',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при отправке кода',
+            ], 422);
+        }
+    }
+
+    public function confirmCode(Request $request, $id)
+    {
+        $request->validate([
+            'code' => 'required|string',
+            'token' => 'required|string',
+        ]);
+
+        try {
+            // Debug session data
+            Log::info('OTP Verification Debug', [
+                'request_token' => $request->token,
+                'request_code' => $request->code,
+                'request_id' => $id,
+                'session_token' => session('otp_token'),
+                'session_code' => session('otp_code'),
+                'session_document_id' => session('document_id'),
+            ]);
+
+            // Verify OTP
+            if (session('otp_token') !== $request->token ||
+                session('otp_code') != $request->code ||
+                session('document_id') != (int)$id) {
+
+                Log::warning('OTP Verification Failed', [
+                    'token_match' => session('otp_token') === $request->token,
+                    'code_match' => session('otp_code') == $request->code,
+                    'id_match' => session('document_id') == $id,
+                ]);
+
+                return response()->json([
+                    'errors' => ['message' => 'Неверный код подтверждения'],
+                ], 400);
+            }
+
+            // Clear OTP from session
+            session()->forget(['otp_token', 'otp_code', 'document_id']);
+
+            // Process document - send to next level
+            $documentService = new DocumentService($id);
+            $response = $documentService->sendToNext();
+
+            if ($response) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Документ успешно отправлен следующему',
+                ]);
+            }
+
+            return response()->json([
+                'errors' => ['message' => 'Ошибка при отправке документа'],
+            ], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'errors' => ['message' => $e->getMessage()],
+            ], 400);
+        }
+    }
+
+    public function rejectCode(Request $request, $id)
+    {
+        $request->validate([
+            'code' => 'required|string',
+            'token' => 'required|string',
+            'note' => 'required|string',
+        ]);
+
+        try {
+            // Debug session data
+            Log::info('OTP Rejection Debug', [
+                'request_token' => $request->token,
+                'request_code' => $request->code,
+                'request_id' => $id,
+                'request_note' => $request->note,
+                'session_token' => session('otp_token'),
+                'session_code' => session('otp_code'),
+                'session_document_id' => session('document_id'),
+            ]);
+
+            // Verify OTP
+            if (session('otp_token') !== $request->token ||
+                session('otp_code') != $request->code ||
+                session('document_id') != (int)$id) {
+
+                Log::warning('OTP Rejection Failed', [
+                    'token_match' => session('otp_token') === $request->token,
+                    'code_match' => session('otp_code') == $request->code,
+                    'id_match' => session('document_id') == $id,
+                ]);
+
+                return response()->json([
+                    'errors' => ['message' => 'Неверный код подтверждения'],
+                ], 400);
+            }
+
+            // Clear OTP from session
+            session()->forget(['otp_token', 'otp_code', 'document_id']);
+
+            // Reject document
+            $documentService = new DocumentService($id);
+            $response = $documentService->rejectDocument($request->note);
+
+            if ($response) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Документ успешно отклонен',
+                ]);
+            }
+
+            return response()->json([
+                'errors' => ['message' => 'Ошибка при отклонении документа'],
+            ], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'errors' => ['message' => $e->getMessage()],
+            ], 400);
+        }
+    }
+
+    public function sendToNext(Request $request, $id)
+    {
+        try {
+            $documentService = new DocumentService($id);
+            $response = $documentService->sendToNext();
+
+            if ($response) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Документ успешно отправлен следующему',
+                ]);
+            }
+
+            return response()->json([
+                'errors' => ['message' => 'Ошибка при отправке документа'],
+            ], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'errors' => ['message' => $e->getMessage()],
+            ], 400);
+        }
     }
 }

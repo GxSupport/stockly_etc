@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { router, useForm } from '@inertiajs/react';
 import axios from 'axios';
-import { LoaderCircle, Plus, Trash2, Calendar, ToggleLeft, ToggleRight, Save } from 'lucide-react';
+import { LoaderCircle, Plus, Trash2, Calendar, ToggleLeft, ToggleRight, Save, Send } from 'lucide-react';
+import SmsConfirmationModal from '@/components/SmsConfirmationModal';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,10 @@ export interface DocumentData {
     main_tool: string;
     date_order: string;
     total_amount?: number;
+    is_draft?: boolean;
+    is_returned?: boolean;
+    status?: number;
+    note?: string;
 }
 
 interface DocumentFormProps {
@@ -34,13 +39,31 @@ interface DocumentFormProps {
     documentTypes: DocumentType[];
     allProducts: Product[];
     services: Service[];
+    isEditMode?: boolean;
+    documentNotes?: any[];
 }
 
-export default function DocumentForm({ data, setData, errors, processing, onSubmit, documentTypes, allProducts, services }: DocumentFormProps) {
+export default function DocumentForm({ data, setData, errors, processing, onSubmit, documentTypes, allProducts, services, isEditMode = false, documentNotes = [] }: DocumentFormProps) {
     const currentYear = new Date().getFullYear();
     const [isMainToolFromService, setIsMainToolFromService] = useState(!!data.main_tool);
     const [composition, setComposition] = useState<any[]>([]);
+    const [showSmsModal, setShowSmsModal] = useState(false);
+    const [sendingToNext, setSendingToNext] = useState(false);
     const today = new Date(data.date_order).toLocaleDateString('ru-RU');
+    
+    // Document status logic
+    const canEdit = !isEditMode || data.is_draft || data.is_returned;
+    const canSendToNext = data.is_draft && !processing && data.products.length > 0;
+    const isReturned = data.is_returned;
+    
+    // User role types for display
+    const userRoles = {
+        'frp': 'МОЛ',
+        'header_frp': 'Руководители МОЛ', 
+        'director': 'Технический директор',
+        'buxgalter': 'Бухгалтерия',
+        'admin': 'Администратор',
+    };
 
     const addProduct = () => {
         const newProduct: ProductItem = { id: Math.random().toString(36).substr(2, 9), selected_product: null, product_name: '', measure: '', quantity: 1, amount: 0, nomenclature: '', max_quantity: 0, note: '' };
@@ -123,8 +146,66 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
     const serviceOptions = services.map(service => ({ value: service.basic_resource_code, label: service.name }));
     const productOptions = allProducts.map(product => ({ value: product.nomenclature, label: `${product.name.substring(0, 50)}... | ${product.measure} | ${formatAmount(product.price)} | Склад: ${product.count}` }));
 
+    const handleSendToNext = async () => {
+        if (!data.id) return;
+        
+        setSendingToNext(true);
+        try {
+            // Check if SMS confirmation is required
+            const smsCheck = await axios.get(`/documents/${data.id}/check-sms`);
+            
+            if (smsCheck.data.sms_required) {
+                setShowSmsModal(true);
+            } else {
+                // Send directly without SMS
+                await sendToNextLevel();
+            }
+        } catch (error) {
+            console.error('Error checking SMS requirement:', error);
+        } finally {
+            setSendingToNext(false);
+        }
+    };
+
+    const sendToNextLevel = async () => {
+        if (!data.id) return;
+        
+        try {
+            const response = await axios.post(`/documents/${data.id}/send-to-next`);
+            if (response.data.success) {
+                router.visit('/documents', {
+                    preserveState: false,
+                    onSuccess: () => {
+                        // Show success message
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error sending to next level:', error);
+        }
+    };
+
+    const handleSmsSuccess = () => {
+        setShowSmsModal(false);
+        setSendingToNext(false);
+        router.visit('/documents', {
+            preserveState: false,
+            replace: true,
+            onSuccess: () => {
+                // Show success message
+            }
+        });
+    };
+
     return (
-        <form onSubmit={onSubmit} className="flex flex-col gap-6">
+        <form onSubmit={(e) => {
+            // Prevent submission if SMS modal is open or sending to next
+            if (showSmsModal || sendingToNext) {
+                e.preventDefault();
+                return;
+            }
+            onSubmit(e);
+        }} className="flex flex-col gap-6">
             <Card className="max-w-4xl">
                 <CardHeader><CardTitle>Основная информация</CardTitle></CardHeader>
                 <CardContent>
@@ -271,14 +352,92 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
                 </Card>
             )}
 
+            {/* Notes section for returned documents */}
+            {isEditMode && (
+                <Card className="max-w-6xl">
+                    <CardHeader><CardTitle>Дополнительная информация</CardTitle></CardHeader>
+                    <CardContent>
+                        <div className="grid gap-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="note">Причина списания</Label>
+                                <textarea
+                                    id="note"
+                                    value={data.note || ''}
+                                    onChange={(e) => setData('note', e.target.value)}
+                                    className="w-full p-3 border border-input rounded-md resize-none min-h-[100px]"
+                                    placeholder="Введите причину списания..."
+                                />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Return notification banner */}
+            {isReturned && documentNotes.length > 0 && (
+                <Card className="max-w-6xl border-red-500 bg-red-50">
+                    <CardContent className="pt-6">
+                        <div className="bg-red-600 text-white p-4 rounded-md">
+                            <h4 className="font-semibold mb-2">Документ возвращен</h4>
+                            {documentNotes.map((note, index) => (
+                                <div key={index} className="mb-4 last:mb-0">
+                                    {index > 0 && <hr className="border-red-300 my-2" />}
+                                    <div className="mb-1">
+                                        <strong>Позиция:</strong> {userRoles[note.from_info?.type as keyof typeof userRoles] || note.from_info?.type}
+                                    </div>
+                                    <div className="mb-1">
+                                        <strong>Имя:</strong> {note.from_info?.name}
+                                    </div>
+                                    <div>
+                                        <strong>Причина возврата документа:</strong> {note.note}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             <div className="flex gap-4 pt-4 max-w-6xl">
                 <Button type="button" variant="outline" onClick={() => router.visit('/documents')}>Отменить</Button>
-                <Button type="submit" disabled={processing || data.products.length === 0 || !data.document_type_id}>
-                    {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                    <Save className="h-4 w-4 mr-2" />
-                    Сохранить
-                </Button>
+                
+                {/* Save button - show if can edit */}
+                {canEdit && (
+                    <Button type="submit" disabled={processing || data.products.length === 0 || !data.document_type_id}>
+                        {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                        <Save className="h-4 w-4 mr-2" />
+                        Сохранить
+                    </Button>
+                )}
+                
+                {/* Send to next button - show if draft and can send */}
+                {isEditMode && canSendToNext && (
+                    <Button 
+                        type="button" 
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSendToNext();
+                        }}
+                        disabled={sendingToNext || processing}
+                        className="bg-green-600 hover:bg-green-700"
+                    >
+                        {sendingToNext && <LoaderCircle className="h-4 w-4 animate-spin mr-2" />}
+                        <Send className="h-4 w-4 mr-2" />
+                        Отправить следующему
+                    </Button>
+                )}
             </div>
+            
+            {/* SMS Confirmation Modal */}
+            {isEditMode && data.id && (
+                <SmsConfirmationModal
+                    isOpen={showSmsModal}
+                    onClose={() => setShowSmsModal(false)}
+                    documentId={data.id}
+                    onSuccess={handleSmsSuccess}
+                />
+            )}
         </form>
     );
 }

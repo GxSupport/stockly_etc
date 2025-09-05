@@ -10,6 +10,7 @@ use App\Http\Integrations\IstTelecom\Warehouse;
 use App\Models\DocumentPriority;
 use App\Models\DocumentPriorityConfig;
 use App\Models\DocumentProducts;
+use App\Models\DocumentReturned;
 use App\Models\Documents;
 use App\Models\User;
 use Illuminate\Database\QueryException;
@@ -125,6 +126,7 @@ class DocumentService
 
     public function update(Request $request, int $id)
     {
+
         return $this->save($request, $id);
     }
 
@@ -189,11 +191,11 @@ class DocumentService
         $product = new DocumentProducts;
         $product->document_id = $document_id;
         $product->user_id = $data['user_id'] ?? $this->user->id;
-        $product->title = $data['title'];
-        $product->measure = $data['measure'];
-        $product->quantity = $data['quantity'];
-        $product->amount = $data['amount'];
-        $product->nomenclature = $data['nomenclature'] ?? '';
+        $product->title = $data['selected_product']['name'];
+        $product->measure = $data['selected_product']['measure'];
+        $product->quantity = $data['selected_product']['count'];
+        $product->amount = $data['selected_product']['price'];
+        $product->nomenclature = $data['selected_product']['nomenclature'] ?? '';
         $product->note = $data['note'] ?? '';
         try {
             $product->save();
@@ -321,9 +323,7 @@ class DocumentService
             Log::info('1C Integration Response (Guzzle)', [
                 'status' => $statusCode,
                 'successful' => $statusCode >= 200 && $statusCode < 300,
-                'body_length' => strlen($body),
-                'body_preview' => substr($body, 0, 500),
-                'raw_body' => $body,
+                'body_length' => strlen($body)
             ]);
 
             $send = [];
@@ -333,8 +333,6 @@ class DocumentService
                 $items = json_decode($clean, true);
 
                 Log::info('1C Integration Parsed Data (Guzzle)', [
-                    'cleaned_body' => $clean,
-                    'json_decode_result' => $items,
                     'items_count' => is_array($items) ? count($items) : 'not_array',
                 ]);
 
@@ -507,6 +505,227 @@ class DocumentService
     {
         $this->document->is_returned = 0;
         $this->document->save();
+    }
+
+    public function sendToNext(): bool
+    {
+        try {
+            DB::beginTransaction();
+
+            // Check if document can be sent to next level
+            if ($this->document->is_finished || $this->document->status > 4) {
+                throw new \Exception('Документ уже завершен или достиг максимального статуса');
+            }
+
+            // Update document status
+            $this->document->status = $this->document->status + 1;
+            $this->document->is_draft = 0;
+            $this->document->save();
+
+            // Update priority if exists
+            if ($this->priority) {
+                $this->priority->is_success = true;
+                $this->priority->user_id = $this->user->id;
+                $this->priority->save();
+            }
+
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error sending document to next level: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function getHistory(): array
+    {
+        try {
+            // Get document history from priority records or similar source
+            $history = DocumentPriority::where('document_id', $this->document->id)
+                ->with('user_info')
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'user_info' => [
+                            'id' => $item->user_info->id ?? null,
+                            'name' => $item->user_info->name ?? 'Unknown',
+                            'type' => $item->user_info->type ?? 'unknown',
+                        ],
+                        'is_success' => $item->is_success ?? 1,
+                        'created_at' => $item->created_at->toISOString(),
+                        'return_info' => $item->return_info ?? [],
+                    ];
+                })
+                ->toArray();
+
+            return ['data' => $history];
+        } catch (\Exception $e) {
+            Log::error('Error getting document history: ' . $e->getMessage());
+            return ['data' => []];
+        }
+    }
+
+    public function getStaffList(): array
+    {
+        try {
+            // Get staff list - you may need to adjust this based on your User model structure
+            $director = User::where('type', 'director')->first();
+
+            return [
+                'data' => [
+                    'director' => [
+                        'name' => $director->name ?? 'Не найден',
+                    ]
+                ]
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error getting staff list: ' . $e->getMessage());
+            return ['data' => []];
+        }
+    }
+
+    public function rejectDocument(string $note): bool
+    {
+        DB::beginTransaction();
+        try {
+            $this->checkAddNote();
+            $document_id = $this->document->id;
+            $from_id = $this->user->id;
+            $to_id = $this->getToCharge();
+            $returned_priority = $this->priority->id;
+
+            $this->saveDocumentReturned(
+                $document_id,
+                $from_id,
+                $to_id,
+                $note,
+                $returned_priority
+            );
+
+            $this->document->is_returned = 1;
+            $this->document->status = $this->getReturnedStatus();
+            $this->document->user_id = $to_id;
+            $this->document->save();
+
+            $this->deActiveDocumentPriority();
+
+            // TODO: Send telegram notification to document owner if needed
+            // $owner = $this->getDocumentOwner();
+            // if (isset($owner->chat_id)) {
+            //     $message = $this->returnMessage($note);
+            //     // Send telegram message
+            // }
+
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error rejecting document: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Check if user can reject this document
+     */
+    public function checkAddNote(): void
+    {
+        $message = 'Вы не можете отказаться от этого АКТ!';
+        Log::info("Checking reject permissions", [
+            'priority_user_role' => $this->priority->user_role ?? 'null',
+            'current_user_type' => $this->user->type,
+            'document_user_id' => $this->document->user_id ?? 'null',
+            'current_user_id' => $this->user->id,
+        ]);
+        if ($this->priority->user_role != $this->user->type) {
+            throw new \Exception($message);
+        }
+        if (!is_null($this->document->user_id)) {
+//            if ($this->document->user_id != $this->user->id) {
+//                throw new \Exception($message);
+//            }
+        }
+    }
+
+    /**
+     * Get the user ID to assign document to after rejection
+     */
+    public function getToCharge(): int
+    {
+        $first_priority = (new DocumentPriorityService())->getPriorityByOrdering(
+            $this->document->id,
+            1
+        );
+        return $first_priority->user_id;
+    }
+
+    /**
+     * Get status to set when document is returned
+     */
+    public function getReturnedStatus(): int
+    {
+        return 1;
+    }
+
+    /**
+     * Save document returned record
+     */
+    public function saveDocumentReturned(
+        int $document_id,
+        int $from_id,
+        int $to_id,
+        string $note,
+        int $priority_id
+    ): void {
+        $returned = new DocumentReturned();
+        $returned->document_id = $document_id;
+        $returned->from_id = $from_id;
+        $returned->to_id = $to_id;
+        $returned->note = $note;
+        $returned->priority_id = $priority_id;
+        try {
+            $returned->save();
+        } catch (QueryException $e) {
+            throw new \Exception('Error saving returned document: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Deactivate document priorities after rejection
+     */
+    public function deActiveDocumentPriority(): void
+    {
+        DocumentPriority::where('document_id', $this->document->id)
+            ->where('ordering', '>', $this->priority->ordering)
+            ->delete();
+
+        DocumentPriority::where('document_id', $this->document->id)
+            ->where('ordering', $this->priority->ordering)
+            ->update(['user_id' => $this->user->id]);
+
+        DocumentPriority::where('document_id', $this->document->id)
+            ->update(['is_active' => 0]);
+    }
+
+    /**
+     * Get document owner for notifications
+     */
+    public function getDocumentOwner(): User
+    {
+        return User::where('id', $this->document->user_id)->first();
+    }
+
+    /**
+     * Generate rejection message for notifications
+     */
+    public function returnMessage($note): string
+    {
+        return "*№ документа:* " . $this->document->number . "
+*Тип:* Отказать ❌
+*Причина:* $note";
     }
 
     public function numberFromStringForProduct(string $number): float

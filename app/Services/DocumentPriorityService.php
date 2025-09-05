@@ -55,7 +55,7 @@ class DocumentPriorityService
 
     public function getPriorityByOrdering($document_id, $ordering): ?DocumentPriority
     {
-        return DocumentPriority::where([
+        return DocumentPriority::query()->where([
             'document_id' => $document_id,
             'ordering' => $ordering,
             'is_active' => 1,

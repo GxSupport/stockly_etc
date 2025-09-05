@@ -114,7 +114,6 @@ export default function Documents({ documents, search, status: currentTab }: Doc
 
     const isFrp = auth.user?.type === 'frp';
     const isAdmin = auth.user?.type === 'admin';
-
     const availableTabs = [];
     if (isAdmin || isFrp) {
         availableTabs.push({ value: 'draft', label: 'Черновик' });
@@ -143,7 +142,10 @@ export default function Documents({ documents, search, status: currentTab }: Doc
                     </div>
                 </div>
                 <Tabs value={currentTab} onValueChange={(value) => router.visit('/documents/' + value)} className="w-full">
-                    <TabsList className={`grid w-full grid-cols-${availableTabs.length}`}>
+                    <TabsList className={`grid w-full ${
+                        availableTabs.length === 1 ? 'grid-cols-1' :
+                        availableTabs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
+                    }`}>
                         {availableTabs.map((tab) => (
                             <TabsTrigger key={tab.value} value={tab.value}>{tab.label}</TabsTrigger>
                         ))}
@@ -151,27 +153,42 @@ export default function Documents({ documents, search, status: currentTab }: Doc
                     <TabsContent value={currentTab} className="mt-4">
                         <div className="rounded-md border">
                             <div className="overflow-x-auto">
-                                <table className="w-full">
+                                <table className="w-full min-w-[800px] table-fixed">
+                                    <colgroup>
+                                        <col className="w-[140px]" />
+                                        <col className="w-[200px]" />
+                                        <col className="w-[150px]" />
+                                        <col className="w-[160px]" />
+                                        <col className="w-[150px]" />
+                                    </colgroup>
                                     <thead>
                                         <tr className="border-b bg-muted/50">
-                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Номер</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Тип документа</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Сумма</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Дата заказа</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Статус</th>
+                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-sm">Номер</th>
+                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-sm">Тип документа</th>
+                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-sm">Сумма</th>
+                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-sm">Дата заказа</th>
+                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-sm">Статус</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {documents.data.length > 0 ? (
                                             documents.data.map((document) => (
                                                 <tr key={document.id} className="border-b hover:bg-muted/50 cursor-pointer" onClick={() => handleRowClick(document)}>
-                                                    <td className="h-12 px-4 align-middle"><div className="font-medium font-mono text-sm">{document.number}</div></td>
-                                                    <td className="h-12 px-4 align-middle"><div className="font-medium">{document.document_type.title}</div></td>
-                                                    <td className="h-12 px-4 align-middle"><div className="font-medium">{formatAmount(document.total_amount)}</div></td>
                                                     <td className="h-12 px-4 align-middle">
-                                                        <div className="text-muted-foreground flex items-center gap-2">
-                                                            <Calendar className="h-4 w-4" />
-                                                            {formatDate(document.date_order)}
+                                                        <div className="font-medium font-mono text-sm truncate">{document.number}</div>
+                                                    </td>
+                                                    <td className="h-12 px-4 align-middle">
+                                                        <div className="font-medium text-sm truncate" title={document.document_type.title}>
+                                                            {document.document_type.title}
+                                                        </div>
+                                                    </td>
+                                                    <td className="h-12 px-4 align-middle">
+                                                        <div className="font-medium text-sm">{formatAmount(document.total_amount)}</div>
+                                                    </td>
+                                                    <td className="h-12 px-4 align-middle">
+                                                        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                                                            <Calendar className="h-4 w-4 flex-shrink-0" />
+                                                            <span>{formatDate(document.date_order)}</span>
                                                         </div>
                                                     </td>
                                                     <td className="h-12 px-4 align-middle">

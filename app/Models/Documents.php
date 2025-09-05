@@ -101,6 +101,6 @@ class Documents extends Model
     {
         return $this->hasMany(DocumentPriority::class, 'document_id', 'id')
             ->where('is_active', 1)
-            ->orderBy('ordering', 'ASC');
+            ->orderBy('ordering', 'ASC')->with(['user_info']);
     }
 }

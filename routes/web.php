@@ -58,6 +58,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{id}', [DocumentController::class, 'update'])->name('documents.update');
         Route::get('/{id}', [DocumentController::class, 'show'])->name('documents.show');
         Route::post('/get-composition', [DocumentController::class, 'getComposition'])->name('documents.get-composition');
+        Route::get('/{id}/check-sms', [DocumentController::class, 'checkSmsRequired'])->name('documents.check-sms');
+        Route::post('/send-otp', [DocumentController::class, 'sendOtp'])->name('documents.send-otp');
+        Route::post('/{id}/confirm-code', [DocumentController::class, 'confirmCode'])->name('documents.confirm-code');
+        Route::post('/{id}/reject-code', [DocumentController::class, 'rejectCode'])->name('documents.reject-code');
+        Route::post('/{id}/send-to-next', [DocumentController::class, 'sendToNext'])->name('documents.send-to-next');
     });
 
     Route::prefix('user-guides')->group(function () {

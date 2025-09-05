@@ -15,7 +15,11 @@ interface Document {
     main_tool: string;
     date_order: string;
     total_amount: number;
+    is_draft: boolean;
+    is_returned: boolean;
+    status: number;
     products: DocumentProduct[];
+    notes?: any[];
 }
 
 interface EditDocumentProps {
@@ -37,6 +41,10 @@ export default function EditDocument({ document, documentTypes, products, servic
         number: document.number,
         main_tool: document.main_tool,
         date_order: document.date_order,
+        is_draft: document.is_draft,
+        is_returned: document.is_returned,
+        status: document.status,
+        note: '',
         products: document.products.map((p): ProductItem => ({
             id: p.id,
             product_name: p.title,
@@ -79,6 +87,8 @@ export default function EditDocument({ document, documentTypes, products, servic
                     documentTypes={documentTypes}
                     allProducts={products}
                     services={services}
+                    isEditMode={true}
+                    documentNotes={document.notes || []}
                 />
             </div>
         </AppLayout>
