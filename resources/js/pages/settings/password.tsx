@@ -7,7 +7,6 @@ import { Alert } from '@/components/ui/alert';
 import { useForm, Head } from '@inertiajs/react';
 import { FormEvent } from 'react';
 import { Lock, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
 export default function Password() {
@@ -30,17 +29,12 @@ export default function Password() {
             preserveScroll: true,
             onSuccess: () => {
                 reset();
-                toast({
-                    title: 'Успешно!',
-                    description: 'Пароль изменен',
-                });
+                alert('Пароль успешно изменен');
             },
             onError: () => {
-                toast({
-                    title: 'Ошибка',
-                    description: 'Не удалось изменить пароль',
-                    variant: 'destructive',
-                });
+                setData('current_password', '');
+                setData('password', '');
+                setData('password_confirmation', '');
             },
         });
     };
@@ -189,7 +183,7 @@ export default function Password() {
                         <Button type="submit" disabled={processing}>
                             {processing ? 'Сохранение...' : 'Изменить пароль'}
                         </Button>
-                        
+
                         {recentlySuccessful && (
                             <div className="flex items-center text-sm text-green-600">
                                 <CheckCircle className="h-4 w-4 mr-1" />
