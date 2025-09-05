@@ -42,6 +42,114 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Validation**: Required code/title/type, type selection with searchable dropdown
 - **Files**: `warehouses.tsx`, `warehouses/create.tsx`, `WarehouseController.php`, `WarehouseService.php`
 
+### Welcome Page (welcome.tsx)
+  Lokatsiya: /stockly/resources/js/pages/welcome.tsx
+
+  Xususiyatlar:
+    - Modern hero section with gradient background
+    - Corporate branding with Stockly logo and Warehouse icon
+    - Theme switcher integration (Light/Dark/System) in header
+    - Animated central illustration with warehouse, logistics icons
+    - Features section showcasing key capabilities
+    - Real-time analytics preview cards
+    - Responsive design with mobile-first approach
+    - CTA sections for authentication
+    - Professional footer
+
+  Ishlatilgan komponentlar:
+    - shadcn/ui: Button, Card, Badge, AppearanceToggleDropdown
+    - Lucide icons: Warehouse, Package, Truck, BarChart3, Shield, Users, etc.
+    - Custom CSS animations for fade-in effects
+
+  ⚙️ Settings Layout (settings-layout.tsx)
+
+  Lokatsiya: resources/js/layouts/settings-layout.tsx
+
+  Xususiyatlar:
+    - Unified layout for all settings pages
+    - Sidebar navigation with active state highlighting
+    - Breadcrumb integration with AppLayout
+    - Responsive grid layout (sidebar + main content)
+    - Icon-based navigation (User, Lock, Palette icons)
+
+  👤 Profile Settings (profile.tsx)
+
+  Lokatsiya: /Users/odilbek/PhpstormProjects/stockly/resources/js/pages/settings/profile.tsx
+
+  Xususiyatlar:
+    - Name and Email editing form
+    - Email verification alerts and resend functionality
+    - Account deletion with confirmation dialog
+    - Form validation with real-time error display
+    - Success/error toast notifications
+    - Responsive two-column layout
+
+  🔐 Password Settings (password.tsx)
+
+  Lokatsiya: /Users/odilbek/PhpstormProjects/stockly/resources/js/pages/settings/password.tsx
+
+  Xususiyatlar:
+    - Secure password change form
+    - Password visibility toggles for all fields
+    - Current password verification
+    - Password strength requirements display
+    - Security best practices information
+    - Form validation and error handling
+
+  🎨 Appearance Settings (appearance.tsx)
+
+  Lokatsiya: /Users/odilbek/PhpstormProjects/stockly/resources/js/pages/settings/appearance.tsx
+
+  Xususiyatlar:
+    - Current theme display with status
+    - Theme selector tabs (Light/Dark/System)
+    - Visual theme preview cards
+    - Detailed theme descriptions
+    - Integration with useAppearance hook
+    - Real-time theme switching
+
+  🔗 Routes va integratsiya
+
+  Settings routes (routes/settings.php):
+  Route::get('settings/profile', [ProfileController::class, 'edit']);
+  Route::get('settings/password', [PasswordController::class, 'edit']);
+  Route::get('settings/appearance', function () {
+  return Inertia::render('settings/appearance');
+  });
+
+  🧩 Reusable komponentlar
+
+  Theme management:
+    - useAppearance hook - theme state management
+    - AppearanceToggleDropdown - header theme switcher
+    - AppearanceToggleTab - settings page theme selector
+
+  UI komponentlari:
+    - shadcn/ui komponentlar to'liq integratsiya
+    - Lucide React ikonkalar
+    - Custom validation va toast system
+
+  📱 Design patterns
+
+  Responsive design:
+    - Mobile-first approach
+    - Container-based layouts
+    - Flexible grid systems
+    - Touch-friendly interactions
+
+  User experience:
+    - Consistent navigation patterns
+    - Real-time feedback
+    - Loading states
+    - Error handling
+    - Accessibility considerations
+
+  🎯 Keyingi qadamlar
+
+  Barcha asosiy settings sahifalar tayyor. Loyiha npm run dev yoki composer run dev bilan ishga tushirilishi mumkin. Theme switching, form validation, responsive design va modern UI/UX patterns to'liq implement
+  qilingan.
+
+
 ### Common Features
 - Server-side pagination with smart UI (max 5 visible pages + ellipsis)
 - Real-time search with debouncing
