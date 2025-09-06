@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,7 +19,11 @@ import {
     Building2,
     Archive,
     FileText,
-    HelpCircle
+    HelpCircle,
+    Printer,
+    Share,
+    Bookmark,
+    BookmarkCheck
 } from 'lucide-react';
 
 interface Guide {
@@ -65,6 +69,9 @@ const categoryColors = {
 export default function UserGuideShow({ guide }: UserGuideShowProps) {
     const [readingProgress, setReadingProgress] = useState(0);
     const [feedback, setFeedback] = useState<'helpful' | 'not-helpful' | null>(null);
+    const [isBookmarked, setIsBookmarked] = useState(false);
+    const [currentHeading, setCurrentHeading] = useState<string>('');
+    const contentRef = useRef<HTMLDivElement>(null);
 
     const IconComponent = iconMap[guide.icon as keyof typeof iconMap] || BookOpen;
 
@@ -79,40 +86,69 @@ export default function UserGuideShow({ guide }: UserGuideShowProps) {
         },
     ];
 
-    // Calculate reading progress based on scroll
+    // Calculate reading progress and current heading based on scroll
     useEffect(() => {
         const handleScroll = () => {
             const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
             const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
             const scrolled = (winScroll / height) * 100;
             setReadingProgress(Math.min(100, Math.max(0, scrolled)));
+
+            // Update current heading
+            if (contentRef.current) {
+                const headings = contentRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6');
+                let current = '';
+                
+                headings.forEach((heading) => {
+                    const rect = heading.getBoundingClientRect();
+                    if (rect.top <= 100) {
+                        current = heading.textContent || '';
+                    }
+                });
+                
+                setCurrentHeading(current);
+            }
         };
 
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+    }, [guide.content]);
 
-    // Extract table of contents from HTML content, not raw markdown
+    // Extract table of contents from HTML content
     const generateTableOfContents = (htmlContent: string) => {
         const headings: { level: number; title: string; id: string }[] = [];
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlContent, 'text/html');
-        const headingElements = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        
+        try {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            const headingElements = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
 
-        headingElements.forEach((heading) => {
-            const level = parseInt(heading.tagName.charAt(1));
-            const title = heading.textContent?.trim() || '';
-            const id = heading.id || title.toLowerCase()
-                .replace(/[^\p{L}\p{N}\s-]/gu, '')
-                .replace(/\s+/g, '-')
-                .replace(/-+/g, '-')
-                .replace(/^-+|-+$/g, '');
+            headingElements.forEach((heading) => {
+                const level = parseInt(heading.tagName.charAt(1));
+                const title = heading.textContent?.trim() || '';
+                let id = heading.id;
+                
+                // Generate ID if not present
+                if (!id && title) {
+                    id = title.toLowerCase()
+                        .replace(/[^\p{L}\p{N}\s-]/gu, '')
+                        .replace(/\s+/g, '-')
+                        .replace(/-+/g, '-')
+                        .replace(/^-+|-+$/g, '');
+                }
 
-            // Skip if this is just metadata or frontmatter content
-            if (title && !title.includes('title:') && !title.includes('description:')) {
-                headings.push({ level, title, id });
-            }
-        });
+                // Skip metadata, emojis-only titles, or very short titles
+                if (title && 
+                    !title.includes('title:') && 
+                    !title.includes('description:') && 
+                    title.length > 2 &&
+                    !/^[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\s]*$/u.test(title)) {
+                    headings.push({ level, title, id: id || '' });
+                }
+            });
+        } catch (error) {
+            console.error('Error parsing HTML content for TOC:', error);
+        }
 
         return headings;
     };
@@ -124,6 +160,69 @@ export default function UserGuideShow({ guide }: UserGuideShowProps) {
         // Here you could send feedback to backend
         console.log(`Feedback: ${type} for guide: ${guide.slug}`);
     };
+
+    const handleBookmark = () => {
+        setIsBookmarked(!isBookmarked);
+        // Here you could save bookmark to localStorage or backend
+        const bookmarks = JSON.parse(localStorage.getItem('guide-bookmarks') || '[]');
+        if (isBookmarked) {
+            const filtered = bookmarks.filter((slug: string) => slug !== guide.slug);
+            localStorage.setItem('guide-bookmarks', JSON.stringify(filtered));
+        } else {
+            bookmarks.push(guide.slug);
+            localStorage.setItem('guide-bookmarks', JSON.stringify(bookmarks));
+        }
+    };
+
+    const handlePrint = () => {
+        window.print();
+    };
+
+    const handleShare = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: guide.title,
+                    text: guide.description,
+                    url: window.location.href,
+                });
+            } catch (err) {
+                console.log('Share cancelled');
+            }
+        } else {
+            // Fallback: copy URL to clipboard
+            navigator.clipboard.writeText(window.location.href);
+        }
+    };
+
+    // Initialize bookmark state from localStorage
+    useEffect(() => {
+        const bookmarks = JSON.parse(localStorage.getItem('guide-bookmarks') || '[]');
+        setIsBookmarked(bookmarks.includes(guide.slug));
+    }, [guide.slug]);
+
+    // Initialize interactive elements after HTML content loads
+    useEffect(() => {
+        if (contentRef.current && guide.type === 'html') {
+            // Add copy buttons to code blocks
+            const codeBlocks = contentRef.current.querySelectorAll('.code-block');
+            codeBlocks.forEach((block) => {
+                const copyBtn = block.querySelector('.copy-button') as HTMLElement;
+                if (copyBtn && !copyBtn.hasAttribute('data-initialized')) {
+                    copyBtn.setAttribute('data-initialized', 'true');
+                    copyBtn.addEventListener('click', () => {
+                        const code = block.querySelector('code')?.textContent || '';
+                        navigator.clipboard.writeText(code).then(() => {
+                            copyBtn.textContent = 'Скопировано';
+                            setTimeout(() => {
+                                copyBtn.textContent = 'Копировать';
+                            }, 2000);
+                        });
+                    });
+                }
+            });
+        }
+    }, [guide.content, guide.type]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -153,6 +252,11 @@ export default function UserGuideShow({ guide }: UserGuideShowProps) {
                                             <span className="text-sm font-medium">{Math.round(readingProgress)}%</span>
                                         </div>
                                         <Progress value={readingProgress} className="h-2" />
+                                        {currentHeading && (
+                                            <div className="text-xs text-muted-foreground truncate" title={currentHeading}>
+                                                <span className="font-medium">Сейчас:</span> {currentHeading}
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="grid grid-cols-1 gap-2 text-sm">
@@ -179,6 +283,43 @@ export default function UserGuideShow({ guide }: UserGuideShowProps) {
                                                 {guide.difficulty}
                                             </Badge>
                                         </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="pt-4 border-t border-border space-y-2">
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={handleBookmark}
+                                                className="text-xs"
+                                            >
+                                                {isBookmarked ? (
+                                                    <BookmarkCheck className="h-3 w-3 mr-1" />
+                                                ) : (
+                                                    <Bookmark className="h-3 w-3 mr-1" />
+                                                )}
+                                                {isBookmarked ? 'Сохранено' : 'Сохранить'}
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={handleShare}
+                                                className="text-xs"
+                                            >
+                                                <Share className="h-3 w-3 mr-1" />
+                                                Поделиться
+                                            </Button>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handlePrint}
+                                            className="w-full text-xs"
+                                        >
+                                            <Printer className="h-3 w-3 mr-1" />
+                                            Печать
+                                        </Button>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -258,29 +399,8 @@ export default function UserGuideShow({ guide }: UserGuideShowProps) {
                             <Card>
                                 <CardContent className="p-8">
                                     <div
-                                        className="prose prose-lg prose-gray dark:prose-invert max-w-none
-                                                   prose-headings:scroll-mt-8 prose-headings:font-bold prose-headings:text-foreground
-                                                   prose-h1:text-3xl prose-h1:mb-6 prose-h1:mt-0 prose-h1:border-b prose-h1:pb-4 prose-h1:border-border
-                                                   prose-h2:text-2xl prose-h2:mb-5 prose-h2:mt-10 prose-h2:border-b prose-h2:pb-3 prose-h2:border-border
-                                                   prose-h3:text-xl prose-h3:mb-4 prose-h3:mt-8 prose-h3:text-foreground
-                                                   prose-h4:text-lg prose-h4:mb-3 prose-h4:mt-6 prose-h4:text-foreground
-                                                   prose-h5:text-base prose-h5:mb-2 prose-h5:mt-5 prose-h5:text-foreground
-                                                   prose-h6:text-sm prose-h6:mb-2 prose-h6:mt-4 prose-h6:text-foreground
-                                                   prose-p:mb-4 prose-p:leading-relaxed prose-p:text-foreground prose-p:text-base
-                                                   prose-ul:mb-6 prose-ul:list-disc prose-ul:pl-6 prose-ul:text-foreground
-                                                   prose-ol:mb-6 prose-ol:list-decimal prose-ol:pl-6 prose-ol:text-foreground
-                                                   prose-li:mb-2 prose-li:leading-relaxed prose-li:text-foreground
-                                                   prose-strong:font-semibold prose-strong:text-foreground
-                                                   prose-em:italic prose-em:text-foreground
-                                                   prose-code:bg-muted prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-code:text-foreground
-                                                   prose-pre:bg-muted prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto
-                                                   prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:pl-6 prose-blockquote:italic prose-blockquote:bg-muted/30 prose-blockquote:py-2 prose-blockquote:text-foreground
-                                                   prose-a:text-primary prose-a:font-medium prose-a:no-underline hover:prose-a:underline
-                                                   prose-table:border-collapse prose-table:w-full prose-table:text-foreground
-                                                   prose-th:border prose-th:p-3 prose-th:bg-muted prose-th:font-semibold prose-th:text-foreground
-                                                   prose-td:border prose-td:p-3 prose-td:text-foreground
-                                                   prose-img:rounded-lg prose-img:shadow-md
-                                                   prose-hr:border-t prose-hr:border-border prose-hr:my-8"
+                                        ref={contentRef}
+                                        className="guide-container max-w-none text-foreground"
                                         dangerouslySetInnerHTML={{ __html: guide.content }}
                                     />
                                 </CardContent>

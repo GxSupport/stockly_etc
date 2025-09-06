@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\HtmlGuideParser;
 use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
 use ParsedownExtra;
@@ -9,10 +10,12 @@ use ParsedownExtra;
 class GuideController extends Controller
 {
     private string $guidesPath;
+    private HtmlGuideParser $htmlParser;
 
-    public function __construct()
+    public function __construct(HtmlGuideParser $htmlParser)
     {
-        $this->guidesPath = resource_path('docs/guides');
+        $this->guidesPath = resource_path('guides');
+        $this->htmlParser = $htmlParser;
     }
 
     public function index()
@@ -32,15 +35,19 @@ class GuideController extends Controller
             abort(404, 'Руководство не найдено');
         }
 
-        $parsedown = new ParsedownExtra;
-        $parsedown->setSafeMode(false); // Disable safe mode to allow proper HTML rendering
-        $parsedown->setMarkupEscaped(false); // Don't escape HTML
-        $parsedown->setUrlsLinked(true); // Enable automatic URL linking
-
-        $content = $parsedown->text($guide['content']);
-
-        // Add IDs to headings for table of contents navigation
-        $content = $this->addHeadingIds($content);
+        // For HTML files, content is already in HTML format
+        if ($guide['type'] === 'html') {
+            // Add IDs to headings for table of contents navigation
+            $content = $this->htmlParser->addHeadingIds($guide['content']);
+        } else {
+            // Legacy support for markdown files
+            $parsedown = new ParsedownExtra;
+            $parsedown->setSafeMode(false);
+            $parsedown->setMarkupEscaped(false);
+            $parsedown->setUrlsLinked(true);
+            $content = $parsedown->text($guide['content']);
+            $content = $this->addHeadingIds($content);
+        }
 
         return Inertia::render('user-guides/show', [
             'guide' => array_merge($guide, ['content' => $content]),
@@ -58,7 +65,7 @@ class GuideController extends Controller
         $files = File::files($this->guidesPath);
 
         foreach ($files as $file) {
-            if ($file->getExtension() === 'md') {
+            if (in_array($file->getExtension(), ['md', 'html'])) {
                 $guide = $this->parseGuideFile($file);
                 if ($guide) {
                     $guides[] = $guide;
@@ -76,11 +83,18 @@ class GuideController extends Controller
     {
         $content = File::get($file);
         $fileName = $file->getFilenameWithoutExtension();
+        $extension = $file->getExtension();
 
-        // Extract metadata from content
-        $metadata = $this->extractMetadata($content);
-        // Remove YAML frontmatter from content
-        $cleanContent = $this->stripFrontmatter($content);
+        if ($extension === 'html') {
+            // Use HTML parser service
+            $parsedData = $this->htmlParser->parseFile($file->getPathname());
+            return $parsedData;
+        } else {
+            // Legacy markdown handling
+            $metadata = $this->extractMetadata($content);
+            $cleanContent = $this->stripFrontmatter($content);
+        }
+
         $slug = $this->generateSlug($fileName);
 
         return [
@@ -93,6 +107,7 @@ class GuideController extends Controller
             'estimatedTime' => $metadata['estimatedTime'] ?? '5 мин',
             'lastModified' => date('Y-m-d', $file->getMTime()),
             'content' => $cleanContent,
+            'type' => $extension,
         ];
     }
 
@@ -185,4 +200,5 @@ class GuideController extends Controller
 
         return str_replace(array_keys($replacements), array_values($replacements), $title);
     }
+
 }

@@ -1,0 +1,437 @@
+/* User Guide Interactive Styles */
+
+/* Base guide container with typography */
+.guide-container {
+  @apply max-w-none text-gray-700 dark:text-gray-300 text-lg leading-relaxed;
+}
+
+.guide-container h1,
+.guide-container h2,
+.guide-container h3,
+.guide-container h4,
+.guide-container h5,
+.guide-container h6 {
+  @apply font-bold text-gray-900 dark:text-gray-100 mt-8 mb-4 scroll-mt-8;
+}
+
+.guide-container h1 {
+  @apply text-4xl mt-0 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700;
+}
+
+.guide-container h2 {
+  @apply text-3xl mt-10 mb-5 pb-3 border-b border-gray-200 dark:border-gray-700;
+}
+
+.guide-container h3 {
+  @apply text-2xl mt-8 mb-4;
+}
+
+.guide-container h4 {
+  @apply text-xl mt-6 mb-3;
+}
+
+.guide-container h5 {
+  @apply text-lg mt-5 mb-2;
+}
+
+.guide-container h6 {
+  @apply text-base mt-4 mb-2;
+}
+
+.guide-container p {
+  @apply mb-4 leading-relaxed;
+}
+
+.guide-container ul,
+.guide-container ol {
+  @apply mb-6 pl-6;
+}
+
+.guide-container ul {
+  @apply list-disc;
+}
+
+.guide-container ol {
+  @apply list-decimal;
+}
+
+.guide-container li {
+  @apply mb-2 leading-relaxed;
+}
+
+.guide-container strong {
+  @apply font-semibold text-gray-900 dark:text-gray-100;
+}
+
+.guide-container em {
+  @apply italic;
+}
+
+.guide-container code {
+  @apply bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm font-mono text-gray-900 dark:text-gray-100;
+}
+
+.guide-container pre {
+  @apply bg-gray-900 dark:bg-gray-950 p-4 rounded-lg overflow-x-auto mb-6;
+}
+
+.guide-container pre code {
+  @apply bg-transparent p-0 text-gray-100;
+}
+
+.guide-container blockquote {
+  @apply border-l-4 border-blue-500 pl-6 italic bg-blue-50 dark:bg-blue-900/30 py-2 mb-6 text-blue-900 dark:text-blue-100;
+}
+
+.guide-container a {
+  @apply text-blue-600 dark:text-blue-400 font-medium hover:underline;
+}
+
+.guide-container table {
+  @apply border-collapse w-full mb-6 text-gray-900 dark:text-gray-100;
+}
+
+.guide-container th {
+  @apply border border-gray-300 dark:border-gray-600 p-3 bg-gray-100 dark:bg-gray-800 font-semibold text-left;
+}
+
+.guide-container td {
+  @apply border border-gray-300 dark:border-gray-600 p-3;
+}
+
+.guide-container img {
+  @apply rounded-lg shadow-md mb-6;
+}
+
+.guide-container hr {
+  @apply border-t border-gray-300 dark:border-gray-600 my-8;
+}
+
+/* Step-by-Step Guide Styles */
+.guide-tutorial {
+  @apply space-y-8;
+}
+
+.guide-overview {
+  @apply bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 p-6 rounded-xl border border-blue-200 dark:border-blue-800;
+}
+
+.guide-overview h2 {
+  @apply text-xl font-semibold text-blue-900 dark:text-blue-100 mb-4 flex items-center gap-2;
+}
+
+.learning-objectives {
+  @apply list-none space-y-2 pl-0;
+}
+
+.learning-objectives li {
+  @apply flex items-center gap-3 text-blue-800 dark:text-blue-200;
+}
+
+.learning-objectives li::before {
+  content: "✓";
+  @apply w-5 h-5 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold;
+}
+
+/* Step Container */
+.guide-steps {
+  @apply space-y-8;
+}
+
+.step {
+  @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow;
+}
+
+.step-header {
+  @apply bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 flex items-center gap-4;
+}
+
+.step-number {
+  @apply w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg font-bold;
+}
+
+.step-header h3 {
+  @apply text-xl font-semibold text-white m-0;
+}
+
+.step-content {
+  @apply p-6 space-y-6;
+}
+
+/* Screenshot Container */
+.screenshot-container {
+  @apply relative bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700;
+}
+
+.screenshot-container img {
+  @apply w-full h-auto;
+}
+
+.annotations {
+  @apply absolute inset-0;
+}
+
+.callout {
+  @apply absolute bg-red-500 text-white px-3 py-2 rounded-lg text-sm font-medium shadow-lg z-10;
+  @apply before:content-[''] before:absolute before:top-full before:left-1/2 before:-translate-x-1/2 before:border-4 before:border-transparent before:border-t-red-500;
+}
+
+.callout--blue {
+  @apply bg-blue-500 before:border-t-blue-500;
+}
+
+.callout--green {
+  @apply bg-green-500 before:border-t-green-500;
+}
+
+.callout--yellow {
+  @apply bg-yellow-500 before:border-t-yellow-500;
+}
+
+/* Arrow Annotations */
+.arrow {
+  @apply absolute pointer-events-none;
+}
+
+.arrow::before {
+  content: "";
+  @apply absolute w-0 h-0 border-l-8 border-r-8 border-b-16 border-transparent border-b-red-500;
+}
+
+/* Step Description */
+.step-description {
+  @apply max-w-none text-lg leading-relaxed text-gray-700 dark:text-gray-300;
+}
+
+/* FAQ Styles */
+.guide-faq {
+  @apply space-y-6;
+}
+
+.faq-search {
+  @apply relative mb-6;
+}
+
+.faq-search input {
+  @apply w-full px-4 py-3 pl-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+}
+
+.faq-search::before {
+  content: "🔍";
+  @apply absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400;
+}
+
+.faq-categories {
+  @apply flex flex-wrap gap-2 mb-6;
+}
+
+.category {
+  @apply px-4 py-2 rounded-full text-sm font-medium border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors;
+}
+
+.category.active {
+  @apply bg-blue-500 text-white border-blue-500;
+}
+
+.faq-items {
+  @apply space-y-4;
+}
+
+.faq-item {
+  @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden;
+}
+
+.faq-question {
+  @apply w-full px-6 py-4 text-left bg-transparent border-none flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer;
+}
+
+.faq-question h3 {
+  @apply font-medium text-gray-900 dark:text-gray-100 m-0;
+}
+
+.faq-toggle {
+  @apply text-2xl font-light text-gray-400 transition-transform;
+}
+
+.faq-item.open .faq-toggle {
+  @apply transform rotate-45;
+}
+
+.faq-answer {
+  @apply px-6 pb-6 pt-0 max-h-0 overflow-hidden transition-all duration-300 ease-in-out;
+}
+
+.faq-item.open .faq-answer {
+  @apply max-h-96 pb-6;
+}
+
+.faq-answer p {
+  @apply text-gray-600 dark:text-gray-300 leading-relaxed;
+}
+
+/* Code Block Styles */
+.code-block {
+  @apply relative bg-gray-900 dark:bg-gray-950 rounded-lg overflow-hidden my-6;
+}
+
+.code-header {
+  @apply bg-gray-800 dark:bg-gray-900 px-4 py-2 flex items-center justify-between border-b border-gray-700;
+}
+
+.code-language {
+  @apply text-xs font-medium text-gray-300 uppercase tracking-wide;
+}
+
+.copy-button {
+  @apply px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded transition-colors cursor-pointer;
+}
+
+.code-content {
+  @apply p-4 overflow-x-auto;
+}
+
+.code-content code {
+  @apply text-sm font-mono text-gray-100 whitespace-pre;
+}
+
+/* Highlight Box */
+.highlight-box {
+  @apply bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 my-6 rounded-r-lg;
+}
+
+.highlight-box.info {
+  @apply bg-blue-50 dark:bg-blue-900/20 border-blue-400;
+}
+
+.highlight-box.warning {
+  @apply bg-orange-50 dark:bg-orange-900/20 border-orange-400;
+}
+
+.highlight-box.danger {
+  @apply bg-red-50 dark:bg-red-900/20 border-red-400;
+}
+
+.highlight-box.success {
+  @apply bg-green-50 dark:bg-green-900/20 border-green-400;
+}
+
+/* Interactive Elements */
+.interactive-demo {
+  @apply bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-700 rounded-xl p-6 my-8;
+}
+
+.interactive-demo h3 {
+  @apply text-lg font-semibold text-purple-900 dark:text-purple-100 mb-4;
+}
+
+/* Progress Indicator */
+.progress-indicator {
+  @apply flex items-center justify-center space-x-2 my-8;
+}
+
+.progress-step {
+  @apply w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium;
+}
+
+.progress-step.completed {
+  @apply bg-green-500 text-white;
+}
+
+.progress-step.active {
+  @apply bg-blue-500 text-white;
+}
+
+.progress-step.pending {
+  @apply bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300;
+}
+
+.progress-connector {
+  @apply w-12 h-1 bg-gray-200 dark:bg-gray-700;
+}
+
+.progress-connector.completed {
+  @apply bg-green-500;
+}
+
+/* Tabbed Content */
+.tabbed-content {
+  @apply border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden my-6;
+}
+
+.tab-headers {
+  @apply bg-gray-50 dark:bg-gray-800 flex border-b border-gray-200 dark:border-gray-700;
+}
+
+.tab-header {
+  @apply px-6 py-3 font-medium text-gray-600 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors;
+}
+
+.tab-header.active {
+  @apply bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 border-b-2 border-blue-500;
+}
+
+.tab-content {
+  @apply p-6;
+}
+
+/* Print Styles */
+@media print {
+  .guide-container {
+    @apply text-black;
+  }
+  
+  .step-header {
+    @apply text-black bg-gray-100 border border-gray-300;
+  }
+  
+  .step-number {
+    @apply bg-gray-300 text-black;
+  }
+  
+  .callout {
+    @apply bg-gray-800 text-white;
+  }
+  
+  .faq-answer {
+    @apply max-h-none;
+  }
+  
+  .code-block {
+    @apply bg-gray-100 border border-gray-300;
+  }
+  
+  .code-content code {
+    @apply text-black;
+  }
+}
+
+/* Animation */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

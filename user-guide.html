@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="uz" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stockly - Foydalanuvchi yo'riqnomasi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.css">
+    <style>
+        :root {
+            --color-primary: #2563eb;
+            --color-primary-dark: #1d4ed8;
+            --color-secondary: #f8fafc;
+            --color-accent: #10b981;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+            --color-text: #1f2937;
+            --color-text-light: #6b7280;
+            --color-border: #e5e7eb;
+            --color-background: #ffffff;
+            --color-surface: #f9fafb;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --radius: 0.5rem;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --color-primary: #3b82f6;
+            --color-primary-dark: #2563eb;
+            --color-secondary: #1f2937;
+            --color-accent: #10b981;
+            --color-text: #f9fafb;
+            --color-text-light: #9ca3af;
+            --color-border: #374151;
+            --color-background: #111827;
+            --color-surface: #1f2937;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            line-height: 1.6;
+            transition: var(--transition);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--color-border);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        [data-theme="dark"] .header {
+            background: rgba(17, 24, 39, 0.95);
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 4rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            margin: 0;
+        }
+
+        .nav-link {
+            color: var(--color-text-light);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--color-primary);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1.5rem;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--color-primary);
+            border-radius: 1px;
+        }
+
+        .theme-toggle {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            background: var(--color-border);
+        }
+
+        /* Mobile menu */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            color: var(--color-text);
+        }
+
+        /* Main content */
+        .main {
+            margin-top: 4rem;
+        }
+
+        /* Hero section */
+        .hero {
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ffffff, #e2e8f0);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Section styles */
+        .section {
+            padding: 4rem 0;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 3rem;
+            color: var(--color-text);
+        }
+
+        .section-subtitle {
+            font-size: 1.125rem;
+            color: var(--color-text-light);
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 3rem;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .card-icon {
+            width: 3rem;
+            height: 3rem;
+            background: var(--color-primary);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .card-description {
+            color: var(--color-text-light);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-features {
+            list-style: none;
+        }
+
+        .card-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--color-text-light);
+        }
+
+        .card-features li::before {
+            content: '✓';
+            color: var(--color-accent);
+            font-weight: bold;
+        }
+
+        /* Steps */
+        .steps {
+            position: relative;
+        }
+
+        .step {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            width: 3rem;
+            height: 3rem;
+            background: var(--color-primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-description {
+            color: var(--color-text-light);
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--color-surface);
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-border);
+        }
+
+        /* Quick navigation */
+        .quick-nav {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: none;
+        }
+
+        .quick-nav-list {
+            list-style: none;
+            background: var(--color-background);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 1rem 0;
+        }
+
+        .quick-nav-item {
+            padding: 0.5rem 1rem;
+        }
+
+        .quick-nav-link {
+            color: var(--color-text-light);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .quick-nav-link:hover {
+            color: var(--color-primary);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--color-surface);
+            border-top: 1px solid var(--color-border);
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: var(--color-text-light);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer-link:hover {
+            color: var(--color-primary);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--color-background);
+                border-top: 1px solid var(--color-border);
+                flex-direction: column;
+                padding: 1rem;
+                gap: 1rem;
+            }
+
+            .nav-menu.active {
+                display: flex;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .step {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(2rem);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* Utilities */
+        .text-center { text-align: center; }
+        .mt-4 { margin-top: 1rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .hidden { display: none; }
+
+        /* Progress indicator */
+        .progress-bar {
+            position: fixed;
+            top: 4rem;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: var(--color-primary);
+            z-index: 1000;
+            transition: width 0.2s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav container">
+            <a href="#" class="logo">
+                <i data-lucide="warehouse"></i>
+                Stockly
+            </a>
+            
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#overview" class="nav-link active">Umumiy ma'lumot</a></li>
+                <li><a href="#features" class="nav-link">Imkoniyatlar</a></li>
+                <li><a href="#getting-started" class="nav-link">Boshlash</a></li>
+                <li><a href="#modules" class="nav-link">Modullar</a></li>
+                <li><a href="#faq" class="nav-link">Savol-javob</a></li>
+            </ul>
+
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="theme-toggle" id="themeToggle" aria-label="Mavzuni o'zgartirish">
+                    <i data-lucide="sun" class="theme-icon-light"></i>
+                    <i data-lucide="moon" class="theme-icon-dark hidden"></i>
+                </button>
+                
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menuni ochish">
+                    <i data-lucide="menu"></i>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main">
+        <!-- Hero Section -->
+        <section class="hero" id="overview">
+            <div class="container">
+                <h1 class="hero-title animate-fade-in">Stockly boshqaruv tizimi</h1>
+                <p class="hero-subtitle animate-fade-in">Ombor va logistikani zamonaviy boshqarish platformasi</p>
+                
+                <div class="hero-stats animate-fade-in">
+                    <div class="stat-card">
+                        <div class="stat-number">100%</div>
+                        <div>Avtomatlashtirilgan</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">24/7</div>
+                        <div>Doimiy monitoring</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">99.9%</div>
+                        <div>Ishonchlilik</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="section" id="features">
+            <div class="container">
+                <h2 class="section-title">Asosiy imkoniyatlar</h2>
+                <p class="section-subtitle">Stockly tizimi sizga keng imkoniyatlar taqdim etadi</p>
+                
+                <div class="card-grid">
+                    <div class="card animate-fade-in">
+                        <div class="card-icon">
+                            <i data-lucide="users"></i>
+                        </div>
+                        <h3 class="card-title">Xodimlar boshqaruvi</h3>
+                        <p class="card-description">Xodimlarni ro'yxatga olish, ularning rollarini belgilash va qidirish imkoniyatlari.</p>
+                        <ul class="card-features">
+                            <li>Ism va telefon raqami bo'yicha qidirish</li>
+                            <li>Rol asosida ranglash</li>
+                            <li>Telefon raqamlarini formatlash</li>
+                            <li>Qidiruv oynasi bilan dropdown</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card animate-fade-in">
+                        <div class="card-icon">
+                            <i data-lucide="building"></i>
+                        </div>
+                        <h3 class="card-title">Bo'limlar boshqaruvi</h3>
+                        <p class="card-description">Bo'limlarni yaratish, tahrirlash va noyob kodlar bilan boshqarish.</p>
+                        <ul class="card-features">
+                            <li>Noyob bo'lim kodlari</li>
+                            <li>Kod va nom bo'yicha qidirish</li>
+                            <li>Avtomatik katta harflar</li>
+                            <li>Validatsiya va xatoliklarni ko'rsatish</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card animate-fade-in">
+                        <div class="card-icon">
+                            <i data-lucide="warehouse"></i>
+                        </div>
+                        <h3 class="card-title">Omborlar boshqaruvi</h3>
+                        <p class="card-description">Omborlarni turlash, qidirish va izohlar bilan boshqarish imkoniyatlari.</p>
+                        <ul class="card-features">
+                            <li>Ombor turlariga ajratish</li>
+                            <li>Kod va nom bo'yicha qidirish</li>
+                            <li>Ixtiyoriy izohlar</li>
+                            <li>Tur bo'yicha filtrlash</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Getting Started Section -->
+        <section class="section" id="getting-started" style="background: var(--color-surface);">
+            <div class="container">
+                <h2 class="section-title">Qanday boshlash kerak</h2>
+                <p class="section-subtitle">Tizim bilan ishlashni boshlash uchun quyidagi qadamlarni bajaring</p>
+                
+                <div class="steps">
+                    <div class="step animate-fade-in">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3 class="step-title">Tizimni ishga tushirish</h3>
+                            <p class="step-description">Development muhitni ishga tushirish uchun quyidagi buyruqlardan foydalaning:</p>
+                            <div class="code-block">composer run dev</div>
+                            <p class="step-description">yoki frontend uchun alohida:</p>
+                            <div class="code-block">npm run dev</div>
+                        </div>
+                    </div>
+                    
+                    <div class="step animate-fade-in">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3 class="step-title">Tizimga kirish</h3>
+                            <p class="step-description">Brauzeringizda <strong>localhost:8000</strong> manziliga kiring va login qiling. Agar sizda hisob qaydnomasiz bo'lsa, ro'yxatdan o'ting.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3 class="step-title">Sozlamalar</h3>
+                            <p class="step-description">Profil sozlamalari orqali:</p>
+                            <ul style="list-style: none; padding-left: 0; margin-top: 1rem;">
+                                <li style="margin-bottom: 0.5rem;">• Shaxsiy ma'lumotlarni yangilash</li>
+                                <li style="margin-bottom: 0.5rem;">• Parolni o'zgartirish</li>
+                                <li style="margin-bottom: 0.5rem;">• Mavzu (Light/Dark/System) tanlash</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="step animate-fade-in">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3 class="step-title">Ma'lumotlarni kiritish</h3>
+                            <p class="step-description">Xodimlar, bo'limlar va omborlarni tizimga kiritishni boshlang. Har bir modul uchun "Yaratish" tugmasini bosing.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Modules Section -->
+        <section class="section" id="modules">
+            <div class="container">
+                <h2 class="section-title">Tizim modullari</h2>
+                <p class="section-subtitle">Har bir modul alohida imkoniyatlarga ega</p>
+                
+                <div class="card-grid">
+                    <div class="card animate-fade-in">
+                        <div class="card-icon">
+                            <i data-lucide="user-check"></i>
+                        </div>
+                        <h3 class="card-title">Xodimlar moduli</h3>
+                        <p class="card-description">Xodimlarni boshqarish uchun to'liq funksional:</p>
+                        <ul class="card-features">
+                            <li>Ro'yxat ko'rish va qidirish</li>
+                            <li>Yangi xodim qo'shish</li>
+                            <li>Tahrirlash va o'chirish</li>
+                            <li>Faollik holati o'zgartirish</li>
+                            <li>Telefon raqamini to'g'ri formatlash</li>
+                        </ul>
+                        <div class="mt-4">
+                            <a href="/employees" class="btn btn-primary">
+                                <i data-lucide="arrow-right"></i>
+                                Modulga o'tish
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="card animate-fade-in">
+                        <div class="card-icon">
+                            <i data-lucide="layers"></i>
+                        </div>
+                        <h3 class="card-title">Bo'limlar moduli</h3>
+                        <p class="card-description">Bo'limlarni tashkil qilish va boshqarish:</p>
+                        <ul class="card-features">
+                            <li>Bo'lim kodlari va nomlari</li>
+                            <li>Noyob kod validatsiyasi</li>
+                            <li>Real-time qidirish</li>
+                            <li>Smart pagination</li>
+                            <li>Breadcrumb navigatsiya</li>
+                        </ul>
+                        <div class="mt-4">
+                            <a href="/departments" class="btn btn-primary">
+                                <i data-lucide="arrow-right"></i>
+                                Modulga o'tish
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="card animate-fade-in">
+                        <div class="card-icon">
+                            <i data-lucide="package"></i>
+                        </div>
+                        <h3 class="card-title">Omborlar moduli</h3>
+                        <p class="card-description">Omborlarni samarali boshqarish:</p>
+                        <ul class="card-features">
+                            <li>Ombor turlari bo'yicha tashkillashtirish</li>
+                            <li>Izoh va tavsif qo'shish</li>
+                            <li>Filtrlash va qidirish</li>
+                            <li>Server-side pagination</li>
+                            <li>Optimistic UI updates</li>
+                        </ul>
+                        <div class="mt-4">
+                            <a href="/warehouses" class="btn btn-primary">
+                                <i data-lucide="arrow-right"></i>
+                                Modulga o'tish
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical Details -->
+        <section class="section" style="background: var(--color-surface);">
+            <div class="container">
+                <h2 class="section-title">Texnik ma'lumotlar</h2>
+                <p class="section-subtitle">Tizim zamonaviy texnologiyalar asosida qurilgan</p>
+                
+                <div class="card-grid">
+                    <div class="card animate-fade-in">
+                        <div class="card-icon">
+                            <i data-lucide="server"></i>
+                        </div>
+                        <h3 class="card-title">Backend</h3>
+                        <ul class="card-features">
+                            <li>Laravel 12 + PHP 8.4</li>
+                            <li>SQLite database</li>
+                            <li>Inertia.js v2</li>
+                            <li>Laravel Wayfinder routing</li>
+                            <li>Pest v4 testing framework</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card animate-fade-in">
+                        <div class="card-icon">
+                            <i data-lucide="monitor"></i>
+                        </div>
+                        <h3 class="card-title">Frontend</h3>
+                        <ul class="card-features">
+                            <li>React 19 + TypeScript</li>
+                            <li>Tailwind CSS v4</li>
+                            <li>Radix UI components</li>
+                            <li>Lucide React icons</li>
+                            <li>Vite build system</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card animate-fade-in">
+                        <div class="card-icon">
+                            <i data-lucide="zap"></i>
+                        </div>
+                        <h3 class="card-title">Xususiyatlar</h3>
+                        <ul class="card-features">
+                            <li>Type-safe routing</li>
+                            <li>Real-time search</li>
+                            <li>Smart pagination</li>
+                            <li>Dark/Light theme</li>
+                            <li>Mobile responsive</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="section" id="faq">
+            <div class="container">
+                <h2 class="section-title">Tez-tez so'raladigan savollar</h2>
+                
+                <div style="max-width: 800px; margin: 0 auto;">
+                    <div class="card animate-fade-in" style="margin-bottom: 2rem;">
+                        <h3 class="card-title">Tizimni qanday ishga tushiraman?</h3>
+                        <p class="card-description">
+                            Development muhiti uchun <code>composer run dev</code> buyrug'ini ishlating. 
+                            Bu server, queue, logs va vite'ni bir vaqtda ishga tushiradi.
+                        </p>
+                    </div>
+                    
+                    <div class="card animate-fade-in" style="margin-bottom: 2rem;">
+                        <h3 class="card-title">Testlarni qanday ishlataman?</h3>
+                        <p class="card-description">
+                            Barcha testlar uchun: <code>composer run test</code><br>
+                            Alohida test uchun: <code>php artisan test --filter=testName</code><br>
+                            Pest v4 browser testing ham mavjud.
+                        </p>
+                    </div>
+                    
+                    <div class="card animate-fade-in" style="margin-bottom: 2rem;">
+                        <h3 class="card-title">Kodni qanday formatlaydi?</h3>
+                        <p class="card-description">
+                            PHP uchun: <code>vendor/bin/pint --dirty</code><br>
+                            JavaScript uchun: <code>npm run format</code><br>
+                            Commit qilishdan oldin albatta formatlaing.
+                        </p>
+                    </div>
+                    
+                    <div class="card animate-fade-in">
+                        <h3 class="card-title">Mavzuni (theme) qanday o'zgartiraman?</h3>
+                        <p class="card-description">
+                            Header'dagi mavzu tugmasini bosing yoki Sozlamalar > Appearance sahifasiga o'ting. 
+                            Light, Dark va System variantlari mavjud.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content container">
+            <div class="footer-links">
+                <a href="#overview" class="footer-link">Umumiy ma'lumot</a>
+                <a href="#features" class="footer-link">Imkoniyatlar</a>
+                <a href="#getting-started" class="footer-link">Boshlash</a>
+                <a href="#modules" class="footer-link">Modullar</a>
+                <a href="#faq" class="footer-link">Savol-javob</a>
+            </div>
+            
+            <p style="color: var(--color-text-light); margin-bottom: 1rem;">
+                <i data-lucide="warehouse" style="vertical-align: middle; margin-right: 0.5rem;"></i>
+                Stockly - Zamonaviy ombor boshqaruv tizimi
+            </p>
+            
+            <p style="color: var(--color-text-light); font-size: 0.875rem;">
+                Laravel 12 • React 19 • TypeScript • Tailwind CSS v4
+            </p>
+        </div>
+    </footer>
+
+    <!-- Quick navigation (desktop only) -->
+    <aside class="quick-nav" id="quickNav">
+        <ul class="quick-nav-list">
+            <li class="quick-nav-item">
+                <a href="#overview" class="quick-nav-link">Umumiy</a>
+            </li>
+            <li class="quick-nav-item">
+                <a href="#features" class="quick-nav-link">Imkoniyatlar</a>
+            </li>
+            <li class="quick-nav-item">
+                <a href="#getting-started" class="quick-nav-link">Boshlash</a>
+            </li>
+            <li class="quick-nav-item">
+                <a href="#modules" class="quick-nav-link">Modullar</a>
+            </li>
+            <li class="quick-nav-item">
+                <a href="#faq" class="quick-nav-link">FAQ</a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        const lightIcon = document.querySelector('.theme-icon-light');
+        const darkIcon = document.querySelector('.theme-icon-dark');
+
+        // Load saved theme or default to system
+        const savedTheme = localStorage.getItem('theme') || 'system';
+        applyTheme(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.dataset.theme || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+
+        function applyTheme(theme) {
+            if (theme === 'system') {
+                const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                html.dataset.theme = systemTheme;
+            } else {
+                html.dataset.theme = theme;
+            }
+            
+            // Update icon visibility
+            if (html.dataset.theme === 'dark') {
+                lightIcon.classList.add('hidden');
+                darkIcon.classList.remove('hidden');
+            } else {
+                lightIcon.classList.remove('hidden');
+                darkIcon.classList.add('hidden');
+            }
+        }
+
+        // Mobile menu functionality
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const navMenu = document.getElementById('navMenu');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!navMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                navMenu.classList.remove('active');
+            }
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+                // Close mobile menu if open
+                navMenu.classList.remove('active');
+            });
+        });
+
+        // Active navigation link tracking
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        function updateActiveLink() {
+            let currentSection = '';
+            
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 100 && rect.bottom >= 100) {
+                    currentSection = section.id;
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${currentSection}`) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        // Progress bar functionality
+        const progressBar = document.getElementById('progressBar');
+
+        function updateProgressBar() {
+            const scrollTop = window.pageYOffset;
+            const documentHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = (scrollTop / documentHeight) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // Scroll event listeners
+        window.addEventListener('scroll', () => {
+            updateActiveLink();
+            updateProgressBar();
+            
+            // Show/hide quick navigation based on scroll
+            const quickNav = document.getElementById('quickNav');
+            if (window.innerWidth >= 1024) { // Desktop only
+                if (window.scrollY > 500) {
+                    quickNav.style.display = 'block';
+                } else {
+                    quickNav.style.display = 'none';
+                }
+            }
+        });
+
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements for animation
+        document.querySelectorAll('.animate-fade-in').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(2rem)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateActiveLink();
+            updateProgressBar();
+        });
+
+        // System theme change detection
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (localStorage.getItem('theme') === 'system') {
+                applyTheme('system');
+            }
+        });
+
+        // Copy code blocks on click
+        document.querySelectorAll('.code-block').forEach(block => {
+            block.addEventListener('click', () => {
+                navigator.clipboard.writeText(block.textContent);
+                
+                // Visual feedback
+                const originalBg = block.style.backgroundColor;
+                block.style.backgroundColor = 'var(--color-accent)';
+                block.style.color = 'white';
+                
+                setTimeout(() => {
+                    block.style.backgroundColor = originalBg;
+                    block.style.color = '';
+                }, 200);
+            });
+            
+            // Add hover effect for code blocks
+            block.style.cursor = 'pointer';
+            block.title = 'Nusxalash uchun bosing';
+        });
+    </script>
+</body>
+</html>
