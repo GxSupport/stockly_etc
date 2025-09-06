@@ -6,6 +6,7 @@ use App\Http\Requests\StoreDocumentRequest;
 use App\Models\DocumentType;
 use App\Services\DocumentService;
 use App\Services\ProductService;
+use App\Services\TelegramService;
 use App\Services\WarehouseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +19,8 @@ class DocumentController extends Controller
     public function __construct(
         DocumentService $documentService,
         protected WarehouseService $warehouseService,
-        protected ProductService $productService
+        protected ProductService $productService,
+        protected TelegramService $telegramService
     ) {
         $this->documentService = $documentService;
     }
@@ -265,6 +267,7 @@ class DocumentController extends Controller
 
     public function sendOtp(Request $request)
     {
+        $user=auth()->user();
         $request->validate([
             'document_id' => 'required|integer',
             'type' => 'required|string',
@@ -285,7 +288,11 @@ class DocumentController extends Controller
             // Here you would send the OTP via SMS/Telegram
             // For now, we'll just return success
             Log::info('OTP sent for document: ' . $request->document_id . ', Code: ' . $otp);
-
+            $documentService = new DocumentService($request->document_id);
+            $document = $documentService->document;
+            $this->telegramService->sendMessage($user->chat_id,
+            "Ваш код подтверждения для документа №{$document->number}: {$otp}"
+            );
             return response()->json([
                 'success' => true,
                 'token' => $token,
