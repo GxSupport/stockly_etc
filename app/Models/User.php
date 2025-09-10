@@ -68,7 +68,7 @@ class User extends Authenticatable
         return $this->hasOne(
             UserWarehouse::class,
             'user_id',
-            'id')->select('user_id', 'warehouse_id');
+            'id')->select('user_id', 'warehouse_id')->with('warehouse');
     }
 
     /**

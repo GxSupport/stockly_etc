@@ -3,12 +3,12 @@ import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
+import { type NavItem, type SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, Users, Building2, Warehouse, Archive, FileText, ClipboardList, HelpCircle } from 'lucide-react';
 import AppLogo from './app-logo';
 
-const mainNavItems: NavItem[] = [
+const allNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: dashboard(),
@@ -46,6 +46,12 @@ const mainNavItems: NavItem[] = [
     },
 ];
 
+const managementRoutes = ['/employees', '/departments', '/warehouses', '/warehouse-types', '/document-types'];
+
+function hasManagementAccess(userType: string): boolean {
+    return ['admin', 'director', 'buxgalter'].includes(userType);
+}
+
 const footerNavItems: NavItem[] = [
     {
         title: 'Руководства',
@@ -55,6 +61,15 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { auth } = usePage<SharedData>().props;
+    
+    const filteredNavItems = allNavItems.filter(item => {
+        if (managementRoutes.includes(item.href as string)) {
+            return hasManagementAccess(auth.user.type);
+        }
+        return true;
+    });
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -70,7 +85,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={filteredNavItems} />
             </SidebarContent>
 
             <SidebarFooter>

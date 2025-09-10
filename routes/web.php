@@ -18,34 +18,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
-    Route::prefix('employees')->group(function () {
-        Route::get('/', [EmployeController::class, 'index'])->name('employees.index');
-        Route::get('/create', [EmployeController::class, 'create'])->name('employees.create');
-        Route::post('/create', [EmployeController::class, 'store'])->name('employees.store');
-    });
+    Route::middleware('management')->group(function () {
+        Route::prefix('employees')->group(function () {
+            Route::get('/', [EmployeController::class, 'index'])->name('employees.index');
+            Route::get('/create', [EmployeController::class, 'create'])->name('employees.create');
+            Route::post('/create', [EmployeController::class, 'store'])->name('employees.store');
+            Route::get('/search-warehouses', [EmployeController::class, 'searchWarehouses'])->name('employees.search-warehouses');
+            Route::get('/{employee}', [EmployeController::class, 'show'])->name('employees.show');
+            Route::get('/{employee}/edit', [EmployeController::class, 'edit'])->name('employees.edit');
+            Route::put('/{employee}', [EmployeController::class, 'update'])->name('employees.update');
+            Route::delete('/{employee}', [EmployeController::class, 'destroy'])->name('employees.destroy');
+        });
 
-    Route::prefix('departments')->group(function () {
-        Route::get('/', [DepartmentController::class, 'index'])->name('departments.index');
-        Route::get('/create', [DepartmentController::class, 'create'])->name('departments.create');
-        Route::post('/create', [DepartmentController::class, 'store'])->name('departments.store');
-    });
+        Route::prefix('departments')->group(function () {
+            Route::get('/', [DepartmentController::class, 'index'])->name('departments.index');
+            Route::get('/create', [DepartmentController::class, 'create'])->name('departments.create');
+            Route::post('/create', [DepartmentController::class, 'store'])->name('departments.store');
+        });
 
-    Route::prefix('warehouses')->group(function () {
-        Route::get('/', [WarehouseController::class, 'index'])->name('warehouses.index');
-        Route::get('/create', [WarehouseController::class, 'create'])->name('warehouses.create');
-        Route::post('/create', [WarehouseController::class, 'store'])->name('warehouses.store');
-    });
+        Route::prefix('warehouses')->group(function () {
+            Route::get('/', [WarehouseController::class, 'index'])->name('warehouses.index');
+            Route::get('/create', [WarehouseController::class, 'create'])->name('warehouses.create');
+            Route::post('/create', [WarehouseController::class, 'store'])->name('warehouses.store');
+        });
 
-    Route::prefix('warehouse-types')->group(function () {
-        Route::get('/', [WarehouseTypeController::class, 'index'])->name('warehouse-types.index');
-        Route::get('/create', [WarehouseTypeController::class, 'create'])->name('warehouse-types.create');
-        Route::post('/create', [WarehouseTypeController::class, 'store'])->name('warehouse-types.store');
-    });
+        Route::prefix('warehouse-types')->group(function () {
+            Route::get('/', [WarehouseTypeController::class, 'index'])->name('warehouse-types.index');
+            Route::get('/create', [WarehouseTypeController::class, 'create'])->name('warehouse-types.create');
+            Route::post('/create', [WarehouseTypeController::class, 'store'])->name('warehouse-types.store');
+        });
 
-    Route::prefix('document-types')->group(function () {
-        Route::get('/', [DocumentTypeController::class, 'index'])->name('document-types.index');
-        Route::get('/create', [DocumentTypeController::class, 'create'])->name('document-types.create');
-        Route::post('/create', [DocumentTypeController::class, 'store'])->name('document-types.store');
+        Route::prefix('document-types')->group(function () {
+            Route::get('/', [DocumentTypeController::class, 'index'])->name('document-types.index');
+            Route::get('/create', [DocumentTypeController::class, 'create'])->name('document-types.create');
+            Route::post('/create', [DocumentTypeController::class, 'store'])->name('document-types.store');
+        });
     });
 
     Route::prefix('documents')->group(function () {

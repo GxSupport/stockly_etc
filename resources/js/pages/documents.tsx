@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
 import { type BreadcrumbItem } from '@/types';
-import { Plus, Calendar } from 'lucide-react';
+import { Plus, Calendar, Filter, X } from 'lucide-react';
 
 // Updated Interfaces
 interface RoleInfo {
@@ -45,10 +47,25 @@ interface PaginatedData {
     to: number;
 }
 
+interface DocumentType {
+    id: number;
+    title: string;
+}
+
+interface Filters {
+    search?: string;
+    start_date?: string;
+    end_date?: string;
+    document_type?: string;
+    is_finished?: string;
+    per_page?: number;
+}
+
 interface DocumentsPageProps {
     documents: PaginatedData;
-    search: string | null;
     status: 'draft' | 'sent' | 'return';
+    documentTypes: DocumentType[];
+    filters: Filters;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -84,17 +101,60 @@ const DocumentStatus = ({ document }: { document: Document }) => {
 };
 
 
-export default function Documents({ documents, search, status: currentTab }: DocumentsPageProps) {
-    const { auth } = usePage().props as any;
-    const [searchQuery, setSearchQuery] = useState(search || '');
+export default function Documents({ documents, status: currentTab, documentTypes, filters }: DocumentsPageProps) {
+    const { auth } = usePage().props as unknown as { auth: { user: { type: string } } };
+    const [searchQuery, setSearchQuery] = useState(filters.search || '');
+    const [startDate, setStartDate] = useState(filters.start_date || '');
+    const [endDate, setEndDate] = useState(filters.end_date || '');
+    const [documentType, setDocumentType] = useState(filters.document_type || '');
+    const [documentStatus, setDocumentStatus] = useState(filters.is_finished || '');
+    const [perPage, setPerPage] = useState(filters.per_page || 20);
+    const [showFilters, setShowFilters] = useState(false);
+
+    const applyFilters = () => {
+        const params: Record<string, string | number> = { page: 1 };
+        if (searchQuery) params.search = searchQuery;
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
+        if (documentType) params.document_type = documentType;
+        if (documentStatus) params.is_finished = documentStatus;
+        if (perPage !== 20) params.per_page = perPage;
+
+        router.get(`/documents/${currentTab}`, params, { preserveState: true, replace: true });
+    };
+
+    const clearFilters = () => {
+        setSearchQuery('');
+        setStartDate('');
+        setEndDate('');
+        setDocumentType('');
+        setDocumentStatus('');
+        setPerPage(20);
+        router.get(`/documents/${currentTab}`, { per_page: 20 }, { preserveState: true, replace: true });
+    };
 
     const handleSearch = (value: string) => {
         setSearchQuery(value);
-        router.get(`/documents/${currentTab}`, { search: value, page: 1 }, { preserveState: true, replace: true });
+        const params: Record<string, string | number> = { page: 1, search: value };
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
+        if (documentType) params.document_type = documentType;
+        if (documentStatus) params.is_finished = documentStatus;
+        if (perPage !== 20) params.per_page = perPage;
+
+        router.get(`/documents/${currentTab}`, params, { preserveState: true, replace: true });
     };
 
     const handlePageChange = (newPage: number) => {
-        router.get(`/documents/${currentTab}`, { search: searchQuery || undefined, page: newPage }, { preserveState: true, replace: true });
+        const params: Record<string, string | number> = { page: newPage };
+        if (searchQuery) params.search = searchQuery;
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
+        if (documentType) params.document_type = documentType;
+        if (documentStatus) params.is_finished = documentStatus;
+        if (perPage !== 20) params.per_page = perPage;
+
+        router.get(`/documents/${currentTab}`, params, { preserveState: true, replace: true });
     };
 
     const handleRowClick = (doc: Document) => {
@@ -136,10 +196,118 @@ export default function Documents({ documents, search, status: currentTab }: Doc
                         </Button>
                     )}
                 </div>
-                <div className="flex gap-4">
-                    <div className="flex-1">
-                        <Input placeholder="Поиск по номеру документа..." value={searchQuery} onChange={(e) => handleSearch(e.target.value)} />
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-wrap gap-4">
+                        <div className="flex-1 min-w-[280px]">
+                            <Input placeholder="Поиск по номеру документа..." value={searchQuery} onChange={(e) => handleSearch(e.target.value)} />
+                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="gap-2"
+                        >
+                            <Filter className="h-4 w-4" />
+                            Фильтры
+                        </Button>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">На странице:</span>
+                            <Select
+                                value={perPage.toString()}
+                                onValueChange={(value) => {
+                                    setPerPage(Number(value));
+                                    const params: Record<string, string | number> = { page: 1, per_page: value };
+                                    if (searchQuery) params.search = searchQuery;
+                                    if (startDate) params.start_date = startDate;
+                                    if (endDate) params.end_date = endDate;
+                                    if (documentType) params.document_type = documentType;
+                                    if (documentStatus) params.is_finished = documentStatus;
+                                    router.get(`/documents/${currentTab}`, params, { preserveState: true, replace: true });
+                                }}
+                            >
+                                <SelectTrigger className="w-20">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="20">20</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                    <SelectItem value="100">100</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
+
+                    {showFilters && (
+                        <Card>
+                            <CardContent className="p-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-medium">Фильтры</h3>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowFilters(false)}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div>
+                                        <label className="text-sm font-medium mb-2 block">Дата начала</label>
+                                        <Input
+                                            type="date"
+                                            value={startDate}
+                                            onChange={(e) => setStartDate(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium mb-2 block">Дата окончания</label>
+                                        <Input
+                                            type="date"
+                                            value={endDate}
+                                            onChange={(e) => setEndDate(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium mb-2 block">Тип документа</label>
+                                        <Select value={documentType || undefined} onValueChange={(value) => setDocumentType(value || '')}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Все типы" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {documentTypes.map((type) => (
+                                                    <SelectItem key={type.id} value={type.id.toString()}>
+                                                        {type.title}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium mb-2 block">Статус акта</label>
+                                        <Select value={documentStatus || undefined} onValueChange={(value) => setDocumentStatus(value || '')}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Все статусы" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="0">В обработке</SelectItem>
+                                                <SelectItem value="1">Завершен</SelectItem>
+
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 mt-4">
+                                    <Button onClick={applyFilters} className="gap-2">
+                                        <Filter className="h-4 w-4" />
+                                        Применить
+                                    </Button>
+                                    <Button variant="outline" onClick={clearFilters}>
+                                        Очистить
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
                 <Tabs value={currentTab} onValueChange={(value) => router.visit('/documents/' + value)} className="w-full">
                     <TabsList className={`grid w-full ${
@@ -209,35 +377,29 @@ export default function Documents({ documents, search, status: currentTab }: Doc
                         </div>
                         {documents.last_page > 1 && (
                             <div className="flex items-center justify-between mt-4">
-                                <div className="text-sm text-muted-foreground">Показано {documents.from}-{documents.to} из {documents.total} записей</div>
+                                <div className="text-sm text-muted-foreground">
+                                    Показано {documents.from}-{documents.to} из {documents.total} записей
+                                    <span className="ml-2 text-muted-foreground">
+                                        (Страница {documents.current_page} из {documents.last_page})
+                                    </span>
+                                </div>
                                 <div className="flex items-center gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => handlePageChange(Math.max(documents.current_page - 1, 1))} disabled={documents.current_page === 1}>Предыдущая</Button>
-                                    <div className="flex gap-1">
-                                        {(() => {
-                                            const pages = [];
-                                            const maxVisiblePages = 5;
-                                            const halfVisible = Math.floor(maxVisiblePages / 2);
-                                            let startPage = Math.max(1, documents.current_page - halfVisible);
-                                            let endPage = Math.min(documents.last_page, documents.current_page + halfVisible);
-                                            if (endPage - startPage + 1 < maxVisiblePages) {
-                                                if (startPage === 1) endPage = Math.min(documents.last_page, startPage + maxVisiblePages - 1);
-                                                else startPage = Math.max(1, endPage - maxVisiblePages + 1);
-                                            }
-                                            if (startPage > 1) {
-                                                pages.push(<Button key={1} variant="outline" size="sm" onClick={() => handlePageChange(1)} className="w-8">1</Button>);
-                                                if (startPage > 2) pages.push(<span key="start-ellipsis" className="px-2 text-muted-foreground">...</span>);
-                                            }
-                                            for (let i = startPage; i <= endPage; i++) {
-                                                pages.push(<Button key={i} variant={documents.current_page === i ? "default" : "outline"} size="sm" onClick={() => handlePageChange(i)} className="w-8">{i}</Button>);
-                                            }
-                                            if (endPage < documents.last_page) {
-                                                if (endPage < documents.last_page - 1) pages.push(<span key="end-ellipsis" className="px-2 text-muted-foreground">...</span>);
-                                                pages.push(<Button key={documents.last_page} variant="outline" size="sm" onClick={() => handlePageChange(documents.last_page)} className="w-8">{documents.last_page}</Button>);
-                                            }
-                                            return pages;
-                                        })()}
-                                    </div>
-                                    <Button variant="outline" size="sm" onClick={() => handlePageChange(Math.min(documents.current_page + 1, documents.last_page))} disabled={documents.current_page === documents.last_page}>Следующая</Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handlePageChange(Math.max(documents.current_page - 1, 1))}
+                                        disabled={documents.current_page === 1}
+                                    >
+                                        Предыдущая
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handlePageChange(Math.min(documents.current_page + 1, documents.last_page))}
+                                        disabled={documents.current_page === documents.last_page}
+                                    >
+                                        Следующая
+                                    </Button>
                                 </div>
                             </div>
                         )}

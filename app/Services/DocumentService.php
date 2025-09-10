@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Data\ProductData;
 use App\Data\ProductServiceData;
 use App\Http\Integrations\IstTelecom\Requests\GetGoodsRequest;
-use App\Http\Integrations\IstTelecom\Requests\WarehouseRequest;
 use App\Http\Integrations\IstTelecom\Warehouse;
 use App\Models\DocumentPriority;
 use App\Models\DocumentPriorityConfig;
@@ -13,13 +12,13 @@ use App\Models\DocumentProducts;
 use App\Models\DocumentReturned;
 use App\Models\Documents;
 use App\Models\User;
+use GuzzleHttp\Client;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use GuzzleHttp\Client;
 
 class DocumentService
 {
@@ -62,21 +61,33 @@ class DocumentService
 
     public function list(Request $request, $status)
     {
+        // Get filters and pagination parameters
+        $search = $request->input('search');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $documentType = $request->input('document_type');
+        $documentStatus = $request->input('is_finished');
+        $perPage = $request->input('per_page', 20);
+
         // For draft and return, the logic is simple and correct.
         if ($status === 'draft') {
-            return Documents::with(['user_info', 'document_type', 'products'])
+            $query = Documents::with(['user_info', 'document_type', 'products'])
                 ->where('is_draft', 1)
-                ->where('user_id', $this->user->id)
-                ->latest()
-                ->paginate(10);
+                ->where('user_id', $this->user->id);
+
+            $this->applyFilters($query, $search, $startDate, $endDate, $documentType, $documentStatus);
+
+            return $query->latest()->paginate($perPage);
         }
 
         if ($status === 'return') {
-            return Documents::with(['user_info', 'document_type', 'products'])
+            $query = Documents::with(['user_info', 'document_type', 'products'])
                 ->where('is_returned', 1)
-                ->where('user_id', $this->user->id)
-                ->latest()
-                ->paginate(10);
+                ->where('user_id', $this->user->id);
+
+            $this->applyFilters($query, $search, $startDate, $endDate, $documentType, $documentStatus);
+
+            return $query->latest()->paginate($perPage);
         }
 
         // For 'sent', we implement the detailed logic from the old service.
@@ -92,62 +103,100 @@ class DocumentService
 
             $priorityWhere = [
                 ['user_role', $this->user->type],
-                ['is_active', 1]
+                ['is_active', 1],
             ];
 
-            // Get the document IDs from the DocumentPriority table
-            $documentIds = DocumentPriority::where($priorityWhere)
+            // Get the document IDs from the DocumentPriority table with filters
+            $documentIdsQuery = DocumentPriority::where($priorityWhere)
                 ->where(function ($query) {
                     $query->whereNull('user_id')
-                          ->orWhere('user_id', $this->user->id);
+                        ->orWhere('user_id', $this->user->id);
                 })
-                ->whereHas('document', function ($query) use ($min_status) {
+                ->whereHas('document', function ($query) use ($min_status, $search, $startDate, $endDate, $documentType, $documentStatus) {
                     $query->where('is_draft', 0)
-                          ->where('is_returned', 0) // Also ensure it's not a returned doc
-                          ->where('status', '>=', $min_status);
-                })
-                ->pluck('document_id');
+                        ->where('is_returned', 0)
+                        ->where('status', '>=', $min_status);
+
+                    // Apply filters to document relation
+                    if ($search) {
+                        $query->where('number', 'like', "%{$search}%");
+                    }
+
+                    if ($startDate) {
+                        $query->where('date_order', '>=', $startDate);
+                    }
+
+                    if ($endDate) {
+                        $query->where('date_order', '<=', $endDate);
+                    }
+
+                    if ($documentType) {
+                        $query->where('document_type_id', $documentType);
+                    }
+
+                    if ($documentStatus) {
+                        if ($documentStatus === 'draft') {
+                            $query->where('is_draft', 1);
+                        } elseif ($documentStatus === 'returned') {
+                            $query->where('is_returned', 1);
+                        } elseif ($documentStatus === 'finished') {
+                            $query->where('is_finished', 1);
+                        } elseif ($documentStatus === 'processing') {
+                            $query->where('is_draft', 0)
+                                ->where('is_returned', 0)
+                                ->where('is_finished', 0);
+                        }
+                    }
+                });
+
+            $documentIds = $documentIdsQuery->pluck('document_id');
 
             // Now, fetch the documents with those IDs
             return Documents::with(['user_info', 'document_type', 'products', 'priority.role_info'])
                 ->whereIn('id', $documentIds)
                 ->latest()
-                ->paginate(10);
+                ->paginate($perPage);
         }
 
         // Fallback for any other status, though the route is constrained.
-        return Documents::query()->where('id', -1)->paginate(10);
+        return Documents::query()->where('id', -1)->paginate($perPage);
     }
 
-    public function create(Request $request)
+    private function applyFilters($query, $search, $startDate, $endDate, $documentType, $documentStatus): void
     {
-        return $this->save($request);
+        if ($search) {
+            $query->where('number', 'like', "%{$search}%");
+        }
+
+        if ($startDate) {
+            $query->whereDate('date_order', '>=', $startDate);
+        }
+
+        if ($endDate) {
+            $query->whereDate('date_order', '<=', $endDate);
+        }
+
+        if ($documentType) {
+            $query->where('document_type_id', $documentType);
+        }
+
+        if ($documentStatus) {
+            $query->where('is_finished', $documentStatus);
+        }
     }
 
-    public function update(Request $request, int $id)
+    public function create(Request $request): JsonResponse
     {
-
-        return $this->save($request, $id);
-    }
-
-    private function save(Request $request, ?int $id = null): JsonResponse
-    {
-        $status = 200;
         DB::beginTransaction();
         try {
-            if (is_null($id)) {
-                $document = new Documents;
-                $status = 201;
-            } else {
-                $document = Documents::find($id);
-                if ($document->status != 1) {
-                    throw new \Exception('АКТ изменить невозможно!');
-                }
-                $this->removeProduct($id);
-            }
+            $document = new Documents;
             $document->type = $request->input('type');
+            // Проверяем что тип документа указан
+            if (is_null($document->type)) {
+                throw new \Exception('Тип документа обязателен для заполнения');
+            }
             $document->user_id = $this->user->id;
-            $document->date_order = $request->input('date_order', date('Y-m-d'));
+            $document->date_order = date('Y-m-d');
             $document->number = $request->input('number');
             $document->main_tool = $request->input('main_tool');
             $document->subscriber_title = $request->input('subscriber_title');
@@ -156,6 +205,7 @@ class DocumentService
             $document->is_draft = 1;
             $document->status = 1;
             $document->save();
+
             $total_amount = 0;
             foreach ($request->input('products', []) as $product) {
                 $this->addProduct($product, $document->id);
@@ -164,20 +214,117 @@ class DocumentService
             $document->total_amount = $total_amount;
             $document->save();
             $this->document = $document;
-            $this->checkStartPriorityConfig();
-            $this->checkStartPriority();
-            if (! is_null($id)) {
-                $this->removePriority();
+
+            // Проверяем приоритеты только для обычных документов (не возвращенных)
+            if (! $document->is_returned) {
+                $this->checkStartPriorityConfig();
+                $this->checkStartPriority();
             }
+
             $this->createPriority();
             DB::commit();
 
-            return response()->json(['success' => true, 'data' => ['id' => $document->id]], $status);
+            return response()->json(['success' => true, 'data' => ['id' => $document->id]], 201);
         } catch (QueryException $e) {
-
             DB::rollback();
+            Log::error('DocumentService::create QueryException: '.$e->getMessage(), [
+                'user_id' => $this->user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
 
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 503);
+            return response()->json(['success' => false, 'message' => 'Ошибка базы данных: '.$e->getMessage()], 503);
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('DocumentService::create Exception: '.$e->getMessage(), [
+                'user_id' => $this->user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function update(Request $request, int $id): JsonResponse
+    {
+        // Birinchi tekshiruvlar - transaction dan tashqarida
+        $document = Documents::find($id);
+        if (! $document) {
+            throw new \Exception('АКТ не найден!');
+        }
+
+        // Проверяем статус документа как в старом проекте
+        if ($document->status != 1) {
+            throw new \Exception('АКТ изменить невозможно!');
+        }
+
+        // Дополнительная проверка на завершенность документа
+        if ($document->is_finished) {
+            throw new \Exception('Завершенный документ нельзя изменить!');
+        }
+
+        $this->document = $document;
+
+        DB::beginTransaction();
+        try {
+            $this->removeProduct($id);
+
+            $document->type = $request->input('document_type_id');
+            // Проверяем что тип документа указан
+            if (is_null($document->type)) {
+                throw new \Exception('Тип документа обязателен для заполнения');
+            }
+            $document->user_id = $this->user->id;
+            // Для существующих документов дата не изменяется
+            $document->number = $request->input('number');
+            $document->main_tool = $request->input('main_tool');
+            $document->subscriber_title = $request->input('subscriber_title');
+            $document->address = $request->input('address');
+            $document->in_charge = $request->input('in_charge');
+            $document->is_draft = 1;
+            $document->status = 1;
+            $document->save();
+
+            $total_amount = 0;
+            foreach ($request->input('products', []) as $product) {
+                $this->addProduct($product, $document->id);
+                $total_amount += $product['amount'] * $product['quantity'];
+            }
+            $document->total_amount = $total_amount;
+            $document->save();
+            $this->document = $document;
+
+            // Проверяем приоритеты только для обычных документов (не возвращенных)
+            if (! $document->is_returned) {
+                $this->checkStartPriorityConfig();
+                $this->checkStartPriority();
+            }
+
+            $this->removePriority();
+            $this->createPriority();
+            DB::commit();
+
+            return response()->json(['success' => true, 'data' => ['id' => $document->id]], 200);
+        } catch (QueryException $e) {
+            DB::rollback();
+            Log::error('DocumentService::update QueryException: '.$e->getMessage(), [
+                'id' => $id,
+                'user_id' => $this->user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json(['success' => false, 'message' => 'Ошибка базы данных: '.$e->getMessage()], 503);
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('DocumentService::update Exception: '.$e->getMessage(), [
+                'id' => $id,
+                'user_id' => $this->user->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
         }
     }
 
@@ -207,7 +354,7 @@ class DocumentService
     private function removeProduct($document_id): void
     {
         try {
-            DocumentProducts::where('document_id', $document_id)
+            DocumentProducts::query()->where('document_id', $document_id)
                 ->delete();
         } catch (QueryException $e) {
             throw new \Exception($e->getMessage());
@@ -216,6 +363,7 @@ class DocumentService
 
     public function checkStartPriorityConfig(): void
     {
+
         $item = (new DocumentPriorityService)
             ->checkConfigByOrderingRole(1, $this->user->type, $this->document->type);
         if (is_null($item)) {
@@ -233,6 +381,15 @@ class DocumentService
 
     public function createPriority()
     {
+        // Убеждаемся что document и type установлены
+        if (! $this->document || is_null($this->document->type)) {
+            Log::error('DocumentService::createPriority - document or type is null', [
+                'document' => $this->document ? $this->document->id : 'null',
+                'type' => $this->document ? $this->document->type : 'null',
+            ]);
+            throw new \Exception('Документ или тип документа не установлен');
+        }
+
         (new DocumentPriorityService)->createPriority($this->document->id, $this->document->type);
     }
 
@@ -296,7 +453,7 @@ class DocumentService
             'date' => $date,
         ];
 
-        $fullUrl = $baseUrl . $endpoint . '?' . http_build_query($queryParams);
+        $fullUrl = $baseUrl.$endpoint.'?'.http_build_query($queryParams);
 
         Log::info('1C Integration Request (Guzzle)', [
             'base_url' => $baseUrl,
@@ -323,7 +480,7 @@ class DocumentService
             Log::info('1C Integration Response (Guzzle)', [
                 'status' => $statusCode,
                 'successful' => $statusCode >= 200 && $statusCode < 300,
-                'body_length' => strlen($body)
+                'body_length' => strlen($body),
             ]);
 
             $send = [];
@@ -356,7 +513,7 @@ class DocumentService
                     'body' => $body,
                     'url' => $fullUrl,
                 ]);
-                throw new \ErrorException('Ошибка подключения к серверу,ошибка: ' . $statusCode);
+                throw new \ErrorException('Ошибка подключения к серверу,ошибка: '.$statusCode);
             }
 
             Log::info('1C Integration Final Result (Guzzle)', ['products_count' => count($send)]);
@@ -368,7 +525,7 @@ class DocumentService
                 'message' => $e->getMessage(),
                 'url' => $fullUrl,
             ]);
-            throw new \ErrorException('Ошибка подключения к серверу: ' . $e->getMessage());
+            throw new \ErrorException('Ошибка подключения к серверу: '.$e->getMessage());
         }
     }
 
@@ -530,10 +687,11 @@ class DocumentService
             }
 
             DB::commit();
+
             return true;
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error sending document to next level: ' . $e->getMessage());
+            Log::error('Error sending document to next level: '.$e->getMessage());
             throw $e;
         }
     }
@@ -563,7 +721,8 @@ class DocumentService
 
             return ['data' => $history];
         } catch (\Exception $e) {
-            Log::error('Error getting document history: ' . $e->getMessage());
+            Log::error('Error getting document history: '.$e->getMessage());
+
             return ['data' => []];
         }
     }
@@ -578,11 +737,12 @@ class DocumentService
                 'data' => [
                     'director' => [
                         'name' => $director->name ?? 'Не найден',
-                    ]
-                ]
+                    ],
+                ],
             ];
         } catch (\Exception $e) {
-            Log::error('Error getting staff list: ' . $e->getMessage());
+            Log::error('Error getting staff list: '.$e->getMessage());
+
             return ['data' => []];
         }
     }
@@ -620,10 +780,11 @@ class DocumentService
             // }
 
             DB::commit();
+
             return true;
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Error rejecting document: ' . $e->getMessage());
+            Log::error('Error rejecting document: '.$e->getMessage());
             throw $e;
         }
     }
@@ -634,7 +795,7 @@ class DocumentService
     public function checkAddNote(): void
     {
         $message = 'Вы не можете отказаться от этого АКТ!';
-        Log::info("Checking reject permissions", [
+        Log::info('Checking reject permissions', [
             'priority_user_role' => $this->priority->user_role ?? 'null',
             'current_user_type' => $this->user->type,
             'document_user_id' => $this->document->user_id ?? 'null',
@@ -643,10 +804,10 @@ class DocumentService
         if ($this->priority->user_role != $this->user->type) {
             throw new \Exception($message);
         }
-        if (!is_null($this->document->user_id)) {
-//            if ($this->document->user_id != $this->user->id) {
-//                throw new \Exception($message);
-//            }
+        if (! is_null($this->document->user_id)) {
+            //            if ($this->document->user_id != $this->user->id) {
+            //                throw new \Exception($message);
+            //            }
         }
     }
 
@@ -655,10 +816,11 @@ class DocumentService
      */
     public function getToCharge(): int
     {
-        $first_priority = (new DocumentPriorityService())->getPriorityByOrdering(
+        $first_priority = (new DocumentPriorityService)->getPriorityByOrdering(
             $this->document->id,
             1
         );
+
         return $first_priority->user_id;
     }
 
@@ -680,7 +842,7 @@ class DocumentService
         string $note,
         int $priority_id
     ): void {
-        $returned = new DocumentReturned();
+        $returned = new DocumentReturned;
         $returned->document_id = $document_id;
         $returned->from_id = $from_id;
         $returned->to_id = $to_id;
@@ -689,7 +851,7 @@ class DocumentService
         try {
             $returned->save();
         } catch (QueryException $e) {
-            throw new \Exception('Error saving returned document: ' . $e->getMessage());
+            throw new \Exception('Error saving returned document: '.$e->getMessage());
         }
     }
 
@@ -723,7 +885,7 @@ class DocumentService
      */
     public function returnMessage($note): string
     {
-        return "*№ документа:* " . $this->document->number . "
+        return '*№ документа:* '.$this->document->number."
 *Тип:* Отказать ❌
 *Причина:* $note";
     }

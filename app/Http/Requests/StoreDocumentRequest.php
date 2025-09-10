@@ -25,7 +25,7 @@ class StoreDocumentRequest extends FormRequest
             'is_finished' => 'boolean',
             'note' => 'nullable|string|max:1000',
             'products' => 'required|array|min:1',
-            'products.*.id' => 'nullable|string',
+            'products.*.id' => 'nullable',
             'products.*.selected_product' => 'nullable|array',
             'products.*.product_name' => 'required|string|max:500',
             'products.*.measure' => 'required|string|max:50',

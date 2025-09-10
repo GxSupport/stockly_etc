@@ -18,9 +18,9 @@ class DocumentPriorityService
         return DocumentPriorityConfig::where('type_id', $type)->get();
     }
 
-    public function checkConfigByOrderingRole($ordering, $role, $type)
+    public function checkConfigByOrderingRole($ordering, $role, $type): ?DocumentPriorityConfig
     {
-        return DocumentPriorityConfig::where([
+        return DocumentPriorityConfig::query()->where([
             ['ordering', $ordering],
             ['user_role', $role],
             ['type_id', $type],
@@ -34,9 +34,14 @@ class DocumentPriorityService
 
     public function createPriority($document_id, $type): void
     {
+        // Проверяем что type не null
+        if (is_null($type)) {
+            throw new \Exception('Тип документа не указан для создания приоритета');
+        }
+
         $items = $this->getFromConfig($type);
         if ($items->isEmpty()) {
-            throw new \Exception('Не найдено приоритета');
+            throw new \Exception('Не найдено приоритета для типа документа: '.$type);
         }
         foreach ($items as $item) {
             $data['document_id'] = $document_id;

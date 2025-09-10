@@ -1,7 +1,10 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
+## Paths
+- PhpstormProjects/stockly - main project with backend and frontend code
+ - PhpstormProjects/document-turnover - old backend project read-only
+ - PhpstormProjects/document-turnover-front - old frontend project read-only
 ## Development Commands
 
 ### Frontend Development

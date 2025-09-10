@@ -4,8 +4,9 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { type BreadcrumbItem } from '@/types';
-import { Plus } from 'lucide-react';
+import { Plus, MoreHorizontal, Edit, Trash2, UserCheck, UserX } from 'lucide-react';
 
 interface Role {
     id: number;
@@ -72,6 +73,20 @@ export default function Employees({ employees, total, page, perPage, search }: E
                 emp.id === id ? { ...emp, is_active: true } : emp
             )
         );
+    };
+
+    const handleEdit = (id: number) => {
+        router.visit(`/employees/${id}/edit`);
+    };
+
+    const handleDelete = (id: number) => {
+        if (confirm('Вы уверены, что хотите удалить этого сотрудника?')) {
+            router.delete(`/employees/${id}`, {
+                onSuccess: () => {
+                    setLocalEmployees(prev => prev.filter(emp => emp.id !== id));
+                }
+            });
+        }
     };
 
     const formatPhone = (phone: string | null) => {
@@ -164,23 +179,37 @@ export default function Employees({ employees, total, page, perPage, search }: E
                                                 </Badge>
                                             </td>
                                             <td className="h-12 px-4 align-middle">
-                                                {employee.is_active ? (
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        onClick={() => handleDeactivate(employee.id)}
-                                                    >
-                                                        Деактивировать
-                                                    </Button>
-                                                ) : (
-                                                    <Button
-                                                        variant="default"
-                                                        size="sm"
-                                                        onClick={() => handleActivate(employee.id)}
-                                                    >
-                                                        Активировать
-                                                    </Button>
-                                                )}
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => handleEdit(employee.id)}>
+                                                            <Edit className="mr-2 h-4 w-4" />
+                                                            Изменить
+                                                        </DropdownMenuItem>
+                                                        {employee.is_active ? (
+                                                            <DropdownMenuItem onClick={() => handleDeactivate(employee.id)}>
+                                                                <UserX className="mr-2 h-4 w-4" />
+                                                                Деактивировать
+                                                            </DropdownMenuItem>
+                                                        ) : (
+                                                            <DropdownMenuItem onClick={() => handleActivate(employee.id)}>
+                                                                <UserCheck className="mr-2 h-4 w-4" />
+                                                                Активировать
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        <DropdownMenuItem 
+                                                            onClick={() => handleDelete(employee.id)}
+                                                            className="text-destructive"
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            Удалить
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </td>
                                         </tr>
                                     ))

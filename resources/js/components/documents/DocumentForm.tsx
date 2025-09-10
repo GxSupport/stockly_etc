@@ -50,16 +50,16 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
     const [showSmsModal, setShowSmsModal] = useState(false);
     const [sendingToNext, setSendingToNext] = useState(false);
     const today = new Date(data.date_order).toLocaleDateString('ru-RU');
-    
+
     // Document status logic
     const canEdit = !isEditMode || data.is_draft || data.is_returned;
     const canSendToNext = data.is_draft && !processing && data.products.length > 0;
     const isReturned = data.is_returned;
-    
+
     // User role types for display
     const userRoles = {
         'frp': 'МОЛ',
-        'header_frp': 'Руководители МОЛ', 
+        'header_frp': 'Руководители МОЛ',
         'director': 'Технический директор',
         'buxgalter': 'Бухгалтерия',
         'admin': 'Администратор',
@@ -148,12 +148,12 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
 
     const handleSendToNext = async () => {
         if (!data.id) return;
-        
+
         setSendingToNext(true);
         try {
             // Check if SMS confirmation is required
             const smsCheck = await axios.get(`/documents/${data.id}/check-sms`);
-            
+
             if (smsCheck.data.sms_required) {
                 setShowSmsModal(true);
             } else {
@@ -169,7 +169,7 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
 
     const sendToNextLevel = async () => {
         if (!data.id) return;
-        
+
         try {
             const response = await axios.post(`/documents/${data.id}/send-to-next`);
             if (response.data.success) {
@@ -206,7 +206,8 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
             }
             onSubmit(e);
         }} className="flex flex-col gap-6">
-            <Card className="max-w-4xl">
+            <Card className="max-w-full">
+                {errors.general && <div className="text-red-600 p-4">{errors.general}</div>}
                 <CardHeader><CardTitle>Основная информация</CardTitle></CardHeader>
                 <CardContent>
                     <div className="grid gap-6 md:grid-cols-2">
@@ -400,7 +401,7 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
 
             <div className="flex gap-4 pt-4 max-w-6xl">
                 <Button type="button" variant="outline" onClick={() => router.visit('/documents')}>Отменить</Button>
-                
+
                 {/* Save button - show if can edit */}
                 {canEdit && (
                     <Button type="submit" disabled={processing || data.products.length === 0 || !data.document_type_id}>
@@ -409,11 +410,11 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
                         Сохранить
                     </Button>
                 )}
-                
+
                 {/* Send to next button - show if draft and can send */}
                 {isEditMode && canSendToNext && (
-                    <Button 
-                        type="button" 
+                    <Button
+                        type="button"
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -428,7 +429,7 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
                     </Button>
                 )}
             </div>
-            
+
             {/* SMS Confirmation Modal */}
             {isEditMode && data.id && (
                 <SmsConfirmationModal

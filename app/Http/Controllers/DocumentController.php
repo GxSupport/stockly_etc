@@ -28,13 +28,24 @@ class DocumentController extends Controller
     public function index(Request $request, $status = 'draft')
     {
         $user = auth()->user();
-        if($user->type!='frp'){
-            $status='sent';
+        if ($user->type != 'frp') {
+            $status = 'sent';
         }
         $documents = $this->documentService->list($request, $status);
+        $documentTypes = DocumentType::all(['id', 'title']);
+
         return Inertia::render('documents', [
             'documents' => $documents,
             'status' => $status,
+            'documentTypes' => $documentTypes,
+            'filters' => [
+                'search' => $request->input('search'),
+                'start_date' => $request->input('start_date'),
+                'end_date' => $request->input('end_date'),
+                'document_type' => $request->input('document_type'),
+                'is_finished' => $request->input('is_finished'),
+                'per_page' => $request->input('per_page', 20),
+            ],
         ]);
     }
 
@@ -100,8 +111,8 @@ class DocumentController extends Controller
     {
 
         try {
-            $request['is_draft'] = !$request->has('is_draft') || $request->is_draft;
-            $request['type']= $request->document_type_id;
+            $request['is_draft'] = ! $request->has('is_draft') || $request->is_draft;
+            $request['type'] = $request->document_type_id;
             $response = $this->documentService->create($request);
             if ($response->getStatusCode() === 201) {
                 return redirect()->route('documents.index')
@@ -130,7 +141,7 @@ class DocumentController extends Controller
                     $history = $historyResponse['data'];
                 }
             } catch (\Exception $e) {
-                Log::error('Error getting document history: ' . $e->getMessage());
+                Log::error('Error getting document history: '.$e->getMessage());
             }
 
             // Get staff list for director info
@@ -141,10 +152,11 @@ class DocumentController extends Controller
                     $staff = $staffResponse['data'];
                 }
             } catch (\Exception $e) {
-                Log::error('Error getting staff list: ' . $e->getMessage());
+                Log::error('Error getting staff list: '.$e->getMessage());
             }
+
             return Inertia::render('documents/show', [
-                'document' => $document->load(['products', 'document_type', 'user_info', 'notes','priority']),
+                'document' => $document->load(['products', 'document_type', 'user_info', 'notes', 'priority']),
                 'history' => $history,
                 'staff' => $staff,
                 'user' => auth()->user(),
@@ -162,7 +174,7 @@ class DocumentController extends Controller
             $document = $documentService->document;
 
             // Only allow editing of draft documents
-            if ($document->is_finished || $document->status != 1) {
+            if ($document->is_finished) {
                 return redirect()->route('documents.show', $id)
                     ->with('error', 'Можно редактировать только черновики документов.');
             }
@@ -213,14 +225,16 @@ class DocumentController extends Controller
             $response = $this->documentService->update($request, $id);
 
             if ($response->getStatusCode() === 200) {
-                return redirect()->route('documents.show', $id)
+                return redirect()->route('documents.index')
                     ->with('success', 'Документ успешно обновлен');
             }
 
             return back()->with('error', 'Ошибка при обновлении документа');
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage())
-                ->withInput();
+            Log::error('Error updating document: '.$e->getMessage());
+            session('errors', collect([$e->getMessage()]));
+
+            return back()->with('error', $e->getMessage());
         }
     }
 
@@ -267,7 +281,7 @@ class DocumentController extends Controller
 
     public function sendOtp(Request $request)
     {
-        $user=auth()->user();
+        $user = auth()->user();
         $request->validate([
             'document_id' => 'required|integer',
             'type' => 'required|string',
@@ -282,17 +296,18 @@ class DocumentController extends Controller
             session([
                 'otp_token' => $token,
                 'otp_code' => $otp,
-                'document_id' => (int)$request->document_id,
+                'document_id' => (int) $request->document_id,
             ]);
 
             // Here you would send the OTP via SMS/Telegram
             // For now, we'll just return success
-            Log::info('OTP sent for document: ' . $request->document_id . ', Code: ' . $otp);
+            Log::info('OTP sent for document: '.$request->document_id.', Code: '.$otp);
             $documentService = new DocumentService($request->document_id);
             $document = $documentService->document;
             $this->telegramService->sendMessage($user->chat_id,
-            "Ваш код подтверждения для документа №{$document->number}: {$otp}"
+                "Ваш код подтверждения для документа №{$document->number}: {$otp}"
             );
+
             return response()->json([
                 'success' => true,
                 'token' => $token,
@@ -327,7 +342,7 @@ class DocumentController extends Controller
             // Verify OTP
             if (session('otp_token') !== $request->token ||
                 session('otp_code') != $request->code ||
-                session('document_id') != (int)$id) {
+                session('document_id') != (int) $id) {
 
                 Log::warning('OTP Verification Failed', [
                     'token_match' => session('otp_token') === $request->token,
@@ -387,7 +402,7 @@ class DocumentController extends Controller
             // Verify OTP
             if (session('otp_token') !== $request->token ||
                 session('otp_code') != $request->code ||
-                session('document_id') != (int)$id) {
+                session('document_id') != (int) $id) {
 
                 Log::warning('OTP Rejection Failed', [
                     'token_match' => session('otp_token') === $request->token,

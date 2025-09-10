@@ -68,7 +68,7 @@ export default function EditDocument({ document, documentTypes, products, servic
                 ? data.products.map(p => ({ ...p, measure: '' }))
                 : data.products,
         };
-        put(`/documents/${document.id}`, { data: submissionData } as any);
+        put(`/documents/${document.id}`, { data: submissionData } as never);
     };
 
     return (
