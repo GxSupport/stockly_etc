@@ -242,9 +242,7 @@ class DocumentController extends Controller
     {
         try {
             $documentService = new DocumentService($id);
-            $response = $documentService->runProcess($request);
-
-            return $response;
+            return $documentService->runProcess($request);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

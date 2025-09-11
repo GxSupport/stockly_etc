@@ -74,17 +74,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const DocumentStatus = ({ document }: { document: Document }) => {
 
-    if (document.is_returned) {
-        return <Badge variant="destructive">Возвращено</Badge>;
-    }
-
-    if (!document.priority || document.priority.length === 0) {
-        return <Badge variant="outline">Черновик</Badge>;
-    }
+    // if (document.is_returned) {
+    //     return <Badge variant="destructive">Возвращено</Badge>;
+    // }
+    //
+    // if (!document.priority || document.priority.length === 0) {
+    //     return <Badge variant="outline">Черновик</Badge>;
+    // }
 
     return (
         <TooltipProvider>
             <div className="flex items-center gap-1">
+
                 {document.priority.map((p, index) => (
                     <Tooltip key={index}>
                         <TooltipTrigger>
@@ -159,7 +160,7 @@ export default function Documents({ documents, status: currentTab, documentTypes
 
     const handleRowClick = (doc: Document) => {
         if (currentTab === 'sent') {
-            if (doc.status === 0 || doc.status === 3) {
+            if (doc.status === 0) {
                 router.visit(`/documents/${doc.id}/edit`);
             } else {
                 router.visit(`/documents/${doc.id}`);

@@ -131,7 +131,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
     };
 
     const getDocumentTypeTitle = () => {
-        return `Акт ${document.document_type.title}`;
+        return `Акт ${document.document_type.title} №${document.number} от ${new Date(document.date_order).toLocaleDateString('ru-RU')}`;
     };
 
     const getResponsiblePerson = () => {
@@ -172,14 +172,14 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
 
                         {/* Products Table */}
                         <div className="mb-8">
-                            <table className="w-full border-collapse border border-white">
+                            <table className="w-full border-collapse border dark:border-white">
                                 <thead>
                                     <tr>
-                                        <th className="border border-white p-2 text-center">№</th>
-                                        <th className="border border-white p-2 text-center">Наименование</th>
-                                        <th className="border border-white p-2 text-center">Ед.изм.</th>
-                                        <th className="border border-white p-2 text-center">Кол-во</th>
-                                        <th className="border border-white p-2 text-center">
+                                        <th className="border dark:border-white p-2 text-center">№</th>
+                                        <th className="border dark:border-white p-2 text-center">Наименование</th>
+                                        <th className="border dark:border-white p-2 text-center">Ед.изм.</th>
+                                        <th className="border dark:border-white p-2 text-center">Кол-во</th>
+                                        <th className="border dark:border-white p-2 text-center">
                                             {document.type === 1 ? 'Место установки' : 'Причина списания'}
                                         </th>
                                     </tr>
@@ -187,11 +187,11 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                                 <tbody>
                                     {document.products.map((product, index) => (
                                         <tr key={`product-${index}`}>
-                                            <td className="border border-white p-2 text-center">{index + 1}</td>
-                                            <td className="border border-white p-2 text-center">{product.title}</td>
-                                            <td className="border border-white p-2 text-center">{product.measure}.</td>
-                                            <td className="border border-white p-2 text-center">{product.quantity}</td>
-                                            <td className="border border-white p-2 text-center">
+                                            <td className="border dark:border-white p-2 text-center">{index + 1}</td>
+                                            <td className="border dark:border-white p-2 text-center">{product.title}</td>
+                                            <td className="border dark:border-white p-2 text-center">{product.measure}.</td>
+                                            <td className="border dark:border-white p-2 text-center">{product.quantity}</td>
+                                            <td className="border dark:border-white p-2 text-center">
                                                 {(document.type === 3 || document.type === 1) ? product.note : ''}
                                             </td>
                                         </tr>
@@ -213,7 +213,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                                             <div className="space-y-4">
                                                 {history.map((item, index) => (
                                                     <div key={`history-${item.id}-${index}`} className="flex items-start gap-4 pb-4 border-b last:border-b-0">
-                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-sm ${
+                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center dark:text-white text-sm ${
                                                             index === 0 ? 'bg-blue-500' :
                                                             item.is_success === 1 ? 'bg-green-500' : 'bg-red-500'
                                                         }`}>

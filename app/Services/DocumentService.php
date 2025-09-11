@@ -71,7 +71,7 @@ class DocumentService
 
         // For draft and return, the logic is simple and correct.
         if ($status === 'draft') {
-            $query = Documents::with(['user_info', 'document_type', 'products'])
+            $query = Documents::with(['user_info', 'document_type', 'products','priority'])
                 ->where('is_draft', 1)
                 ->where('user_id', $this->user->id);
 
@@ -81,7 +81,7 @@ class DocumentService
         }
 
         if ($status === 'return') {
-            $query = Documents::with(['user_info', 'document_type', 'products'])
+            $query = Documents::with(['user_info', 'document_type', 'products','priority'])
                 ->where('is_returned', 1)
                 ->where('user_id', $this->user->id);
 
@@ -340,7 +340,7 @@ class DocumentService
         $product->user_id = $data['user_id'] ?? $this->user->id;
         $product->title = $data['selected_product']['name'];
         $product->measure = $data['selected_product']['measure'];
-        $product->quantity = $data['selected_product']['count'];
+        $product->quantity = $data['quantity'];
         $product->amount = $data['selected_product']['price'];
         $product->nomenclature = $data['selected_product']['nomenclature'] ?? '';
         $product->note = $data['note'] ?? '';
@@ -702,6 +702,14 @@ class DocumentService
             // Get document history from priority records or similar source
             $history = DocumentPriority::where('document_id', $this->document->id)
                 ->with('user_info')
+                ->where(function ($query) {
+                    $query->where(function ($query1) {
+                        $query1->where('is_active', true)
+                            ->where('ordering', '<', $this->priority->ordering??5);
+                    })->orWhere(function ($query) {
+                        $query->where('is_active', false);;
+                    });
+                })
                 ->orderBy('created_at', 'asc')
                 ->get()
                 ->map(function ($item) {

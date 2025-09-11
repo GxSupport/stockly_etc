@@ -85,7 +85,7 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
                         updated.product_name = selectedProduct.name;
                         updated.measure = selectedProduct.measure;
                         updated.quantity = 1;
-                        updated.amount = selectedProduct.price * updated.quantity;
+                        updated.amount = parseNumericValue(selectedProduct.price) * updated.quantity;
                         updated.nomenclature = selectedProduct.nomenclature;
                         updated.max_quantity = parseInt(selectedProduct.count);
                     }
@@ -94,7 +94,7 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
                     const maxQty = p.max_quantity;
                     const validatedQuantity = Math.max(1, Math.min(value, maxQty));
                     updated.quantity = validatedQuantity;
-                    updated.amount = p.selected_product.price * validatedQuantity;
+                    updated.amount = parseNumericValue(p.selected_product.price) * validatedQuantity;
                 }
                 return updated;
             }
@@ -111,8 +111,14 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
 
     const formatAmount = (amount: number) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
 
-    const totalAmount = data.products.reduce((sum, product) => sum + product.amount, 0);
+    // Helper function to safely parse numeric values
+    const parseNumericValue = (value: any): number => {
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? 0 : parsed;
+    };
 
+    const totalAmount = data.products.reduce((sum, product) => sum + parseNumericValue(product.amount), 0);
+    console.log('totalAmount', totalAmount);
     const selectedDocumentType = documentTypes.find(d => d.id.toString() === data.document_type_id);
     const showMainToolInput = selectedDocumentType && selectedDocumentType.id === 1 && !isMainToolFromService;
     const showMainToolSelect = selectedDocumentType && (selectedDocumentType.id === 4 || (selectedDocumentType.id === 1 && isMainToolFromService) || selectedDocumentType.id === 2);
