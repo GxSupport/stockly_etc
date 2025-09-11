@@ -53,6 +53,7 @@ class Documents extends Model
         'is_draft',
         'is_finished',
         'is_returned',
+        'note',
     ];
 
     public static array $type = [

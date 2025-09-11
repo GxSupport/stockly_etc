@@ -63,7 +63,7 @@ class DocumentPriorityService
         return DocumentPriority::query()->where([
             'document_id' => $document_id,
             'ordering' => $ordering,
-            'is_active' => 1,
+            'is_active' => true,
         ])->first();
     }
 

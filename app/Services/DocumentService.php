@@ -71,7 +71,7 @@ class DocumentService
 
         // For draft and return, the logic is simple and correct.
         if ($status === 'draft') {
-            $query = Documents::with(['user_info', 'document_type', 'products','priority'])
+            $query = Documents::with(['user_info', 'document_type', 'products', 'priority'])
                 ->where('is_draft', 1)
                 ->where('user_id', $this->user->id);
 
@@ -81,7 +81,7 @@ class DocumentService
         }
 
         if ($status === 'return') {
-            $query = Documents::with(['user_info', 'document_type', 'products','priority'])
+            $query = Documents::with(['user_info', 'document_type', 'products', 'priority'])
                 ->where('is_returned', 1)
                 ->where('user_id', $this->user->id);
 
@@ -283,6 +283,7 @@ class DocumentService
             $document->subscriber_title = $request->input('subscriber_title');
             $document->address = $request->input('address');
             $document->in_charge = $request->input('in_charge');
+            $document->note = $request->input('note');
             $document->is_draft = 1;
             $document->status = 1;
             $document->save();
@@ -297,10 +298,8 @@ class DocumentService
             $this->document = $document;
 
             // Проверяем приоритеты только для обычных документов (не возвращенных)
-            if (! $document->is_returned) {
-                $this->checkStartPriorityConfig();
-                $this->checkStartPriority();
-            }
+            $this->checkStartPriorityConfig();
+            // $this->checkStartPriority();
 
             $this->removePriority();
             $this->createPriority();
@@ -373,7 +372,10 @@ class DocumentService
 
     public function checkStartPriority()
     {
-        $check = (new DocumentPriorityService)->getPriorityByOrdering($this->document->id, 1);
+        Log::error('DocumentService::checkStartPriority - Checking start priority', [
+            'document_id' => $this->document->id,
+        ]);
+        $check = (new DocumentPriorityService)->getPriorityByOrdering($this->document->id, 2);
         if ($check) {
             throw new \Exception('Приложение не находится в статусе startProcess!');
         }
@@ -700,14 +702,14 @@ class DocumentService
     {
         try {
             // Get document history from priority records or similar source
-            $history = DocumentPriority::where('document_id', $this->document->id)
+            $history = DocumentPriority::query()->where('document_id', $this->document->id)
                 ->with('user_info')
                 ->where(function ($query) {
                     $query->where(function ($query1) {
                         $query1->where('is_active', true)
-                            ->where('ordering', '<', $this->priority->ordering??5);
+                            ->where('ordering', '<', $this->priority->ordering ?? 5);
                     })->orWhere(function ($query) {
-                        $query->where('is_active', false);;
+                        $query->where('is_active', false);
                     });
                 })
                 ->orderBy('created_at', 'asc')

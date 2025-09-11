@@ -29,6 +29,7 @@ interface Priority {
     ordering: number;
     is_success: number;
     created_at: string;
+    updated_at: string;
 }
 
 interface DocumentProduct {
@@ -65,6 +66,8 @@ interface Document {
     document_type: DocumentType;
     user_info: UserInfo;
     notes?: any[];
+    created_at: string;
+    updated_at: string;
 }
 
 interface StaffList {
@@ -221,7 +224,8 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                                                         </div>
                                                         <div className="flex-1">
                                                             <div className="text-sm text-gray-500 mb-1">
-                                                                {formatDate(item.created_at)}
+                                                                {index===0 ? formatDate(document.created_at) : item.created_at}
+
                                                             </div>
                                                             <div className="font-medium mb-1">
                                                                 Имя: {item.user_info.name} ({getWorkerType(item.user_info.type)})
@@ -257,7 +261,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                                     {document.priority.map((priority, index) => (
                                         index === 0 && priority.is_success === 1 && (
                                             <div key={`sent-${index}`} className="p-4 border-4 border-gray-400  rounded-lg" style={{ width: '300px' }}>
-                                                <div>{formatDate(priority.created_at)}</div>
+                                                <div>{formatDate(priority.updated_at)}</div>
                                                 <div className="text-center font-bold my-2">ОТПРАВЛЕНО</div>
                                                 <div>{priority.user_info?.name}</div>
                                             </div>
@@ -272,7 +276,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                                     {document.priority.map((priority, index) => (
                                         index > 0 && priority.is_success === 1 && (
                                             <div key={`confirmed-${index}`} className="p-4 border-4 border-teal-500  rounded-lg" style={{ width: '300px' }}>
-                                                <div>{formatDate(priority.created_at)}</div>
+                                                <div>{formatDate(priority.updated_at)}</div>
                                                 <div className="text-center font-bold my-2">ПОДТВЕРЖДЕН</div>
                                                 <div>{priority.user_info.name}</div>
                                             </div>

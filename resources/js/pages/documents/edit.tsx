@@ -19,7 +19,7 @@ interface Document {
     is_returned: boolean;
     status: number;
     products: DocumentProduct[];
-    notes?: any[];
+    notes?: never[];
 }
 
 interface EditDocumentProps {
