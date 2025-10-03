@@ -1,5 +1,5 @@
-import * as React from "react";
-import { ToastProps } from "@/components/ui/toast";
+import { ToastProps } from '@/components/ui/toast';
+import * as React from 'react';
 
 type ToastWithId = ToastProps & { id: string };
 
@@ -18,7 +18,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     const addToast = React.useCallback((toast: Omit<ToastProps, 'onClose'>) => {
         const id = Math.random().toString(36).substr(2, 9);
         const newToast: ToastWithId = { ...toast, id };
-        
+
         setToasts((current) => [...current, newToast]);
     }, []);
 
@@ -30,37 +30,35 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         setToasts([]);
     }, []);
 
-    const contextValue = React.useMemo(() => ({
-        toasts,
-        addToast,
-        removeToast,
-        clearToasts,
-    }), [toasts, addToast, removeToast, clearToasts]);
-
-    return (
-        <ToastContext.Provider value={contextValue}>
-            {children}
-        </ToastContext.Provider>
+    const contextValue = React.useMemo(
+        () => ({
+            toasts,
+            addToast,
+            removeToast,
+            clearToasts,
+        }),
+        [toasts, addToast, removeToast, clearToasts],
     );
+
+    return <ToastContext.Provider value={contextValue}>{children}</ToastContext.Provider>;
 }
 
 export function useToast() {
     const context = React.useContext(ToastContext);
-    
+
     if (context === undefined) {
         throw new Error('useToast must be used within a ToastProvider');
     }
 
-    const toast = React.useMemo(() => ({
-        success: (message: string, title?: string) => 
-            context.addToast({ type: 'success', message, title }),
-        error: (message: string, title?: string) => 
-            context.addToast({ type: 'error', message, title }),
-        warning: (message: string, title?: string) => 
-            context.addToast({ type: 'warning', message, title }),
-        info: (message: string, title?: string) => 
-            context.addToast({ type: 'info', message, title }),
-    }), [context.addToast]);
+    const toast = React.useMemo(
+        () => ({
+            success: (message: string, title?: string) => context.addToast({ type: 'success', message, title }),
+            error: (message: string, title?: string) => context.addToast({ type: 'error', message, title }),
+            warning: (message: string, title?: string) => context.addToast({ type: 'warning', message, title }),
+            info: (message: string, title?: string) => context.addToast({ type: 'info', message, title }),
+        }),
+        [context.addToast],
+    );
 
     return {
         toast,

@@ -1,12 +1,26 @@
-import { Head, useForm } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import DocumentForm, { type DocumentData } from '@/components/documents/DocumentForm';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { Head, useForm } from '@inertiajs/react';
 
 // Interfaces
-interface DocumentType { id: number; code: string; title: string; }
-interface Product { name: string; warehouse: string; measure: string; price: number; count: string; nomenclature: string; }
-interface Service { name: string; basic_resource_code: string; }
+interface DocumentType {
+    id: number;
+    code: string;
+    title: string;
+}
+interface Product {
+    name: string;
+    warehouse: string;
+    measure: string;
+    price: number;
+    count: string;
+    nomenclature: string;
+}
+interface Service {
+    name: string;
+    basic_resource_code: string;
+}
 
 interface CreateDocumentProps {
     documentTypes: DocumentType[];
@@ -34,9 +48,7 @@ export default function CreateDocument({ documentTypes, products, services }: Cr
         const submissionData = {
             ...data,
             total_amount: totalAmount,
-            products: data.document_type_id === '2'
-                ? data.products.map(p => ({ ...p, measure: '' }))
-                : data.products,
+            products: data.document_type_id === '2' ? data.products.map((p) => ({ ...p, measure: '' })) : data.products,
         };
         post('/documents/create', { data: submissionData } as any);
     };

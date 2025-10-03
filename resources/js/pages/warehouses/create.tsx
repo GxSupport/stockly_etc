@@ -1,16 +1,15 @@
+import { Form, Head, router } from '@inertiajs/react';
+import { ArrowLeft, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
-import { Form } from '@inertiajs/react';
-import { LoaderCircle, ArrowLeft } from 'lucide-react';
 
-import AppLayout from '@/layouts/app-layout';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import InputError from '@/components/input-error';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 
 interface WarehouseType {
@@ -48,12 +47,7 @@ export default function CreateWarehouse({ warehouse_types }: CreateWarehouseProp
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => router.visit('/warehouses')}
-                            className="gap-2"
-                        >
+                        <Button variant="outline" size="sm" onClick={() => router.visit('/warehouses')} className="gap-2">
                             <ArrowLeft className="h-4 w-4" />
                             Назад
                         </Button>
@@ -66,11 +60,7 @@ export default function CreateWarehouse({ warehouse_types }: CreateWarehouseProp
                         <CardTitle>Информация о складе</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Form
-                            action="/warehouses/create"
-                            method="post"
-                            className="flex flex-col gap-6"
-                        >
+                        <Form action="/warehouses/create" method="post" className="flex flex-col gap-6">
                             {({ processing, errors }) => (
                                 <>
                                     <div className="grid gap-6">
@@ -98,13 +88,7 @@ export default function CreateWarehouse({ warehouse_types }: CreateWarehouseProp
 
                                         <div className="grid gap-2">
                                             <Label htmlFor="title">Название склада *</Label>
-                                            <Input
-                                                id="title"
-                                                name="title"
-                                                type="text"
-                                                placeholder="Введите название склада"
-                                                required
-                                            />
+                                            <Input id="title" name="title" type="text" placeholder="Введите название склада" required />
                                             <InputError message={errors.title} />
                                         </div>
 
@@ -134,18 +118,12 @@ export default function CreateWarehouse({ warehouse_types }: CreateWarehouseProp
                                                 className="min-h-[80px]"
                                             />
                                             <InputError message={errors.comment} />
-                                            <div className="text-xs text-muted-foreground">
-                                                Необязательное поле для дополнительной информации
-                                            </div>
+                                            <div className="text-xs text-muted-foreground">Необязательное поле для дополнительной информации</div>
                                         </div>
                                     </div>
 
                                     <div className="flex gap-4 pt-4">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => router.visit('/warehouses')}
-                                        >
+                                        <Button type="button" variant="outline" onClick={() => router.visit('/warehouses')}>
                                             Отменить
                                         </Button>
                                         <Button type="submit" disabled={processing}>

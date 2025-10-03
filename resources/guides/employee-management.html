@@ -1,509 +1,536 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Управление сотрудниками</title>
-    
-    <!-- Guide Metadata -->
-    <meta name="guide:title" content="Управление сотрудниками">
-    <meta name="guide:description" content="Полное руководство по работе с модулем управления сотрудниками в системе Stockly с интерактивными примерами">
-    <meta name="guide:difficulty" content="Начальный">
-    <meta name="guide:icon" content="Users">
-    <meta name="guide:category" content="Управление персоналом">
-    <meta name="guide:estimatedTime" content="15 мин">
-    
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-        "guide": {
-            "title": "Управление сотрудниками",
-            "description": "Полное руководство по работе с модулем управления сотрудниками в системе Stockly с интерактивными примерами",
-            "difficulty": "Начальный",
-            "icon": "Users",
-            "category": "Управление персоналом",
-            "estimatedTime": "15 мин"
-        }
-    }
-    </script>
-</head>
-<body>
-    <div class="guide-container">
-        <!-- Overview Section -->
-        <div class="guide-overview">
-            <h2>🎯 Что вы изучите</h2>
-            <ul class="learning-objectives">
-                <li>Как найти и просматривать информацию о сотрудниках</li>
-                <li>Как добавить нового сотрудника в систему</li>
-                <li>Как использовать поиск и фильтрацию</li>
-                <li>Как управлять статусами и ролями сотрудников</li>
-                <li>Как устранять типичные проблемы</li>
-            </ul>
-        </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Управление сотрудниками</title>
 
-        <!-- Quick Access Section -->
-        <div class="highlight-box info">
-            <h3>🚀 Быстрый доступ</h3>
-            <p><strong>Раздел:</strong> Dashboard → Сотрудники</p>
-            <p><strong>Права доступа:</strong> Admin, Manager</p>
-            <p><strong>Основные функции:</strong> Просмотр, Создание, Поиск, Управление статусом</p>
-        </div>
+        <!-- Guide Metadata -->
+        <meta name="guide:title" content="Управление сотрудниками" />
+        <meta
+            name="guide:description"
+            content="Полное руководство по работе с модулем управления сотрудниками в системе Stockly с интерактивными примерами"
+        />
+        <meta name="guide:difficulty" content="Начальный" />
+        <meta name="guide:icon" content="Users" />
+        <meta name="guide:category" content="Управление персоналом" />
+        <meta name="guide:estimatedTime" content="15 мин" />
 
-        <!-- Step-by-Step Tutorial -->
-        <div class="guide-tutorial">
-            <h2>📋 Пошаговое руководство</h2>
-            
-            <!-- Step 1 -->
-            <div class="step">
-                <div class="step-header">
-                    <div class="step-number">1</div>
-                    <h3>Доступ к разделу сотрудников</h3>
+        <!-- Structured Data -->
+        <script type="application/ld+json">
+            {
+                "guide": {
+                    "title": "Управление сотрудниками",
+                    "description": "Полное руководство по работе с модулем управления сотрудниками в системе Stockly с интерактивными примерами",
+                    "difficulty": "Начальный",
+                    "icon": "Users",
+                    "category": "Управление персоналом",
+                    "estimatedTime": "15 мин"
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <div class="guide-container">
+            <!-- Overview Section -->
+            <div class="guide-overview">
+                <h2>🎯 Что вы изучите</h2>
+                <ul class="learning-objectives">
+                    <li>Как найти и просматривать информацию о сотрудниках</li>
+                    <li>Как добавить нового сотрудника в систему</li>
+                    <li>Как использовать поиск и фильтрацию</li>
+                    <li>Как управлять статусами и ролями сотрудников</li>
+                    <li>Как устранять типичные проблемы</li>
+                </ul>
+            </div>
+
+            <!-- Quick Access Section -->
+            <div class="highlight-box info">
+                <h3>🚀 Быстрый доступ</h3>
+                <p><strong>Раздел:</strong> Dashboard → Сотрудники</p>
+                <p><strong>Права доступа:</strong> Admin, Manager</p>
+                <p><strong>Основные функции:</strong> Просмотр, Создание, Поиск, Управление статусом</p>
+            </div>
+
+            <!-- Step-by-Step Tutorial -->
+            <div class="guide-tutorial">
+                <h2>📋 Пошаговое руководство</h2>
+
+                <!-- Step 1 -->
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <h3>Доступ к разделу сотрудников</h3>
+                    </div>
+                    <div class="step-content">
+                        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                            <div class="step-description">
+                                <h4>Переход в раздел</h4>
+                                <p>
+                                    В главном меню системы найдите раздел <strong>"Сотрудники"</strong> и нажмите на него. Система откроет страницу со
+                                    списком всех сотрудников организации.
+                                </p>
+
+                                <div class="highlight-box info">
+                                    <h5>💡 Навигация</h5>
+                                    <p>В верхней части страницы отображается хлебная навигация: <strong>Dashboard → Сотрудники</strong></p>
+                                </div>
+
+                                <h4>Что вы увидите</h4>
+                                <ul>
+                                    <li><strong>Заголовок страницы</strong> с общим количеством записей</li>
+                                    <li><strong>Поле поиска</strong> для быстрого поиска</li>
+                                    <li><strong>Кнопку "Добавить"</strong> для создания нового сотрудника</li>
+                                    <li><strong>Таблицу сотрудников</strong> с подробной информацией</li>
+                                </ul>
+                            </div>
+                            <div class="screenshot-container">
+                                <img src="/images/guides/employees-list.png" alt="Список сотрудников" />
+                                <div class="annotations">
+                                    <div class="callout callout--blue" style="left: 50px; top: 80px">Меню "Сотрудники"</div>
+                                    <div class="callout callout--green" style="right: 50px; top: 120px">Кнопка "Добавить"</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="step-content">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- Step 2 -->
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <h3>Поиск и фильтрация сотрудников</h3>
+                    </div>
+                    <div class="step-content">
                         <div class="step-description">
-                            <h4>Переход в раздел</h4>
-                            <p>В главном меню системы найдите раздел <strong>"Сотрудники"</strong> и нажмите на него. Система откроет страницу со списком всех сотрудников организации.</p>
-                            
-                            <div class="highlight-box info">
-                                <h5>💡 Навигация</h5>
-                                <p>В верхней части страницы отображается хлебная навигация: <strong>Dashboard → Сотрудники</strong></p>
-                            </div>
-                            
-                            <h4>Что вы увидите</h4>
-                            <ul>
-                                <li><strong>Заголовок страницы</strong> с общим количеством записей</li>
-                                <li><strong>Поле поиска</strong> для быстрого поиска</li>
-                                <li><strong>Кнопку "Добавить"</strong> для создания нового сотрудника</li>
-                                <li><strong>Таблицу сотрудников</strong> с подробной информацией</li>
-                            </ul>
-                        </div>
-                        <div class="screenshot-container">
-                            <img src="/images/guides/employees-list.png" alt="Список сотрудников" />
-                            <div class="annotations">
-                                <div class="callout callout--blue" style="left: 50px; top: 80px;">
-                                    Меню "Сотрудники"
-                                </div>
-                                <div class="callout callout--green" style="right: 50px; top: 120px;">
-                                    Кнопка "Добавить"
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                            <h4>Использование поиска</h4>
+                            <p>Система поддерживает поиск по нескольким критериям:</p>
 
-            <!-- Step 2 -->
-            <div class="step">
-                <div class="step-header">
-                    <div class="step-number">2</div>
-                    <h3>Поиск и фильтрация сотрудников</h3>
-                </div>
-                <div class="step-content">
-                    <div class="step-description">
-                        <h4>Использование поиска</h4>
-                        <p>Система поддерживает поиск по нескольким критериям:</p>
-                        
-                        <div class="tabbed-content">
-                            <div class="tab-headers">
-                                <div class="tab-header active" data-tab="name">По имени</div>
-                                <div class="tab-header" data-tab="phone">По телефону</div>
-                                <div class="tab-header" data-tab="combined">Комбинированный</div>
-                            </div>
-                            
-                            <div class="tab-content" data-content="name">
-                                <h5>Поиск по имени</h5>
-                                <p>Введите полное или частичное имя сотрудника:</p>
-                                <div class="code-block">
-                                    <div class="code-header">
-                                        <span class="code-language">Примеры</span>
-                                    </div>
-                                    <div class="code-content">
-                                        <code>Иван - найдет всех "Иван"
-Петров - найдет по фамилии
-Ив Пет - найдет "Иван Петров"</code>
-                                    </div>
+                            <div class="tabbed-content">
+                                <div class="tab-headers">
+                                    <div class="tab-header active" data-tab="name">По имени</div>
+                                    <div class="tab-header" data-tab="phone">По телефону</div>
+                                    <div class="tab-header" data-tab="combined">Комбинированный</div>
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <div class="highlight-box success">
-                            <h5>✅ Особенности поиска</h5>
-                            <ul>
-                                <li>Поиск работает в режиме реального времени</li>
-                                <li>Не учитывается регистр букв</li>
-                                <li>Можно искать по частичному совпадению</li>
-                                <li>Система автоматически форматирует номера телефонов</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Step 3 -->
-            <div class="step">
-                <div class="step-header">
-                    <div class="step-number">3</div>
-                    <h3>Создание нового сотрудника</h3>
-                </div>
-                <div class="step-content">
-                    <div class="step-description">
-                        <h4>Открытие формы создания</h4>
-                        <p>Нажмите кнопку <strong>"Добавить"</strong> на странице списка сотрудников. Откроется форма с обязательными полями.</p>
-                        
-                        <h4>Заполнение обязательных полей</h4>
-                        
-                        <div class="space-y-4">
-                            <!-- Имя и фамилия -->
-                            <div class="bg-white dark:bg-gray-900 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                <h5 class="font-semibold text-red-600 dark:text-red-400">1. Имя и фамилия *</h5>
-                                <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">Введите полное имя сотрудника</p>
-                                <div class="code-block">
-                                    <div class="code-header">
-                                        <span class="code-language">Пример</span>
-                                    </div>
-                                    <div class="code-content">
-                                        <code>Иван Петров</code>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Телефон -->
-                            <div class="bg-white dark:bg-gray-900 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                <h5 class="font-semibold text-red-600 dark:text-red-400">2. Телефон *</h5>
-                                <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">Система автоматически форматирует номер</p>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <strong>Вы вводите:</strong>
-                                        <div class="code-block">
-                                            <div class="code-content">
-                                                <code>901234567</code>
-                                            </div>
+                                <div class="tab-content" data-content="name">
+                                    <h5>Поиск по имени</h5>
+                                    <p>Введите полное или частичное имя сотрудника:</p>
+                                    <div class="code-block">
+                                        <div class="code-header">
+                                            <span class="code-language">Примеры</span>
                                         </div>
-                                    </div>
-                                    <div>
-                                        <strong>Результат:</strong>
-                                        <div class="code-block">
-                                            <div class="code-content">
-                                                <code>+998 90 123 45 67</code>
-                                            </div>
+                                        <div class="code-content">
+                                            <code>Иван - найдет всех "Иван" Петров - найдет по фамилии Ив Пет - найдет "Иван Петров"</code>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <!-- Роль -->
-                            <div class="bg-white dark:bg-gray-900 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                <h5 class="font-semibold text-red-600 dark:text-red-400">3. Роль *</h5>
-                                <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">Выберите роль из выпадающего списка с поиском</p>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                    <div class="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                                        <div class="w-3 h-3 bg-red-500 rounded-full mx-auto mb-2"></div>
-                                        <strong>Admin</strong>
-                                        <p class="text-xs text-gray-600 dark:text-gray-300">Полный доступ</p>
+
+                            <div class="highlight-box success">
+                                <h5>✅ Особенности поиска</h5>
+                                <ul>
+                                    <li>Поиск работает в режиме реального времени</li>
+                                    <li>Не учитывается регистр букв</li>
+                                    <li>Можно искать по частичному совпадению</li>
+                                    <li>Система автоматически форматирует номера телефонов</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">3</div>
+                        <h3>Создание нового сотрудника</h3>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-description">
+                            <h4>Открытие формы создания</h4>
+                            <p>Нажмите кнопку <strong>"Добавить"</strong> на странице списка сотрудников. Откроется форма с обязательными полями.</p>
+
+                            <h4>Заполнение обязательных полей</h4>
+
+                            <div class="space-y-4">
+                                <!-- Имя и фамилия -->
+                                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+                                    <h5 class="font-semibold text-red-600 dark:text-red-400">1. Имя и фамилия *</h5>
+                                    <p class="mb-2 text-sm text-gray-600 dark:text-gray-300">Введите полное имя сотрудника</p>
+                                    <div class="code-block">
+                                        <div class="code-header">
+                                            <span class="code-language">Пример</span>
+                                        </div>
+                                        <div class="code-content">
+                                            <code>Иван Петров</code>
+                                        </div>
                                     </div>
-                                    <div class="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                                        <div class="w-3 h-3 bg-blue-500 rounded-full mx-auto mb-2"></div>
-                                        <strong>Manager</strong>
-                                        <p class="text-xs text-gray-600 dark:text-gray-300">Управление</p>
+                                </div>
+
+                                <!-- Телефон -->
+                                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+                                    <h5 class="font-semibold text-red-600 dark:text-red-400">2. Телефон *</h5>
+                                    <p class="mb-2 text-sm text-gray-600 dark:text-gray-300">Система автоматически форматирует номер</p>
+                                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <div>
+                                            <strong>Вы вводите:</strong>
+                                            <div class="code-block">
+                                                <div class="code-content">
+                                                    <code>901234567</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <strong>Результат:</strong>
+                                            <div class="code-block">
+                                                <div class="code-content">
+                                                    <code>+998 90 123 45 67</code>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                                        <div class="w-3 h-3 bg-green-500 rounded-full mx-auto mb-2"></div>
-                                        <strong>Employee</strong>
-                                        <p class="text-xs text-gray-600 dark:text-gray-300">Сотрудник</p>
-                                    </div>
-                                    <div class="text-center p-3 bg-gray-50 dark:bg-gray-900/20 rounded-lg border border-gray-200 dark:border-gray-800">
-                                        <div class="w-3 h-3 bg-gray-500 rounded-full mx-auto mb-2"></div>
-                                        <strong>Intern</strong>
-                                        <p class="text-xs text-gray-600 dark:text-gray-300">Стажер</p>
+                                </div>
+
+                                <!-- Роль -->
+                                <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+                                    <h5 class="font-semibold text-red-600 dark:text-red-400">3. Роль *</h5>
+                                    <p class="mb-3 text-sm text-gray-600 dark:text-gray-300">Выберите роль из выпадающего списка с поиском</p>
+                                    <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+                                        <div
+                                            class="rounded-lg border border-red-200 bg-red-50 p-3 text-center dark:border-red-800 dark:bg-red-900/20"
+                                        >
+                                            <div class="mx-auto mb-2 h-3 w-3 rounded-full bg-red-500"></div>
+                                            <strong>Admin</strong>
+                                            <p class="text-xs text-gray-600 dark:text-gray-300">Полный доступ</p>
+                                        </div>
+                                        <div
+                                            class="rounded-lg border border-blue-200 bg-blue-50 p-3 text-center dark:border-blue-800 dark:bg-blue-900/20"
+                                        >
+                                            <div class="mx-auto mb-2 h-3 w-3 rounded-full bg-blue-500"></div>
+                                            <strong>Manager</strong>
+                                            <p class="text-xs text-gray-600 dark:text-gray-300">Управление</p>
+                                        </div>
+                                        <div
+                                            class="rounded-lg border border-green-200 bg-green-50 p-3 text-center dark:border-green-800 dark:bg-green-900/20"
+                                        >
+                                            <div class="mx-auto mb-2 h-3 w-3 rounded-full bg-green-500"></div>
+                                            <strong>Employee</strong>
+                                            <p class="text-xs text-gray-600 dark:text-gray-300">Сотрудник</p>
+                                        </div>
+                                        <div
+                                            class="rounded-lg border border-gray-200 bg-gray-50 p-3 text-center dark:border-gray-800 dark:bg-gray-900/20"
+                                        >
+                                            <div class="mx-auto mb-2 h-3 w-3 rounded-full bg-gray-500"></div>
+                                            <strong>Intern</strong>
+                                            <p class="text-xs text-gray-600 dark:text-gray-300">Стажер</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="highlight-box warning">
-                            <h5>⚠️ Важные замечания</h5>
-                            <ul>
-                                <li>Все поля, отмеченные <span class="text-red-500">*</span>, обязательны для заполнения</li>
-                                <li>Номер телефона должен быть действительным для Узбекистана</li>
-                                <li>После создания сотрудник получит временный пароль</li>
+                            <div class="highlight-box warning">
+                                <h5>⚠️ Важные замечания</h5>
+                                <ul>
+                                    <li>Все поля, отмеченные <span class="text-red-500">*</span>, обязательны для заполнения</li>
+                                    <li>Номер телефона должен быть действительным для Узбекистана</li>
+                                    <li>После создания сотрудник получит временный пароль</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">4</div>
+                        <h3>Управление статусом сотрудника</h3>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-description">
+                            <h4>Статусы активности</h4>
+                            <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div class="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+                                    <div class="mb-2 flex items-center gap-3">
+                                        <div class="h-3 w-3 rounded-full bg-green-500"></div>
+                                        <strong class="text-green-800 dark:text-green-200">Активен</strong>
+                                    </div>
+                                    <p class="text-sm text-green-700 dark:text-green-300">
+                                        Сотрудник имеет полный доступ к системе и может выполнять все функции согласно своей роли.
+                                    </p>
+                                </div>
+                                <div class="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+                                    <div class="mb-2 flex items-center gap-3">
+                                        <div class="h-3 w-3 rounded-full bg-red-500"></div>
+                                        <strong class="text-red-800 dark:text-red-200">Неактивен</strong>
+                                    </div>
+                                    <p class="text-sm text-red-700 dark:text-red-300">
+                                        Доступ к системе заблокирован, но данные сотрудника сохраняются в системе.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <h4>Изменение статуса</h4>
+                            <ol class="list-inside list-decimal space-y-2">
+                                <li>В списке сотрудников найдите нужного сотрудника</li>
+                                <li>В колонке "Статус" нажмите на текущий статус</li>
+                                <li>Статус изменится на противоположный автоматически</li>
+                            </ol>
+
+                            <div class="interactive-demo">
+                                <h5>🎮 Интерактивная демонстрация</h5>
+                                <p>Попробуйте нажать на статус:</p>
+                                <div class="flex items-center gap-4 rounded-lg border bg-white p-4 dark:bg-gray-800">
+                                    <span class="text-sm">Иван Петров</span>
+                                    <button class="rounded-full bg-green-500 px-3 py-1 text-xs text-white transition-colors hover:bg-green-600">
+                                        Активен
+                                    </button>
+                                    <span class="text-xs text-gray-500">← Нажмите для изменения</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="guide-faq mt-12">
+                <h2 class="mb-6 text-2xl font-bold">❓ Часто задаваемые вопросы</h2>
+
+                <div class="faq-items space-y-4">
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
+                                    ?
+                                </div>
+                                <h3>Можно ли изменить данные сотрудника после создания?</h3>
+                            </div>
+                            <div class="faq-toggle">+</div>
+                        </button>
+                        <div class="faq-answer">
+                            <p>
+                                В текущей версии доступно только создание и управление статусом. Функция редактирования данных будет добавлена в
+                                следующих обновлениях системы.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-xs font-bold text-white">
+                                    ✓
+                                </div>
+                                <h3>Почему телефон автоматически форматируется?</h3>
+                            </div>
+                            <div class="faq-toggle">+</div>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Система автоматически приводит номера к стандарту Узбекистана (+998 XX XXX XX XX) для:</p>
+                            <ul class="mt-2 list-inside list-disc space-y-1">
+                                <li>Единообразия отображения в интерфейсе</li>
+                                <li>Корректной работы SMS-уведомлений</li>
+                                <li>Интеграции с телефонными системами</li>
                             </ul>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Step 4 -->
-            <div class="step">
-                <div class="step-header">
-                    <div class="step-number">4</div>
-                    <h3>Управление статусом сотрудника</h3>
-                </div>
-                <div class="step-content">
-                    <div class="step-description">
-                        <h4>Статусы активности</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                                    <strong class="text-green-800 dark:text-green-200">Активен</strong>
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">
+                                    !
                                 </div>
-                                <p class="text-sm text-green-700 dark:text-green-300">Сотрудник имеет полный доступ к системе и может выполнять все функции согласно своей роли.</p>
+                                <h3>Что делать, если отдел не отображается в списке?</h3>
                             </div>
-                            <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <div class="w-3 h-3 bg-red-500 rounded-full"></div>
-                                    <strong class="text-red-800 dark:text-red-200">Неактивен</strong>
-                                </div>
-                                <p class="text-sm text-red-700 dark:text-red-300">Доступ к системе заблокирован, но данные сотрудника сохраняются в системе.</p>
-                            </div>
+                            <div class="faq-toggle">+</div>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Если нужного отдела нет в выпадающем списке:</p>
+                            <ol class="mt-2 list-inside list-decimal space-y-1">
+                                <li>Обратитесь к администратору системы</li>
+                                <li>Администратор должен добавить новый отдел в разделе "Отделы"</li>
+                                <li>После добавления отдел автоматически появится в списке при создании сотрудников</li>
+                            </ol>
                         </div>
-                        
-                        <h4>Изменение статуса</h4>
-                        <ol class="list-decimal list-inside space-y-2">
-                            <li>В списке сотрудников найдите нужного сотрудника</li>
-                            <li>В колонке "Статус" нажмите на текущий статус</li>
-                            <li>Статус изменится на противоположный автоматически</li>
-                        </ol>
-                        
-                        <div class="interactive-demo">
-                            <h5>🎮 Интерактивная демонстрация</h5>
-                            <p>Попробуйте нажать на статус:</p>
-                            <div class="flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg border">
-                                <span class="text-sm">Иван Петров</span>
-                                <button class="px-3 py-1 bg-green-500 text-white rounded-full text-xs hover:bg-green-600 transition-colors">
-                                    Активен
-                                </button>
-                                <span class="text-xs text-gray-500">← Нажмите для изменения</span>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <div class="flex items-start gap-3">
+                                <div class="mt-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                                    ✗
+                                </div>
+                                <h3>Не работает поиск по номеру телефона</h3>
+                            </div>
+                            <div class="faq-toggle">+</div>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="highlight-box warning">
+                                <h5>Возможные причины:</h5>
+                                <ul class="list-inside list-disc space-y-1">
+                                    <li>Введен неполный номер (минимум 3 цифры)</li>
+                                    <li>Номер содержит недопустимые символы</li>
+                                    <li>Поиск выполняется по старому формату</li>
+                                </ul>
+                            </div>
+                            <div class="highlight-box success mt-4">
+                                <h5>Решение:</h5>
+                                <p>Попробуйте искать по частям номера: <code>90</code>, <code>123</code>, <code>4567</code></p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- FAQ Section -->
-        <div class="guide-faq mt-12">
-            <h2 class="text-2xl font-bold mb-6">❓ Часто задаваемые вопросы</h2>
-            
-            <div class="faq-items space-y-4">
-                <div class="faq-item">
-                    <button class="faq-question">
-                        <div class="flex items-start gap-3">
-                            <div class="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold mt-1">?</div>
-                            <h3>Можно ли изменить данные сотрудника после создания?</h3>
+            <!-- Troubleshooting Section -->
+            <div class="mt-12">
+                <h2 class="mb-6 text-2xl font-bold">🔧 Устранение неполадок</h2>
+
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div class="highlight-box danger">
+                        <h3>🚫 Ошибки при создании</h3>
+                        <div class="mt-3 space-y-3">
+                            <div>
+                                <strong>Ошибка:</strong> "Поле обязательно для заполнения"<br />
+                                <strong>Решение:</strong> Заполните все поля со звездочкой (*)
+                            </div>
+                            <div>
+                                <strong>Ошибка:</strong> "Некорректный формат телефона"<br />
+                                <strong>Решение:</strong> Используйте номера, начинающиеся с 90, 91, 93, 94, 95, 97, 98, 99
+                            </div>
                         </div>
-                        <div class="faq-toggle">+</div>
-                    </button>
-                    <div class="faq-answer">
-                        <p>В текущей версии доступно только создание и управление статусом. Функция редактирования данных будет добавлена в следующих обновлениях системы.</p>
+                    </div>
+
+                    <div class="highlight-box info">
+                        <h3>🔍 Проблемы с поиском</h3>
+                        <div class="mt-3 space-y-3">
+                            <div>
+                                <strong>Проблема:</strong> Медленная работа поиска<br />
+                                <strong>Решение:</strong> Система имеет задержку 300мс для оптимизации
+                            </div>
+                            <div>
+                                <strong>Проблема:</strong> Не находит сотрудника<br />
+                                <strong>Решение:</strong> Проверьте правильность написания, попробуйте частичное совпадение
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="faq-item">
-                    <button class="faq-question">
-                        <div class="flex items-start gap-3">
-                            <div class="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold mt-1">✓</div>
-                            <h3>Почему телефон автоматически форматируется?</h3>
-                        </div>
-                        <div class="faq-toggle">+</div>
-                    </button>
-                    <div class="faq-answer">
-                        <p>Система автоматически приводит номера к стандарту Узбекистана (+998 XX XXX XX XX) для:</p>
-                        <ul class="list-disc list-inside mt-2 space-y-1">
-                            <li>Единообразия отображения в интерфейсе</li>
-                            <li>Корректной работы SMS-уведомлений</li>
-                            <li>Интеграции с телефонными системами</li>
+            </div>
+
+            <!-- Quick Reference -->
+            <div
+                class="mt-12 rounded-xl border border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50 p-6 dark:border-purple-700 dark:from-purple-900/20 dark:to-blue-900/20"
+            >
+                <h2 class="mb-4 text-xl font-semibold">📚 Справочная информация</h2>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                        <h4 class="mb-2 font-semibold">🔐 Права доступа</h4>
+                        <ul class="space-y-1 text-sm">
+                            <li><strong>Admin:</strong> Все функции</li>
+                            <li><strong>Manager:</strong> Создание, просмотр</li>
+                            <li><strong>Employee:</strong> Только просмотр</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="mb-2 font-semibold">📱 Форматы телефонов</h4>
+                        <ul class="space-y-1 text-sm">
+                            <li>90, 91, 93, 94, 95</li>
+                            <li>97, 98, 99 - префиксы</li>
+                            <li>Формат: +998 XX XXX XX XX</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="mb-2 font-semibold">⚙️ Горячие клавиши</h4>
+                        <ul class="space-y-1 text-sm">
+                            <li><kbd>Ctrl + F</kbd> - Поиск</li>
+                            <li><kbd>Ctrl + N</kbd> - Новый сотрудник</li>
+                            <li><kbd>Esc</kbd> - Закрыть форму</li>
                         </ul>
                     </div>
                 </div>
-                
-                <div class="faq-item">
-                    <button class="faq-question">
-                        <div class="flex items-start gap-3">
-                            <div class="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold mt-1">!</div>
-                            <h3>Что делать, если отдел не отображается в списке?</h3>
-                        </div>
-                        <div class="faq-toggle">+</div>
-                    </button>
-                    <div class="faq-answer">
-                        <p>Если нужного отдела нет в выпадающем списке:</p>
-                        <ol class="list-decimal list-inside mt-2 space-y-1">
-                            <li>Обратитесь к администратору системы</li>
-                            <li>Администратор должен добавить новый отдел в разделе "Отделы"</li>
-                            <li>После добавления отдел автоматически появится в списке при создании сотрудников</li>
-                        </ol>
-                    </div>
-                </div>
+            </div>
 
-                <div class="faq-item">
-                    <button class="faq-question">
-                        <div class="flex items-start gap-3">
-                            <div class="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold mt-1">✗</div>
-                            <h3>Не работает поиск по номеру телефона</h3>
-                        </div>
-                        <div class="faq-toggle">+</div>
-                    </button>
-                    <div class="faq-answer">
-                        <div class="highlight-box warning">
-                            <h5>Возможные причины:</h5>
-                            <ul class="list-disc list-inside space-y-1">
-                                <li>Введен неполный номер (минимум 3 цифры)</li>
-                                <li>Номер содержит недопустимые символы</li>
-                                <li>Поиск выполняется по старому формату</li>
-                            </ul>
-                        </div>
-                        <div class="highlight-box success mt-4">
-                            <h5>Решение:</h5>
-                            <p>Попробуйте искать по частям номера: <code>90</code>, <code>123</code>, <code>4567</code></p>
-                        </div>
-                    </div>
-                </div>
+            <!-- Footer -->
+            <div class="mt-8 border-t border-gray-200 pt-6 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400">
+                <p>
+                    <em>Это руководство актуально для текущей версии системы Stockly. При обновлении системы некоторые функции могут измениться.</em>
+                </p>
+                <p class="mt-2">Последнее обновление: <strong>Декабрь 2024</strong></p>
             </div>
         </div>
 
-        <!-- Troubleshooting Section -->
-        <div class="mt-12">
-            <h2 class="text-2xl font-bold mb-6">🔧 Устранение неполадок</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="highlight-box danger">
-                    <h3>🚫 Ошибки при создании</h3>
-                    <div class="space-y-3 mt-3">
-                        <div>
-                            <strong>Ошибка:</strong> "Поле обязательно для заполнения"<br>
-                            <strong>Решение:</strong> Заполните все поля со звездочкой (*)
-                        </div>
-                        <div>
-                            <strong>Ошибка:</strong> "Некорректный формат телефона"<br>
-                            <strong>Решение:</strong> Используйте номера, начинающиеся с 90, 91, 93, 94, 95, 97, 98, 99
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="highlight-box info">
-                    <h3>🔍 Проблемы с поиском</h3>
-                    <div class="space-y-3 mt-3">
-                        <div>
-                            <strong>Проблема:</strong> Медленная работа поиска<br>
-                            <strong>Решение:</strong> Система имеет задержку 300мс для оптимизации
-                        </div>
-                        <div>
-                            <strong>Проблема:</strong> Не находит сотрудника<br>
-                            <strong>Решение:</strong> Проверьте правильность написания, попробуйте частичное совпадение
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <script>
+            // FAQ Interactivity
+            document.addEventListener('DOMContentLoaded', function () {
+                const faqItems = document.querySelectorAll('.faq-item');
 
-        <!-- Quick Reference -->
-        <div class="mt-12 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-6 rounded-xl border border-purple-200 dark:border-purple-700">
-            <h2 class="text-xl font-semibold mb-4">📚 Справочная информация</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <h4 class="font-semibold mb-2">🔐 Права доступа</h4>
-                    <ul class="text-sm space-y-1">
-                        <li><strong>Admin:</strong> Все функции</li>
-                        <li><strong>Manager:</strong> Создание, просмотр</li>
-                        <li><strong>Employee:</strong> Только просмотр</li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h4 class="font-semibold mb-2">📱 Форматы телефонов</h4>
-                    <ul class="text-sm space-y-1">
-                        <li>90, 91, 93, 94, 95</li>
-                        <li>97, 98, 99 - префиксы</li>
-                        <li>Формат: +998 XX XXX XX XX</li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h4 class="font-semibold mb-2">⚙️ Горячие клавиши</h4>
-                    <ul class="text-sm space-y-1">
-                        <li><kbd>Ctrl + F</kbd> - Поиск</li>
-                        <li><kbd>Ctrl + N</kbd> - Новый сотрудник</li>
-                        <li><kbd>Esc</kbd> - Закрыть форму</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+                faqItems.forEach((item) => {
+                    const question = item.querySelector('.faq-question');
+                    const toggle = item.querySelector('.faq-toggle');
+                    const answer = item.querySelector('.faq-answer');
 
-        <!-- Footer -->
-        <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-600 dark:text-gray-400">
-            <p><em>Это руководство актуально для текущей версии системы Stockly. При обновлении системы некоторые функции могут измениться.</em></p>
-            <p class="mt-2">Последнее обновление: <strong>Декабрь 2024</strong></p>
-        </div>
-    </div>
+                    question.addEventListener('click', () => {
+                        const isOpen = item.classList.contains('open');
 
-    <script>
-        // FAQ Interactivity
-        document.addEventListener('DOMContentLoaded', function() {
-            const faqItems = document.querySelectorAll('.faq-item');
-            
-            faqItems.forEach(item => {
-                const question = item.querySelector('.faq-question');
-                const toggle = item.querySelector('.faq-toggle');
-                const answer = item.querySelector('.faq-answer');
-                
-                question.addEventListener('click', () => {
-                    const isOpen = item.classList.contains('open');
-                    
-                    // Close all other items
-                    faqItems.forEach(otherItem => {
-                        if (otherItem !== item) {
-                            otherItem.classList.remove('open');
-                            otherItem.querySelector('.faq-toggle').textContent = '+';
+                        // Close all other items
+                        faqItems.forEach((otherItem) => {
+                            if (otherItem !== item) {
+                                otherItem.classList.remove('open');
+                                otherItem.querySelector('.faq-toggle').textContent = '+';
+                            }
+                        });
+
+                        // Toggle current item
+                        item.classList.toggle('open');
+                        toggle.textContent = isOpen ? '+' : '−';
+                    });
+                });
+
+                // Tab functionality
+                const tabHeaders = document.querySelectorAll('.tab-header');
+                const tabContents = document.querySelectorAll('.tab-content');
+
+                tabHeaders.forEach((header) => {
+                    header.addEventListener('click', () => {
+                        const targetTab = header.dataset.tab;
+
+                        // Remove active class from all headers and contents
+                        tabHeaders.forEach((h) => h.classList.remove('active'));
+                        tabContents.forEach((c) => (c.style.display = 'none'));
+
+                        // Add active class to clicked header and show corresponding content
+                        header.classList.add('active');
+                        const targetContent = document.querySelector(`[data-content="${targetTab}"]`);
+                        if (targetContent) {
+                            targetContent.style.display = 'block';
                         }
                     });
-                    
-                    // Toggle current item
-                    item.classList.toggle('open');
-                    toggle.textContent = isOpen ? '+' : '−';
                 });
+
+                // Interactive demo
+                const demoButton = document.querySelector('.interactive-demo button');
+                if (demoButton) {
+                    demoButton.addEventListener('click', () => {
+                        const isActive = demoButton.classList.contains('bg-green-500');
+
+                        if (isActive) {
+                            demoButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                            demoButton.classList.add('bg-red-500', 'hover:bg-red-600');
+                            demoButton.textContent = 'Неактивен';
+                        } else {
+                            demoButton.classList.remove('bg-red-500', 'hover:bg-red-600');
+                            demoButton.classList.add('bg-green-500', 'hover:bg-green-600');
+                            demoButton.textContent = 'Активен';
+                        }
+                    });
+                }
             });
-            
-            // Tab functionality
-            const tabHeaders = document.querySelectorAll('.tab-header');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            tabHeaders.forEach(header => {
-                header.addEventListener('click', () => {
-                    const targetTab = header.dataset.tab;
-                    
-                    // Remove active class from all headers and contents
-                    tabHeaders.forEach(h => h.classList.remove('active'));
-                    tabContents.forEach(c => c.style.display = 'none');
-                    
-                    // Add active class to clicked header and show corresponding content
-                    header.classList.add('active');
-                    const targetContent = document.querySelector(`[data-content="${targetTab}"]`);
-                    if (targetContent) {
-                        targetContent.style.display = 'block';
-                    }
-                });
-            });
-            
-            // Interactive demo
-            const demoButton = document.querySelector('.interactive-demo button');
-            if (demoButton) {
-                demoButton.addEventListener('click', () => {
-                    const isActive = demoButton.classList.contains('bg-green-500');
-                    
-                    if (isActive) {
-                        demoButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        demoButton.classList.add('bg-red-500', 'hover:bg-red-600');
-                        demoButton.textContent = 'Неактивен';
-                    } else {
-                        demoButton.classList.remove('bg-red-500', 'hover:bg-red-600');
-                        demoButton.classList.add('bg-green-500', 'hover:bg-green-600');
-                        demoButton.textContent = 'Активен';
-                    }
-                });
-            }
-        });
-    </script>
-</body>
+        </script>
+    </body>
 </html>

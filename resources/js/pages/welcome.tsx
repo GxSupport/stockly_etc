@@ -1,25 +1,11 @@
-import { dashboard, login, register } from '@/routes';
+import AppearanceToggleDropdown from '@/components/appearance-dropdown';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { dashboard, login } from '@/routes';
 import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import {
-    Warehouse,
-    Package,
-    Truck,
-    ArrowRight,
-    BarChart3,
-    Shield,
-    Users,
-    Clock,
-    CheckCircle,
-    ArrowUpDown,
-    FileText,
-    TrendingUp,
-    Boxes
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import AppearanceToggleDropdown from '@/components/appearance-dropdown';
+import { ArrowRight, ArrowUpDown, BarChart3, Boxes, CheckCircle, FileText, Package, Shield, TrendingUp, Truck, Users, Warehouse } from 'lucide-react';
 
 export default function Welcome() {
     const { auth } = usePage<SharedData>().props;
@@ -33,7 +19,7 @@ export default function Welcome() {
 
             <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
                 {/* Header Navigation */}
-                <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-lg dark:bg-gray-900/80 dark:border-gray-800">
+                <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-lg dark:border-gray-800 dark:bg-gray-900/80">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex h-16 items-center justify-between">
                             <div className="flex items-center space-x-2">
@@ -46,18 +32,14 @@ export default function Welcome() {
                                     <div className="flex items-center gap-3">
                                         <AppearanceToggleDropdown />
                                         <Button asChild>
-                                            <Link href={dashboard()}>
-                                                Дашборд
-                                            </Link>
+                                            <Link href={dashboard()}>Дашборд</Link>
                                         </Button>
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-3">
                                         <AppearanceToggleDropdown />
                                         <Button variant="ghost" asChild>
-                                            <Link href={login()}>
-                                                Войти
-                                            </Link>
+                                            <Link href={login()}>Войти</Link>
                                         </Button>
                                     </div>
                                 )}
@@ -77,16 +59,15 @@ export default function Welcome() {
                                     </Badge>
                                 </div>
 
-                                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6">
-                                    Добро пожаловать в{' '}
-                                    <span className="text-blue-600 dark:text-blue-400">Stockly</span>
+                                <h1 className="mb-6 text-4xl font-bold text-gray-900 sm:text-6xl lg:text-7xl dark:text-white">
+                                    Добро пожаловать в <span className="text-blue-600 dark:text-blue-400">Stockly</span>
                                 </h1>
 
-                                <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 mb-12 max-w-3xl mx-auto">
+                                <p className="mx-auto mb-12 max-w-3xl text-xl text-gray-600 sm:text-2xl dark:text-gray-300">
                                     Профессиональная система учёта и контроля движения товарно-материальных ценностей для современного бизнеса
                                 </p>
 
-                                <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+                                <div className="mb-16 flex flex-col justify-center gap-4 sm:flex-row">
                                     {!auth.user && (
                                         <>
                                             <Button size="lg" asChild className="px-8 py-4 text-lg">
@@ -95,18 +76,17 @@ export default function Welcome() {
                                                     <ArrowRight className="ml-2 h-5 w-5" />
                                                 </Link>
                                             </Button>
-
                                         </>
                                     )}
                                 </div>
 
                                 {/* Central Illustration */}
                                 <div className="relative mx-auto max-w-4xl">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                                    <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-3">
                                         {/* Left side - Warehouse */}
-                                        <div className="flex flex-col items-center space-y-4 opacity-0 animate-fade-in-up">
+                                        <div className="animate-fade-in-up flex flex-col items-center space-y-4 opacity-0">
                                             <div className="relative">
-                                                <div className="bg-blue-100 dark:bg-blue-900/30 p-6 rounded-2xl">
+                                                <div className="rounded-2xl bg-blue-100 p-6 dark:bg-blue-900/30">
                                                     <Warehouse className="h-12 w-12 text-blue-600 dark:text-blue-400" />
                                                 </div>
                                                 <div className="absolute -top-2 -right-2">
@@ -122,28 +102,28 @@ export default function Welcome() {
                                         {/* Center - Flow */}
                                         <div className="flex flex-col items-center space-y-6">
                                             <div className="flex items-center justify-center space-x-4">
-                                                <div className="bg-orange-100 dark:bg-orange-900/30 p-4 rounded-xl animate-bounce">
+                                                <div className="animate-bounce rounded-xl bg-orange-100 p-4 dark:bg-orange-900/30">
                                                     <Package className="h-8 w-8 text-orange-600 dark:text-orange-400" />
                                                 </div>
-                                                <ArrowUpDown className="h-6 w-6 text-gray-400 animate-pulse" />
-                                                <div className="bg-purple-100 dark:bg-purple-900/30 p-4 rounded-xl animate-bounce delay-200">
+                                                <ArrowUpDown className="h-6 w-6 animate-pulse text-gray-400" />
+                                                <div className="animate-bounce rounded-xl bg-purple-100 p-4 delay-200 dark:bg-purple-900/30">
                                                     <Boxes className="h-8 w-8 text-purple-600 dark:text-purple-400" />
                                                 </div>
                                             </div>
-                                            <div className="bg-blue-600 dark:bg-blue-500 p-4 rounded-xl text-white animate-pulse">
+                                            <div className="animate-pulse rounded-xl bg-blue-600 p-4 text-white dark:bg-blue-500">
                                                 <Truck className="h-8 w-8" />
                                             </div>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Движение ТМЦ</p>
+                                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Движение ТМЦ</p>
                                         </div>
 
                                         {/* Right side - Analytics */}
-                                        <div className="flex flex-col items-center space-y-4 opacity-0 animate-fade-in-up delay-300">
+                                        <div className="animate-fade-in-up flex flex-col items-center space-y-4 opacity-0 delay-300">
                                             <div className="relative">
-                                                <div className="bg-green-100 dark:bg-green-900/30 p-6 rounded-2xl">
+                                                <div className="rounded-2xl bg-green-100 p-6 dark:bg-green-900/30">
                                                     <BarChart3 className="h-12 w-12 text-green-600 dark:text-green-400" />
                                                 </div>
                                                 <div className="absolute -top-1 -right-1">
-                                                    <div className="bg-red-500 h-3 w-3 rounded-full animate-ping"></div>
+                                                    <div className="h-3 w-3 animate-ping rounded-full bg-red-500"></div>
                                                 </div>
                                             </div>
                                             <div className="text-center">
@@ -158,87 +138,73 @@ export default function Welcome() {
                     </section>
 
                     {/* Features Section */}
-                    <section className="py-20 bg-white dark:bg-gray-900">
+                    <section className="bg-white py-20 dark:bg-gray-900">
                         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="text-center mb-16">
-                                <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                                    Ключевые возможности
-                                </h2>
-                                <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                            <div className="mb-16 text-center">
+                                <h2 className="mb-4 text-3xl font-bold text-gray-900 sm:text-4xl dark:text-white">Ключевые возможности</h2>
+                                <p className="mx-auto max-w-2xl text-xl text-gray-600 dark:text-gray-300">
                                     Всё необходимое для эффективного управления товарно-материальными ценностями
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                                <Card className="border-0 shadow-lg transition-shadow duration-300 hover:shadow-xl">
                                     <CardHeader>
-                                        <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg w-fit">
+                                        <div className="w-fit rounded-lg bg-blue-100 p-3 dark:bg-blue-900/30">
                                             <Warehouse className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                                         </div>
                                         <CardTitle>Управление складами</CardTitle>
-                                        <CardDescription>
-                                            Полный контроль над складскими помещениями и зонами хранения
-                                        </CardDescription>
+                                        <CardDescription>Полный контроль над складскими помещениями и зонами хранения</CardDescription>
                                     </CardHeader>
                                 </Card>
 
-                                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                <Card className="border-0 shadow-lg transition-shadow duration-300 hover:shadow-xl">
                                     <CardHeader>
-                                        <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg w-fit">
+                                        <div className="w-fit rounded-lg bg-green-100 p-3 dark:bg-green-900/30">
                                             <Package className="h-6 w-6 text-green-600 dark:text-green-400" />
                                         </div>
                                         <CardTitle>Учёт товаров</CardTitle>
-                                        <CardDescription>
-                                            Детальный учёт поступления, перемещения и списания товаров
-                                        </CardDescription>
+                                        <CardDescription>Детальный учёт поступления, перемещения и списания товаров</CardDescription>
                                     </CardHeader>
                                 </Card>
 
-                                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                <Card className="border-0 shadow-lg transition-shadow duration-300 hover:shadow-xl">
                                     <CardHeader>
-                                        <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-lg w-fit">
+                                        <div className="w-fit rounded-lg bg-purple-100 p-3 dark:bg-purple-900/30">
                                             <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                                         </div>
                                         <CardTitle>Управление персоналом</CardTitle>
-                                        <CardDescription>
-                                            Контроль доступа сотрудников и их ответственности
-                                        </CardDescription>
+                                        <CardDescription>Контроль доступа сотрудников и их ответственности</CardDescription>
                                     </CardHeader>
                                 </Card>
 
-                                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                <Card className="border-0 shadow-lg transition-shadow duration-300 hover:shadow-xl">
                                     <CardHeader>
-                                        <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg w-fit">
+                                        <div className="w-fit rounded-lg bg-orange-100 p-3 dark:bg-orange-900/30">
                                             <FileText className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                                         </div>
                                         <CardTitle>Документооборот</CardTitle>
-                                        <CardDescription>
-                                            Автоматизация создания и обработки складских документов
-                                        </CardDescription>
+                                        <CardDescription>Автоматизация создания и обработки складских документов</CardDescription>
                                     </CardHeader>
                                 </Card>
 
-                                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                <Card className="border-0 shadow-lg transition-shadow duration-300 hover:shadow-xl">
                                     <CardHeader>
-                                        <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-lg w-fit">
+                                        <div className="w-fit rounded-lg bg-red-100 p-3 dark:bg-red-900/30">
                                             <Shield className="h-6 w-6 text-red-600 dark:text-red-400" />
                                         </div>
                                         <CardTitle>Безопасность</CardTitle>
-                                        <CardDescription>
-                                            Многоуровневая система защиты и аудит операций
-                                        </CardDescription>
+                                        <CardDescription>Многоуровневая система защиты и аудит операций</CardDescription>
                                     </CardHeader>
                                 </Card>
 
-                                <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                <Card className="border-0 shadow-lg transition-shadow duration-300 hover:shadow-xl">
                                     <CardHeader>
-                                        <div className="bg-indigo-100 dark:bg-indigo-900/30 p-3 rounded-lg w-fit">
+                                        <div className="w-fit rounded-lg bg-indigo-100 p-3 dark:bg-indigo-900/30">
                                             <TrendingUp className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
                                         </div>
                                         <CardTitle>Аналитика</CardTitle>
-                                        <CardDescription>
-                                            Подробные отчёты и аналитика движения ТМЦ
-                                        </CardDescription>
+                                        <CardDescription>Подробные отчёты и аналитика движения ТМЦ</CardDescription>
                                     </CardHeader>
                                 </Card>
                             </div>
@@ -246,77 +212,68 @@ export default function Welcome() {
                     </section>
 
                     {/* Analytics Preview Section */}
-                    <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900">
+                    <section className="bg-gradient-to-r from-blue-600 to-blue-700 py-20 dark:from-blue-800 dark:to-blue-900">
                         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="text-center text-white mb-12">
-                                <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                                    Аналитика в реальном времени
-                                </h2>
-                                <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-                                    Получайте актуальную информацию о состоянии ваших складов
-                                </p>
+                            <div className="mb-12 text-center text-white">
+                                <h2 className="mb-4 text-3xl font-bold sm:text-4xl">Аналитика в реальном времени</h2>
+                                <p className="mx-auto max-w-2xl text-xl text-blue-100">Получайте актуальную информацию о состоянии ваших складов</p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-white">
-                                    <div className="flex items-center justify-between mb-4">
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+                                <div className="rounded-xl bg-white/10 p-6 text-white backdrop-blur-lg">
+                                    <div className="mb-4 flex items-center justify-between">
                                         <Warehouse className="h-8 w-8" />
                                         <Badge className="bg-green-500">+12%</Badge>
                                     </div>
-                                    <div className="text-2xl font-bold mb-1">15</div>
-                                    <div className="text-blue-100 text-sm">Активных складов</div>
+                                    <div className="mb-1 text-2xl font-bold">15</div>
+                                    <div className="text-sm text-blue-100">Активных складов</div>
                                 </div>
 
-                                <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-white">
-                                    <div className="flex items-center justify-between mb-4">
+                                <div className="rounded-xl bg-white/10 p-6 text-white backdrop-blur-lg">
+                                    <div className="mb-4 flex items-center justify-between">
                                         <Package className="h-8 w-8" />
                                         <Badge className="bg-blue-500">+8%</Badge>
                                     </div>
-                                    <div className="text-2xl font-bold mb-1">2,847</div>
-                                    <div className="text-blue-100 text-sm">Позиций товаров</div>
+                                    <div className="mb-1 text-2xl font-bold">2,847</div>
+                                    <div className="text-sm text-blue-100">Позиций товаров</div>
                                 </div>
 
-                                <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-white">
-                                    <div className="flex items-center justify-between mb-4">
+                                <div className="rounded-xl bg-white/10 p-6 text-white backdrop-blur-lg">
+                                    <div className="mb-4 flex items-center justify-between">
                                         <Truck className="h-8 w-8" />
                                         <Badge className="bg-orange-500">24</Badge>
                                     </div>
-                                    <div className="text-2xl font-bold mb-1">156</div>
-                                    <div className="text-blue-100 text-sm">Операций сегодня</div>
+                                    <div className="mb-1 text-2xl font-bold">156</div>
+                                    <div className="text-sm text-blue-100">Операций сегодня</div>
                                 </div>
 
-                                <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 text-white">
-                                    <div className="flex items-center justify-between mb-4">
+                                <div className="rounded-xl bg-white/10 p-6 text-white backdrop-blur-lg">
+                                    <div className="mb-4 flex items-center justify-between">
                                         <Users className="h-8 w-8" />
                                         <Badge className="bg-green-500">
                                             <CheckCircle className="h-3 w-3" />
                                         </Badge>
                                     </div>
-                                    <div className="text-2xl font-bold mb-1">48</div>
-                                    <div className="text-blue-100 text-sm">Активных сотрудников</div>
+                                    <div className="mb-1 text-2xl font-bold">48</div>
+                                    <div className="text-sm text-blue-100">Активных сотрудников</div>
                                 </div>
                             </div>
                         </div>
                     </section>
 
                     {/* CTA Section */}
-                    <section className="py-20 bg-gray-50 dark:bg-gray-800">
+                    <section className="bg-gray-50 py-20 dark:bg-gray-800">
                         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="text-center">
-                                <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-                                    Готовы начать?
-                                </h2>
-                                <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto">
+                                <h2 className="mb-6 text-3xl font-bold text-gray-900 sm:text-4xl dark:text-white">Готовы начать?</h2>
+                                <p className="mx-auto mb-10 max-w-2xl text-xl text-gray-600 dark:text-gray-300">
                                     Присоединяйтесь к тысячам компаний, которые уже оптимизировали свои складские процессы с помощью Stockly
                                 </p>
 
                                 {!auth.user ? (
-                                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-
+                                    <div className="flex flex-col justify-center gap-4 sm:flex-row">
                                         <Button size="lg" variant="outline" asChild className="px-8 py-4 text-lg">
-                                            <Link href={login()}>
-                                                Войти в систему
-                                            </Link>
+                                            <Link href={login()}>Войти в систему</Link>
                                         </Button>
                                     </div>
                                 ) : (
@@ -333,16 +290,14 @@ export default function Welcome() {
                 </main>
 
                 {/* Footer */}
-                <footer className="bg-white dark:bg-gray-900 border-t dark:border-gray-800">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                        <div className="flex flex-col md:flex-row items-center justify-between">
-                            <div className="flex items-center space-x-2 mb-4 md:mb-0">
+                <footer className="border-t bg-white dark:border-gray-800 dark:bg-gray-900">
+                    <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+                        <div className="flex flex-col items-center justify-between md:flex-row">
+                            <div className="mb-4 flex items-center space-x-2 md:mb-0">
                                 <Warehouse className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                                 <span className="font-semibold text-gray-900 dark:text-white">Stockly</span>
                             </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                                © 2025 Stockly. Разработано в Roo Support Technology
-                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">© 2025 Stockly. Разработано в Roo Support Technology</div>
                         </div>
                     </div>
                 </footer>

@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Check, Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 
 interface Step {
     title: string;
@@ -64,12 +64,10 @@ const StepByStepGuide = ({ title, description, steps, estimatedTime }: StepBySte
         <div className="guide-tutorial">
             {/* Overview */}
             <div className="guide-overview">
-                <div className="flex items-start justify-between mb-4">
+                <div className="mb-4 flex items-start justify-between">
                     <div>
-                        <h2 className="text-xl font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
-                            📚 {title}
-                        </h2>
-                        <p className="text-blue-800 dark:text-blue-200 mb-4">{description}</p>
+                        <h2 className="mb-2 flex items-center gap-2 text-xl font-semibold text-blue-900 dark:text-blue-100">📚 {title}</h2>
+                        <p className="mb-4 text-blue-800 dark:text-blue-200">{description}</p>
                     </div>
                     {estimatedTime && (
                         <div className="text-right">
@@ -79,7 +77,7 @@ const StepByStepGuide = ({ title, description, steps, estimatedTime }: StepBySte
                     )}
                 </div>
 
-                <div className="flex items-center justify-between mb-4">
+                <div className="mb-4 flex items-center justify-between">
                     <div className="text-sm text-blue-800 dark:text-blue-200">
                         Шаг {currentStep + 1} из {steps.length}
                     </div>
@@ -88,42 +86,26 @@ const StepByStepGuide = ({ title, description, steps, estimatedTime }: StepBySte
                         <div className="w-32">
                             <Progress value={progress} className="h-2" />
                         </div>
-                        <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                            {Math.round(progress)}%
-                        </span>
+                        <span className="text-sm font-medium text-blue-900 dark:text-blue-100">{Math.round(progress)}%</span>
                     </div>
                 </div>
 
                 {/* Step Navigation */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={goToPreviousStep}
-                            disabled={currentStep === 0}
-                        >
-                            <ChevronLeft className="h-4 w-4 mr-1" />
+                        <Button variant="outline" size="sm" onClick={goToPreviousStep} disabled={currentStep === 0}>
+                            <ChevronLeft className="mr-1 h-4 w-4" />
                             Назад
                         </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={goToNextStep}
-                            disabled={currentStep === steps.length - 1}
-                        >
+                        <Button variant="outline" size="sm" onClick={goToNextStep} disabled={currentStep === steps.length - 1}>
                             Далее
-                            <ChevronRight className="h-4 w-4 ml-1" />
+                            <ChevronRight className="ml-1 h-4 w-4" />
                         </Button>
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <Button
-                            variant={completedSteps.has(currentStep) ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={markStepComplete}
-                        >
-                            <Check className="h-4 w-4 mr-1" />
+                        <Button variant={completedSteps.has(currentStep) ? 'default' : 'outline'} size="sm" onClick={markStepComplete}>
+                            <Check className="mr-1 h-4 w-4" />
                             {completedSteps.has(currentStep) ? 'Выполнено' : 'Отметить как выполнено'}
                         </Button>
                     </div>
@@ -133,27 +115,17 @@ const StepByStepGuide = ({ title, description, steps, estimatedTime }: StepBySte
             {/* Current Step */}
             <div className="step fade-in">
                 <div className="step-header">
-                    <div className="step-number">
-                        {completedSteps.has(currentStep) ? (
-                            <Check className="h-5 w-5" />
-                        ) : (
-                            currentStep + 1
-                        )}
-                    </div>
+                    <div className="step-number">{completedSteps.has(currentStep) ? <Check className="h-5 w-5" /> : currentStep + 1}</div>
                     <h3>{currentStepData.title}</h3>
                 </div>
 
                 <div className="step-content">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         {/* Screenshot Section */}
                         {currentStepData.screenshot && (
                             <div className="screenshot-container">
-                                <img
-                                    src={currentStepData.screenshot}
-                                    alt={`Шаг ${currentStep + 1} скриншот`}
-                                    className="w-full h-auto"
-                                />
-                                
+                                <img src={currentStepData.screenshot} alt={`Шаг ${currentStep + 1} скриншот`} className="h-auto w-full" />
+
                                 {/* Annotations */}
                                 <div className="annotations">
                                     {currentStepData.annotations?.map((annotation, index) => (
@@ -174,20 +146,14 @@ const StepByStepGuide = ({ title, description, steps, estimatedTime }: StepBySte
 
                         {/* Content Section */}
                         <div className="step-description">
-                            <div 
-                                className="max-w-none text-foreground"
-                                dangerouslySetInnerHTML={{ __html: currentStepData.content }}
-                            />
+                            <div className="max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: currentStepData.content }} />
 
                             {/* Code Block */}
                             {currentStepData.code && (
                                 <div className="code-block mt-6">
                                     <div className="code-header">
                                         <span className="code-language">{currentStepData.code.language}</span>
-                                        <button
-                                            className="copy-button"
-                                            onClick={() => copyToClipboard(currentStepData.code!.content)}
-                                        >
+                                        <button className="copy-button" onClick={() => copyToClipboard(currentStepData.code!.content)}>
                                             Копировать
                                         </button>
                                     </div>
@@ -200,10 +166,12 @@ const StepByStepGuide = ({ title, description, steps, estimatedTime }: StepBySte
                             {/* Tips */}
                             {currentStepData.tips && currentStepData.tips.length > 0 && (
                                 <div className="highlight-box info mt-6">
-                                    <h4 className="font-semibold mb-2">💡 Советы:</h4>
-                                    <ul className="list-disc list-inside space-y-1">
+                                    <h4 className="mb-2 font-semibold">💡 Советы:</h4>
+                                    <ul className="list-inside list-disc space-y-1">
                                         {currentStepData.tips.map((tip, index) => (
-                                            <li key={index} className="text-sm">{tip}</li>
+                                            <li key={index} className="text-sm">
+                                                {tip}
+                                            </li>
                                         ))}
                                     </ul>
                                 </div>
@@ -218,27 +186,13 @@ const StepByStepGuide = ({ title, description, steps, estimatedTime }: StepBySte
                 {steps.map((_, index) => (
                     <div key={index} className="flex items-center">
                         <button
-                            className={`progress-step ${
-                                completedSteps.has(index) 
-                                    ? 'completed' 
-                                    : index === currentStep 
-                                    ? 'active' 
-                                    : 'pending'
-                            }`}
+                            className={`progress-step ${completedSteps.has(index) ? 'completed' : index === currentStep ? 'active' : 'pending'}`}
                             onClick={() => setCurrentStep(index)}
                             title={`Шаг ${index + 1}: ${steps[index].title}`}
                         >
-                            {completedSteps.has(index) ? (
-                                <Check className="h-4 w-4" />
-                            ) : (
-                                index + 1
-                            )}
+                            {completedSteps.has(index) ? <Check className="h-4 w-4" /> : index + 1}
                         </button>
-                        {index < steps.length - 1 && (
-                            <div className={`progress-connector ${
-                                completedSteps.has(index) ? 'completed' : ''
-                            }`} />
-                        )}
+                        {index < steps.length - 1 && <div className={`progress-connector ${completedSteps.has(index) ? 'completed' : ''}`} />}
                     </div>
                 ))}
             </div>

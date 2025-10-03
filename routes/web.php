@@ -5,6 +5,8 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentTypeController;
 use App\Http\Controllers\EmployeController;
 use App\Http\Controllers\GuideController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\WarehouseTypeController;
 use Illuminate\Support\Facades\Route;
@@ -75,6 +77,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('user-guides')->group(function () {
         Route::get('/', [GuideController::class, 'index'])->name('user-guides.index');
         Route::get('/{slug}', [GuideController::class, 'show'])->name('user-guides.show');
+    });
+
+    Route::prefix('api/product')->group(function () {
+        Route::get('/list', [ProductController::class, 'list'])->name('api.product.list');
+    });
+
+    Route::prefix('reports')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/products', [ReportController::class, 'products'])->name('reports.products');
     });
 });
 

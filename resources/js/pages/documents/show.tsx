@@ -1,13 +1,13 @@
-import { Head } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
+import SmsConfirmationModal from '@/components/SmsConfirmationModal';
+import SmsRejectionModal from '@/components/SmsRejectionModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import AppLayout from '@/layouts/app-layout';
+import { type BreadcrumbItem } from '@/types';
+import { Head } from '@inertiajs/react';
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import { useState } from 'react';
-import { type BreadcrumbItem } from '@/types';
-import SmsConfirmationModal from '@/components/SmsConfirmationModal';
-import SmsRejectionModal from '@/components/SmsRejectionModal';
 
 // Interfaces
 interface DocumentType {
@@ -84,11 +84,11 @@ interface ShowDocumentProps {
 }
 
 const workerTypeLabels: Record<string, string> = {
-    'admin': 'Администратор',
-    'frp': 'МОЛ',
-    'dep_head': 'Начальник отдела',
-    'director': 'Директор',
-    'buxgalter': 'Бухгалтер'
+    admin: 'Администратор',
+    frp: 'МОЛ',
+    dep_head: 'Начальник отдела',
+    director: 'Директор',
+    buxgalter: 'Бухгалтер',
 };
 
 export default function ShowDocument({ document, history = [], staff, user }: ShowDocumentProps) {
@@ -108,7 +108,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-            second: '2-digit'
+            second: '2-digit',
         });
     };
 
@@ -138,7 +138,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
     };
 
     const getResponsiblePerson = () => {
-        console.log(document.priority)
+        console.log(document.priority);
         console.log(document.priority?.find((el) => el.user_role === 'frp')?.user_info);
         return document.priority?.find((el) => el.user_role === 'frp')?.user_info?.name || '';
     };
@@ -148,10 +148,10 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
             <Head title={`АКТ №${document.number}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Document View Container */}
-                <Card className="w-full max-w-4xl mx-auto">
+                <Card className="mx-auto w-full max-w-4xl">
                     <CardContent className="p-8" style={{ fontFamily: 'Times New Roman, Times, serif' }}>
                         {/* Header with Approval Section */}
-                        <div className="flex justify-end mb-8">
+                        <div className="mb-8 flex justify-end">
                             <div className="text-center">
                                 <div className="font-bold">Утверждаю</div>
                                 <div>Заместитель Генерального директора</div>
@@ -161,15 +161,12 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                         </div>
 
                         {/* Document Title and Description */}
-                        <div className="text-center mb-8">
-                            <div className="text-lg font-semibold mb-4">
-                                {getDocumentTypeTitle()}
-                            </div>
+                        <div className="mb-8 text-center">
+                            <div className="mb-4 text-lg font-semibold">{getDocumentTypeTitle()}</div>
                             <div className="text-justify">
-                                Мы нижеподписавщиеся соcтавили настоящий акт о том, что нижеуказанные
-                                материалы действительно пришли в непригодное состояние и их дальнейшее
-                                использование не целесообразно. Подлежат к списанию с Материального
-                                ответственного лица <span className="font-semibold">{getResponsiblePerson()}</span>
+                                Мы нижеподписавщиеся соcтавили настоящий акт о том, что нижеуказанные материалы действительно пришли в непригодное
+                                состояние и их дальнейшее использование не целесообразно. Подлежат к списанию с Материального ответственного лица{' '}
+                                <span className="font-semibold">{getResponsiblePerson()}</span>
                             </div>
                         </div>
 
@@ -178,11 +175,11 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                             <table className="w-full border-collapse border dark:border-white">
                                 <thead>
                                     <tr>
-                                        <th className="border dark:border-white p-2 text-center">№</th>
-                                        <th className="border dark:border-white p-2 text-center">Наименование</th>
-                                        <th className="border dark:border-white p-2 text-center">Ед.изм.</th>
-                                        <th className="border dark:border-white p-2 text-center">Кол-во</th>
-                                        <th className="border dark:border-white p-2 text-center">
+                                        <th className="border p-2 text-center dark:border-white">№</th>
+                                        <th className="border p-2 text-center dark:border-white">Наименование</th>
+                                        <th className="border p-2 text-center dark:border-white">Ед.изм.</th>
+                                        <th className="border p-2 text-center dark:border-white">Кол-во</th>
+                                        <th className="border p-2 text-center dark:border-white">
                                             {document.type === 1 ? 'Место установки' : 'Причина списания'}
                                         </th>
                                     </tr>
@@ -190,12 +187,12 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                                 <tbody>
                                     {document.products.map((product, index) => (
                                         <tr key={`product-${index}`}>
-                                            <td className="border dark:border-white p-2 text-center">{index + 1}</td>
-                                            <td className="border dark:border-white p-2 text-center">{product.title}</td>
-                                            <td className="border dark:border-white p-2 text-center">{product.measure}.</td>
-                                            <td className="border dark:border-white p-2 text-center">{product.quantity}</td>
-                                            <td className="border dark:border-white p-2 text-center">
-                                                {(document.type === 3 || document.type === 1) ? product.note : ''}
+                                            <td className="border p-2 text-center dark:border-white">{index + 1}</td>
+                                            <td className="border p-2 text-center dark:border-white">{product.title}</td>
+                                            <td className="border p-2 text-center dark:border-white">{product.measure}.</td>
+                                            <td className="border p-2 text-center dark:border-white">{product.quantity}</td>
+                                            <td className="border p-2 text-center dark:border-white">
+                                                {document.type === 3 || document.type === 1 ? product.note : ''}
                                             </td>
                                         </tr>
                                     ))}
@@ -206,7 +203,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                         {/* History Section */}
                         <div className="mb-8">
                             <Collapsible open={historyExpanded} onOpenChange={setHistoryExpanded}>
-                                <CollapsibleTrigger className="flex items-center gap-2 p-4  w-full rounded-lg ">
+                                <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg p-4">
                                     <span className="font-medium">История документа</span>
                                     {historyExpanded ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
                                 </CollapsibleTrigger>
@@ -215,29 +212,30 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                                         <CardContent className="p-4">
                                             <div className="space-y-4">
                                                 {history.map((item, index) => (
-                                                    <div key={`history-${item.id}-${index}`} className="flex items-start gap-4 pb-4 border-b last:border-b-0">
-                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center dark:text-white text-sm ${
-                                                            index === 0 ? 'bg-blue-500' :
-                                                            item.is_success === 1 ? 'bg-green-500' : 'bg-red-500'
-                                                        }`}>
+                                                    <div
+                                                        key={`history-${item.id}-${index}`}
+                                                        className="flex items-start gap-4 border-b pb-4 last:border-b-0"
+                                                    >
+                                                        <div
+                                                            className={`flex h-6 w-6 items-center justify-center rounded-full text-sm dark:text-white ${
+                                                                index === 0 ? 'bg-blue-500' : item.is_success === 1 ? 'bg-green-500' : 'bg-red-500'
+                                                            }`}
+                                                        >
                                                             {index === 0 ? '+' : item.is_success === 1 ? '✓' : '✗'}
                                                         </div>
                                                         <div className="flex-1">
-                                                            <div className="text-sm text-gray-500 mb-1">
-                                                                {index===0 ? formatDate(document.created_at) : item.created_at}
-
+                                                            <div className="mb-1 text-sm text-gray-500">
+                                                                {index === 0 ? formatDate(document.created_at) : item.created_at}
                                                             </div>
-                                                            <div className="font-medium mb-1">
+                                                            <div className="mb-1 font-medium">
                                                                 Имя: {item.user_info.name} ({getWorkerType(item.user_info.type)})
                                                             </div>
                                                             <div className="text-sm">
-                                                                Положение дел: {
-                                                                    index === 0 ? 'СОЗДАННЫЙ' :
-                                                                    item.is_success === 1 ? 'ПОДТВЕРЖДЕН' : 'Отменено'
-                                                                }
+                                                                Положение дел:{' '}
+                                                                {index === 0 ? 'СОЗДАННЫЙ' : item.is_success === 1 ? 'ПОДТВЕРЖДЕН' : 'Отменено'}
                                                             </div>
                                                             {item.is_success === 0 && item.return_info && (
-                                                                <div className="mt-2 text-red-600 text-sm">
+                                                                <div className="mt-2 text-sm text-red-600">
                                                                     {item.return_info.map((info) => (
                                                                         <p key={info.id}>- {info.note}</p>
                                                                     ))}
@@ -254,34 +252,46 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                         </div>
 
                         {/* Signature Blocks */}
-                        <div className="flex justify-between mb-8">
+                        <div className="mb-8 flex justify-between">
                             {/* ОТПРАВЛЕНО Block */}
                             {document.priority && document.priority.length > 0 && (
                                 <div>
-                                    {document.priority.map((priority, index) => (
-                                        index === 0 && priority.is_success === 1 && (
-                                            <div key={`sent-${index}`} className="p-4 border-4 border-gray-400  rounded-lg" style={{ width: '300px' }}>
-                                                <div>{formatDate(priority.updated_at)}</div>
-                                                <div className="text-center font-bold my-2">ОТПРАВЛЕНО</div>
-                                                <div>{priority.user_info?.name}</div>
-                                            </div>
-                                        )
-                                    ))}
+                                    {document.priority.map(
+                                        (priority, index) =>
+                                            index === 0 &&
+                                            priority.is_success === 1 && (
+                                                <div
+                                                    key={`sent-${index}`}
+                                                    className="rounded-lg border-4 border-gray-400 p-4"
+                                                    style={{ width: '300px' }}
+                                                >
+                                                    <div>{formatDate(priority.updated_at)}</div>
+                                                    <div className="my-2 text-center font-bold">ОТПРАВЛЕНО</div>
+                                                    <div>{priority.user_info?.name}</div>
+                                                </div>
+                                            ),
+                                    )}
                                 </div>
                             )}
 
                             {/* ПОДТВЕРЖДЕН Block */}
                             {document.priority && document.priority.length > 0 && (
                                 <div>
-                                    {document.priority.map((priority, index) => (
-                                        index > 0 && priority.is_success === 1 && (
-                                            <div key={`confirmed-${index}`} className="p-4 border-4 border-teal-500  rounded-lg" style={{ width: '300px' }}>
-                                                <div>{formatDate(priority.updated_at)}</div>
-                                                <div className="text-center font-bold my-2">ПОДТВЕРЖДЕН</div>
-                                                <div>{priority.user_info.name}</div>
-                                            </div>
-                                        )
-                                    ))}
+                                    {document.priority.map(
+                                        (priority, index) =>
+                                            index > 0 &&
+                                            priority.is_success === 1 && (
+                                                <div
+                                                    key={`confirmed-${index}`}
+                                                    className="rounded-lg border-4 border-teal-500 p-4"
+                                                    style={{ width: '300px' }}
+                                                >
+                                                    <div>{formatDate(priority.updated_at)}</div>
+                                                    <div className="my-2 text-center font-bold">ПОДТВЕРЖДЕН</div>
+                                                    <div>{priority.user_info.name}</div>
+                                                </div>
+                                            ),
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -290,20 +300,11 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
 
                 {/* Action Buttons */}
                 {!document.is_finished && checkOrder() && (
-                    <div className="flex gap-4 max-w-4xl mx-auto">
-                        <Button
-                            onClick={() => handleConfirm('confirm')}
-                            className="min-w-[200px]"
-                            size="lg"
-                        >
+                    <div className="mx-auto flex max-w-4xl gap-4">
+                        <Button onClick={() => handleConfirm('confirm')} className="min-w-[200px]" size="lg">
                             Подтвердить
                         </Button>
-                        <Button
-                            onClick={() => handleConfirm('cancel')}
-                            variant="destructive"
-                            className="min-w-[200px]"
-                            size="lg"
-                        >
+                        <Button onClick={() => handleConfirm('cancel')} variant="destructive" className="min-w-[200px]" size="lg">
                             Отказать
                         </Button>
                     </div>

@@ -1,15 +1,14 @@
+import { Form, Head, router } from '@inertiajs/react';
+import { ArrowLeft, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
-import { Form } from '@inertiajs/react';
-import { LoaderCircle, ArrowLeft } from 'lucide-react';
 
-import AppLayout from '@/layouts/app-layout';
+import InputError from '@/components/input-error';
+import { SearchableSelect, SearchableSelectOption } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SearchableSelect, SearchableSelectOption } from '@/components/searchable-select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import InputError from '@/components/input-error';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 
 interface Role {
@@ -49,15 +48,15 @@ export default function CreateEmployee({ roles_list, dep_list }: CreateEmployeeP
 
     // Convert backend data to SearchableSelect options
     const roleOptions: SearchableSelectOption[] = roles_list
-        .filter(role => role.is_active)
-        .map(role => ({
+        .filter((role) => role.is_active)
+        .map((role) => ({
             value: role.title.toString(),
             label: role.name,
         }));
 
     const departmentOptions: SearchableSelectOption[] = dep_list
-        .filter(dept => dept.is_active)
-        .map(dept => ({
+        .filter((dept) => dept.is_active)
+        .map((dept) => ({
             value: dept.dep_code,
             label: `${dept.dep_code} - ${dept.title}`,
         }));
@@ -111,12 +110,7 @@ export default function CreateEmployee({ roles_list, dep_list }: CreateEmployeeP
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => router.visit('/employees')}
-                            className="gap-2"
-                        >
+                        <Button variant="outline" size="sm" onClick={() => router.visit('/employees')} className="gap-2">
                             <ArrowLeft className="h-4 w-4" />
                             Назад
                         </Button>
@@ -143,14 +137,7 @@ export default function CreateEmployee({ roles_list, dep_list }: CreateEmployeeP
                                     <div className="grid gap-6">
                                         <div className="grid gap-2">
                                             <Label htmlFor="name">Имя и фамилия *</Label>
-                                            <Input
-                                                id="name"
-                                                name="name"
-                                                type="text"
-                                                placeholder="Введите полное имя"
-                                                required
-                                                autoFocus
-                                            />
+                                            <Input id="name" name="name" type="text" placeholder="Введите полное имя" required autoFocus />
                                             <InputError message={errors.name} />
                                         </div>
 
@@ -195,22 +182,12 @@ export default function CreateEmployee({ roles_list, dep_list }: CreateEmployeeP
                                         </div>
                                         <div className="grid gap-2">
                                             <Label>Пароль *</Label>
-                                            <Input
-                                                id="password"
-                                                name="password"
-                                                type="password"
-                                                placeholder="Введите пароль"
-                                                required
-                                                />
+                                            <Input id="password" name="password" type="password" placeholder="Введите пароль" required />
                                         </div>
                                     </div>
 
                                     <div className="flex gap-4 pt-4">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => router.visit('/employees')}
-                                        >
+                                        <Button type="button" variant="outline" onClick={() => router.visit('/employees')}>
                                             Отменить
                                         </Button>
                                         <Button type="submit" disabled={processing}>

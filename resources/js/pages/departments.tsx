@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Head, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { Head, router } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface Department {
     id: number;
@@ -34,7 +34,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Departments({ departments, total, page, perPage, search }: DepartmentsPageProps) {
     const [localDepartments, setLocalDepartments] = useState<Department[]>(departments);
     const [searchQuery, setSearchQuery] = useState(search || '');
-    
+
     // Update local departments when props change
     useEffect(() => {
         setLocalDepartments(departments);
@@ -53,19 +53,11 @@ export default function Departments({ departments, total, page, perPage, search 
     };
 
     const handleDeactivate = (id: number) => {
-        setLocalDepartments(prev =>
-            prev.map(dept =>
-                dept.id === id ? { ...dept, is_active: false } : dept
-            )
-        );
+        setLocalDepartments((prev) => prev.map((dept) => (dept.id === id ? { ...dept, is_active: false } : dept)));
     };
 
     const handleActivate = (id: number) => {
-        setLocalDepartments(prev =>
-            prev.map(dept =>
-                dept.id === id ? { ...dept, is_active: true } : dept
-            )
-        );
+        setLocalDepartments((prev) => prev.map((dept) => (dept.id === id ? { ...dept, is_active: true } : dept)));
     };
 
     return (
@@ -96,18 +88,10 @@ export default function Departments({ departments, total, page, perPage, search 
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b bg-muted/50">
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Код отдела
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Название
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Статус
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Действия
-                                    </th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Код отдела</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Название</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Статус</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Действия</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -115,33 +99,23 @@ export default function Departments({ departments, total, page, perPage, search 
                                     localDepartments.map((department) => (
                                         <tr key={department.id} className="border-b">
                                             <td className="h-12 px-4 align-middle">
-                                                <div className="font-medium font-mono text-sm">
-                                                    {department.dep_code}
-                                                </div>
+                                                <div className="font-mono text-sm font-medium">{department.dep_code}</div>
                                             </td>
                                             <td className="h-12 px-4 align-middle">
                                                 <div className="font-medium">{department.title}</div>
                                             </td>
                                             <td className="h-12 px-4 align-middle">
-                                                <Badge variant={department.is_active ? "default" : "secondary"}>
+                                                <Badge variant={department.is_active ? 'default' : 'secondary'}>
                                                     {department.is_active ? 'Активен' : 'Неактивен'}
                                                 </Badge>
                                             </td>
                                             <td className="h-12 px-4 align-middle">
                                                 {department.is_active ? (
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        onClick={() => handleDeactivate(department.id)}
-                                                    >
+                                                    <Button variant="destructive" size="sm" onClick={() => handleDeactivate(department.id)}>
                                                         Деактивировать
                                                     </Button>
                                                 ) : (
-                                                    <Button
-                                                        variant="default"
-                                                        size="sm"
-                                                        onClick={() => handleActivate(department.id)}
-                                                    >
+                                                    <Button variant="default" size="sm" onClick={() => handleActivate(department.id)}>
                                                         Активировать
                                                     </Button>
                                                 )}
@@ -151,9 +125,7 @@ export default function Departments({ departments, total, page, perPage, search 
                                 ) : (
                                     <tr>
                                         <td colSpan={4} className="h-24 text-center">
-                                            <div className="text-muted-foreground">
-                                                Отделы не найдены
-                                            </div>
+                                            <div className="text-muted-foreground">Отделы не найдены</div>
                                         </td>
                                     </tr>
                                 )}
@@ -169,12 +141,7 @@ export default function Departments({ departments, total, page, perPage, search 
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePageChange(Math.max(page - 1, 1))}
-                                disabled={page === 1}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => handlePageChange(Math.max(page - 1, 1))} disabled={page === 1}>
                                 Предыдущая
                             </Button>
 
@@ -182,10 +149,10 @@ export default function Departments({ departments, total, page, perPage, search 
                                 {(() => {
                                     const maxVisiblePages = 5;
                                     const halfVisible = Math.floor(maxVisiblePages / 2);
-                                    
+
                                     let startPage = Math.max(1, page - halfVisible);
                                     let endPage = Math.min(totalPages, page + halfVisible);
-                                    
+
                                     // Adjust if we're near the beginning or end
                                     if (endPage - startPage + 1 < maxVisiblePages) {
                                         if (startPage === 1) {
@@ -194,57 +161,51 @@ export default function Departments({ departments, total, page, perPage, search 
                                             startPage = Math.max(1, endPage - maxVisiblePages + 1);
                                         }
                                     }
-                                    
+
                                     const pages = [];
-                                    
+
                                     // First page + ellipsis if needed
                                     if (startPage > 1) {
                                         pages.push(
-                                            <Button
-                                                key={1}
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handlePageChange(1)}
-                                                className="w-8"
-                                            >
+                                            <Button key={1} variant="outline" size="sm" onClick={() => handlePageChange(1)} className="w-8">
                                                 1
-                                            </Button>
+                                            </Button>,
                                         );
-                                        
+
                                         if (startPage > 2) {
                                             pages.push(
                                                 <span key="start-ellipsis" className="px-2 text-muted-foreground">
                                                     ...
-                                                </span>
+                                                </span>,
                                             );
                                         }
                                     }
-                                    
+
                                     // Visible pages
                                     for (let i = startPage; i <= endPage; i++) {
                                         pages.push(
                                             <Button
                                                 key={i}
-                                                variant={page === i ? "default" : "outline"}
+                                                variant={page === i ? 'default' : 'outline'}
                                                 size="sm"
                                                 onClick={() => handlePageChange(i)}
                                                 className="w-8"
                                             >
                                                 {i}
-                                            </Button>
+                                            </Button>,
                                         );
                                     }
-                                    
+
                                     // Last page + ellipsis if needed
                                     if (endPage < totalPages) {
                                         if (endPage < totalPages - 1) {
                                             pages.push(
                                                 <span key="end-ellipsis" className="px-2 text-muted-foreground">
                                                     ...
-                                                </span>
+                                                </span>,
                                             );
                                         }
-                                        
+
                                         pages.push(
                                             <Button
                                                 key={totalPages}
@@ -254,10 +215,10 @@ export default function Departments({ departments, total, page, perPage, search 
                                                 className="w-8"
                                             >
                                                 {totalPages}
-                                            </Button>
+                                            </Button>,
                                         );
                                     }
-                                    
+
                                     return pages;
                                 })()}
                             </div>

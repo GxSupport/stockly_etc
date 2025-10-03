@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Head, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { Head, router } from '@inertiajs/react';
 import { Plus, Warehouse } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface WarehouseType {
     id: number;
@@ -43,7 +43,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Warehouses({ warehouses, total, page, perPage, search }: WarehousesPageProps) {
     const [localWarehouses, setLocalWarehouses] = useState<Warehouse[]>(warehouses);
     const [searchQuery, setSearchQuery] = useState(search || '');
-    
+
     // Update local warehouses when props change
     useEffect(() => {
         setLocalWarehouses(warehouses);
@@ -62,19 +62,11 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
     };
 
     const handleDeactivate = (id: number) => {
-        setLocalWarehouses(prev =>
-            prev.map(warehouse =>
-                warehouse.id === id ? { ...warehouse, is_active: false } : warehouse
-            )
-        );
+        setLocalWarehouses((prev) => prev.map((warehouse) => (warehouse.id === id ? { ...warehouse, is_active: false } : warehouse)));
     };
 
     const handleActivate = (id: number) => {
-        setLocalWarehouses(prev =>
-            prev.map(warehouse =>
-                warehouse.id === id ? { ...warehouse, is_active: true } : warehouse
-            )
-        );
+        setLocalWarehouses((prev) => prev.map((warehouse) => (warehouse.id === id ? { ...warehouse, is_active: true } : warehouse)));
     };
 
     const getTypeColor = (typeName?: string) => {
@@ -120,24 +112,12 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b bg-muted/50">
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Код склада
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Название
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Тип
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Статус
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Комментарий
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Действия
-                                    </th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Код склада</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Название</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Тип</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Статус</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Комментарий</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Действия</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -145,9 +125,7 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                                     localWarehouses.map((warehouse) => (
                                         <tr key={warehouse.id} className="border-b">
                                             <td className="h-12 px-4 align-middle">
-                                                <div className="font-medium font-mono text-sm">
-                                                    {warehouse.code}
-                                                </div>
+                                                <div className="font-mono text-sm font-medium">{warehouse.code}</div>
                                             </td>
                                             <td className="h-12 px-4 align-middle">
                                                 <div className="font-medium">{warehouse.title}</div>
@@ -158,30 +136,20 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                                                 </Badge>
                                             </td>
                                             <td className="h-12 px-4 align-middle">
-                                                <Badge variant={warehouse.is_active ? "default" : "secondary"}>
+                                                <Badge variant={warehouse.is_active ? 'default' : 'secondary'}>
                                                     {warehouse.is_active ? 'Активен' : 'Неактивен'}
                                                 </Badge>
                                             </td>
-                                            <td className="h-12 px-4 align-middle max-w-xs">
-                                                <div className="text-sm text-muted-foreground truncate">
-                                                    {warehouse.comment || '—'}
-                                                </div>
+                                            <td className="h-12 max-w-xs px-4 align-middle">
+                                                <div className="truncate text-sm text-muted-foreground">{warehouse.comment || '—'}</div>
                                             </td>
                                             <td className="h-12 px-4 align-middle">
                                                 {warehouse.is_active ? (
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        onClick={() => handleDeactivate(warehouse.id)}
-                                                    >
+                                                    <Button variant="destructive" size="sm" onClick={() => handleDeactivate(warehouse.id)}>
                                                         Деактивировать
                                                     </Button>
                                                 ) : (
-                                                    <Button
-                                                        variant="default"
-                                                        size="sm"
-                                                        onClick={() => handleActivate(warehouse.id)}
-                                                    >
+                                                    <Button variant="default" size="sm" onClick={() => handleActivate(warehouse.id)}>
                                                         Активировать
                                                     </Button>
                                                 )}
@@ -191,9 +159,7 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                                 ) : (
                                     <tr>
                                         <td colSpan={6} className="h-24 text-center">
-                                            <div className="text-muted-foreground">
-                                                Склады не найдены
-                                            </div>
+                                            <div className="text-muted-foreground">Склады не найдены</div>
                                         </td>
                                     </tr>
                                 )}
@@ -209,12 +175,7 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePageChange(Math.max(page - 1, 1))}
-                                disabled={page === 1}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => handlePageChange(Math.max(page - 1, 1))} disabled={page === 1}>
                                 Предыдущая
                             </Button>
 
@@ -222,10 +183,10 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                                 {(() => {
                                     const maxVisiblePages = 5;
                                     const halfVisible = Math.floor(maxVisiblePages / 2);
-                                    
+
                                     let startPage = Math.max(1, page - halfVisible);
                                     let endPage = Math.min(totalPages, page + halfVisible);
-                                    
+
                                     // Adjust if we're near the beginning or end
                                     if (endPage - startPage + 1 < maxVisiblePages) {
                                         if (startPage === 1) {
@@ -234,57 +195,51 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                                             startPage = Math.max(1, endPage - maxVisiblePages + 1);
                                         }
                                     }
-                                    
+
                                     const pages = [];
-                                    
+
                                     // First page + ellipsis if needed
                                     if (startPage > 1) {
                                         pages.push(
-                                            <Button
-                                                key={1}
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handlePageChange(1)}
-                                                className="w-8"
-                                            >
+                                            <Button key={1} variant="outline" size="sm" onClick={() => handlePageChange(1)} className="w-8">
                                                 1
-                                            </Button>
+                                            </Button>,
                                         );
-                                        
+
                                         if (startPage > 2) {
                                             pages.push(
                                                 <span key="start-ellipsis" className="px-2 text-muted-foreground">
                                                     ...
-                                                </span>
+                                                </span>,
                                             );
                                         }
                                     }
-                                    
+
                                     // Visible pages
                                     for (let i = startPage; i <= endPage; i++) {
                                         pages.push(
                                             <Button
                                                 key={i}
-                                                variant={page === i ? "default" : "outline"}
+                                                variant={page === i ? 'default' : 'outline'}
                                                 size="sm"
                                                 onClick={() => handlePageChange(i)}
                                                 className="w-8"
                                             >
                                                 {i}
-                                            </Button>
+                                            </Button>,
                                         );
                                     }
-                                    
+
                                     // Last page + ellipsis if needed
                                     if (endPage < totalPages) {
                                         if (endPage < totalPages - 1) {
                                             pages.push(
                                                 <span key="end-ellipsis" className="px-2 text-muted-foreground">
                                                     ...
-                                                </span>
+                                                </span>,
                                             );
                                         }
-                                        
+
                                         pages.push(
                                             <Button
                                                 key={totalPages}
@@ -294,10 +249,10 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                                                 className="w-8"
                                             >
                                                 {totalPages}
-                                            </Button>
+                                            </Button>,
                                         );
                                     }
-                                    
+
                                     return pages;
                                 })()}
                             </div>

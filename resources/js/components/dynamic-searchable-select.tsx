@@ -1,13 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
-import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface DynamicSearchableSelectOption {
     id: string;
@@ -46,7 +42,7 @@ export function DynamicSearchableSelect({
     const [searchQuery, setSearchQuery] = useState('');
     const debounceRef = useRef<NodeJS.Timeout>();
 
-    const selectedOptionData = selectedOption || options.find(option => option.id === value);
+    const selectedOptionData = selectedOption || options.find((option) => option.id === value);
 
     const searchWarehouses = async (query: string) => {
         if (debounceRef.current) {
@@ -96,9 +92,7 @@ export function DynamicSearchableSelect({
 
     const getDisplayText = () => {
         if (selectedOptionData) {
-            return selectedOptionData.code 
-                ? `${selectedOptionData.code} - ${selectedOptionData.title}`
-                : selectedOptionData.title;
+            return selectedOptionData.code ? `${selectedOptionData.code} - ${selectedOptionData.title}` : selectedOptionData.title;
         }
         return placeholder;
     };
@@ -119,12 +113,7 @@ export function DynamicSearchableSelect({
             </PopoverTrigger>
             <PopoverContent className="w-full p-0" style={{ width: 'var(--radix-popover-trigger-width)' }}>
                 <div className="p-2">
-                    <Input
-                        placeholder={searchPlaceholder}
-                        value={searchQuery}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        className="mb-2"
-                    />
+                    <Input placeholder={searchPlaceholder} value={searchQuery} onChange={(e) => handleSearch(e.target.value)} className="mb-2" />
                     <div className="max-h-60 overflow-auto">
                         {loading ? (
                             <div className="flex items-center justify-center p-4">
@@ -132,31 +121,22 @@ export function DynamicSearchableSelect({
                                 <span className="ml-2 text-sm">Загрузка...</span>
                             </div>
                         ) : options.length === 0 ? (
-                            <div className="p-4 text-center text-sm text-muted-foreground">
-                                {emptyText}
-                            </div>
+                            <div className="p-4 text-center text-sm text-muted-foreground">{emptyText}</div>
                         ) : (
                             <div className="space-y-1">
                                 {options.map((option) => {
-                                    const displayText = option.code 
-                                        ? `${option.code} - ${option.title}`
-                                        : option.title;
-                                        
+                                    const displayText = option.code ? `${option.code} - ${option.title}` : option.title;
+
                                     return (
                                         <div
                                             key={option.id}
                                             onClick={() => handleSelect(option.id)}
                                             className={cn(
-                                                "flex items-center px-2 py-2 cursor-pointer rounded-md hover:bg-accent hover:text-accent-foreground",
-                                                value === option.id && "bg-accent text-accent-foreground"
+                                                'flex cursor-pointer items-center rounded-md px-2 py-2 hover:bg-accent hover:text-accent-foreground',
+                                                value === option.id && 'bg-accent text-accent-foreground',
                                             )}
                                         >
-                                            <Check
-                                                className={cn(
-                                                    'mr-2 h-4 w-4',
-                                                    value === option.id ? 'opacity-100' : 'opacity-0'
-                                                )}
-                                            />
+                                            <Check className={cn('mr-2 h-4 w-4', value === option.id ? 'opacity-100' : 'opacity-0')} />
                                             <span className="truncate text-sm">{displayText}</span>
                                         </div>
                                     );

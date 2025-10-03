@@ -1,15 +1,14 @@
-import { useState } from 'react';
-import { Head, router, usePage } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Plus, Calendar, Filter, X } from 'lucide-react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { Calendar, Filter, Plus, X } from 'lucide-react';
+import { useState } from 'react';
 
 // Updated Interfaces
 interface RoleInfo {
@@ -68,12 +67,9 @@ interface DocumentsPageProps {
     filters: Filters;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'АКТ', href: '/documents' },
-];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'АКТ', href: '/documents' }];
 
 const DocumentStatus = ({ document }: { document: Document }) => {
-
     // if (document.is_returned) {
     //     return <Badge variant="destructive">Возвращено</Badge>;
     // }
@@ -85,7 +81,6 @@ const DocumentStatus = ({ document }: { document: Document }) => {
     return (
         <TooltipProvider>
             <div className="flex items-center gap-1">
-
                 {document.priority.map((p, index) => (
                     <Tooltip key={index}>
                         <TooltipTrigger>
@@ -100,7 +95,6 @@ const DocumentStatus = ({ document }: { document: Document }) => {
         </TooltipProvider>
     );
 };
-
 
 export default function Documents({ documents, status: currentTab, documentTypes, filters }: DocumentsPageProps) {
     const { auth } = usePage().props as unknown as { auth: { user: { type: string } } };
@@ -170,7 +164,8 @@ export default function Documents({ documents, status: currentTab, documentTypes
         }
     };
 
-    const formatAmount = (amount: number) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
+    const formatAmount = (amount: number) =>
+        new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
     const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('ru-RU');
 
     const isFrp = auth.user?.type === 'frp';
@@ -199,14 +194,10 @@ export default function Documents({ documents, status: currentTab, documentTypes
                 </div>
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-wrap gap-4">
-                        <div className="flex-1 min-w-[280px]">
+                        <div className="min-w-[280px] flex-1">
                             <Input placeholder="Поиск по номеру документа..." value={searchQuery} onChange={(e) => handleSearch(e.target.value)} />
                         </div>
-                        <Button
-                            variant="outline"
-                            onClick={() => setShowFilters(!showFilters)}
-                            className="gap-2"
-                        >
+                        <Button variant="outline" onClick={() => setShowFilters(!showFilters)} className="gap-2">
                             <Filter className="h-4 w-4" />
                             Фильтры
                         </Button>
@@ -241,35 +232,23 @@ export default function Documents({ documents, status: currentTab, documentTypes
                     {showFilters && (
                         <Card>
                             <CardContent className="p-4">
-                                <div className="flex items-center justify-between mb-4">
+                                <div className="mb-4 flex items-center justify-between">
                                     <h3 className="font-medium">Фильтры</h3>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setShowFilters(false)}
-                                    >
+                                    <Button variant="ghost" size="sm" onClick={() => setShowFilters(false)}>
                                         <X className="h-4 w-4" />
                                     </Button>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                                     <div>
-                                        <label className="text-sm font-medium mb-2 block">Дата начала</label>
-                                        <Input
-                                            type="date"
-                                            value={startDate}
-                                            onChange={(e) => setStartDate(e.target.value)}
-                                        />
+                                        <label className="mb-2 block text-sm font-medium">Дата начала</label>
+                                        <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
                                     </div>
                                     <div>
-                                        <label className="text-sm font-medium mb-2 block">Дата окончания</label>
-                                        <Input
-                                            type="date"
-                                            value={endDate}
-                                            onChange={(e) => setEndDate(e.target.value)}
-                                        />
+                                        <label className="mb-2 block text-sm font-medium">Дата окончания</label>
+                                        <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
                                     </div>
                                     <div>
-                                        <label className="text-sm font-medium mb-2 block">Тип документа</label>
+                                        <label className="mb-2 block text-sm font-medium">Тип документа</label>
                                         <Select value={documentType || undefined} onValueChange={(value) => setDocumentType(value || '')}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Все типы" />
@@ -284,7 +263,7 @@ export default function Documents({ documents, status: currentTab, documentTypes
                                         </Select>
                                     </div>
                                     <div>
-                                        <label className="text-sm font-medium mb-2 block">Статус акта</label>
+                                        <label className="mb-2 block text-sm font-medium">Статус акта</label>
                                         <Select value={documentStatus || undefined} onValueChange={(value) => setDocumentStatus(value || '')}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Все статусы" />
@@ -292,12 +271,11 @@ export default function Documents({ documents, status: currentTab, documentTypes
                                             <SelectContent>
                                                 <SelectItem value="0">В обработке</SelectItem>
                                                 <SelectItem value="1">Завершен</SelectItem>
-
                                             </SelectContent>
                                         </Select>
                                     </div>
                                 </div>
-                                <div className="flex gap-2 mt-4">
+                                <div className="mt-4 flex gap-2">
                                     <Button onClick={applyFilters} className="gap-2">
                                         <Filter className="h-4 w-4" />
                                         Применить
@@ -311,12 +289,15 @@ export default function Documents({ documents, status: currentTab, documentTypes
                     )}
                 </div>
                 <Tabs value={currentTab} onValueChange={(value) => router.visit('/documents/' + value)} className="w-full">
-                    <TabsList className={`grid w-full ${
-                        availableTabs.length === 1 ? 'grid-cols-1' :
-                        availableTabs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
-                    }`}>
+                    <TabsList
+                        className={`grid w-full ${
+                            availableTabs.length === 1 ? 'grid-cols-1' : availableTabs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
+                        }`}
+                    >
                         {availableTabs.map((tab) => (
-                            <TabsTrigger key={tab.value} value={tab.value}>{tab.label}</TabsTrigger>
+                            <TabsTrigger key={tab.value} value={tab.value}>
+                                {tab.label}
+                            </TabsTrigger>
                         ))}
                     </TabsList>
                     <TabsContent value={currentTab} className="mt-4">
@@ -332,30 +313,38 @@ export default function Documents({ documents, status: currentTab, documentTypes
                                     </colgroup>
                                     <thead>
                                         <tr className="border-b bg-muted/50">
-                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-sm">Номер</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-sm">Тип документа</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-sm">Сумма</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-sm">Дата заказа</th>
-                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground text-sm">Статус</th>
+                                            <th className="h-12 px-4 text-left align-middle text-sm font-medium text-muted-foreground">Номер</th>
+                                            <th className="h-12 px-4 text-left align-middle text-sm font-medium text-muted-foreground">
+                                                Тип документа
+                                            </th>
+                                            <th className="h-12 px-4 text-left align-middle text-sm font-medium text-muted-foreground">Сумма</th>
+                                            <th className="h-12 px-4 text-left align-middle text-sm font-medium text-muted-foreground">
+                                                Дата заказа
+                                            </th>
+                                            <th className="h-12 px-4 text-left align-middle text-sm font-medium text-muted-foreground">Статус</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {documents.data.length > 0 ? (
                                             documents.data.map((document) => (
-                                                <tr key={document.id} className="border-b hover:bg-muted/50 cursor-pointer" onClick={() => handleRowClick(document)}>
+                                                <tr
+                                                    key={document.id}
+                                                    className="cursor-pointer border-b hover:bg-muted/50"
+                                                    onClick={() => handleRowClick(document)}
+                                                >
                                                     <td className="h-12 px-4 align-middle">
-                                                        <div className="font-medium font-mono text-sm truncate">{document.number}</div>
+                                                        <div className="truncate font-mono text-sm font-medium">{document.number}</div>
                                                     </td>
                                                     <td className="h-12 px-4 align-middle">
-                                                        <div className="font-medium text-sm truncate" title={document.document_type.title}>
+                                                        <div className="truncate text-sm font-medium" title={document.document_type.title}>
                                                             {document.document_type.title}
                                                         </div>
                                                     </td>
                                                     <td className="h-12 px-4 align-middle">
-                                                        <div className="font-medium text-sm">{formatAmount(document.total_amount)}</div>
+                                                        <div className="text-sm font-medium">{formatAmount(document.total_amount)}</div>
                                                     </td>
                                                     <td className="h-12 px-4 align-middle">
-                                                        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                             <Calendar className="h-4 w-4 flex-shrink-0" />
                                                             <span>{formatDate(document.date_order)}</span>
                                                         </div>
@@ -377,7 +366,7 @@ export default function Documents({ documents, status: currentTab, documentTypes
                             </div>
                         </div>
                         {documents.last_page > 1 && (
-                            <div className="flex items-center justify-between mt-4">
+                            <div className="mt-4 flex items-center justify-between">
                                 <div className="text-sm text-muted-foreground">
                                     Показано {documents.from}-{documents.to} из {documents.total} записей
                                     <span className="ml-2 text-muted-foreground">

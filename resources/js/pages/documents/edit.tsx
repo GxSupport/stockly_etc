@@ -1,13 +1,35 @@
-import { Head, useForm } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import DocumentForm, { type DocumentData, type ProductItem } from '@/components/documents/DocumentForm';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { Head, useForm } from '@inertiajs/react';
 
 // Interfaces
-interface DocumentType { id: number; code: string; title: string; }
-interface Product { name: string; warehouse: string; measure: string; price: number; count: string; nomenclature: string; }
-interface Service { name: string; basic_resource_code: string; }
-interface DocumentProduct { id: number; title: string; measure: string; quantity: number; amount: number; nomenclature: string; note: string; }
+interface DocumentType {
+    id: number;
+    code: string;
+    title: string;
+}
+interface Product {
+    name: string;
+    warehouse: string;
+    measure: string;
+    price: number;
+    count: string;
+    nomenclature: string;
+}
+interface Service {
+    name: string;
+    basic_resource_code: string;
+}
+interface DocumentProduct {
+    id: number;
+    title: string;
+    measure: string;
+    quantity: number;
+    amount: number;
+    nomenclature: string;
+    note: string;
+}
 interface Document {
     id: number;
     number: string;
@@ -45,17 +67,21 @@ export default function EditDocument({ document, documentTypes, products, servic
         is_returned: document.is_returned,
         status: document.status,
         note: '',
-        products: document.products.map((p): ProductItem => ({
-            id: p.id,
-            product_name: p.title,
-            measure: p.measure,
-            quantity: p.quantity,
-            amount: p.amount,
-            nomenclature: p.nomenclature,
-            note: p.note,
-            selected_product: products.find(ap => ap.nomenclature === p.nomenclature) || null,
-            max_quantity: products.find(ap => ap.nomenclature === p.nomenclature) ? parseInt(products.find(ap => ap.nomenclature === p.nomenclature)!.count) : 999,
-        })),
+        products: document.products.map(
+            (p): ProductItem => ({
+                id: p.id,
+                product_name: p.title,
+                measure: p.measure,
+                quantity: p.quantity,
+                amount: p.amount,
+                nomenclature: p.nomenclature,
+                note: p.note,
+                selected_product: products.find((ap) => ap.nomenclature === p.nomenclature) || null,
+                max_quantity: products.find((ap) => ap.nomenclature === p.nomenclature)
+                    ? parseInt(products.find((ap) => ap.nomenclature === p.nomenclature)!.count)
+                    : 999,
+            }),
+        ),
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -64,9 +90,7 @@ export default function EditDocument({ document, documentTypes, products, servic
         const submissionData = {
             ...data,
             total_amount: totalAmount,
-            products: data.document_type_id === '2'
-                ? data.products.map(p => ({ ...p, measure: '' }))
-                : data.products,
+            products: data.document_type_id === '2' ? data.products.map((p) => ({ ...p, measure: '' })) : data.products,
         };
         put(`/documents/${document.id}`, { data: submissionData } as never);
     };

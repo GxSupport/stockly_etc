@@ -5,7 +5,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { dashboard } from '@/routes';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Users, Building2, Warehouse, Archive, FileText, ClipboardList, HelpCircle } from 'lucide-react';
+import { Archive, BarChart3, BookOpen, Building2, ClipboardList, FileText, LayoutGrid, Users, Warehouse } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const allNavItems: NavItem[] = [
@@ -44,6 +44,11 @@ const allNavItems: NavItem[] = [
         href: '/documents',
         icon: ClipboardList,
     },
+    {
+        title: 'Отчеты',
+        href: '/reports/products',
+        icon: BarChart3,
+    },
 ];
 
 const managementRoutes = ['/employees', '/departments', '/warehouses', '/warehouse-types', '/document-types'];
@@ -62,8 +67,8 @@ const footerNavItems: NavItem[] = [
 
 export function AppSidebar() {
     const { auth } = usePage<SharedData>().props;
-    
-    const filteredNavItems = allNavItems.filter(item => {
+
+    const filteredNavItems = allNavItems.filter((item) => {
         if (managementRoutes.includes(item.href as string)) {
             return hasManagementAccess(auth.user.type);
         }

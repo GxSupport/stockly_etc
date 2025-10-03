@@ -1,14 +1,12 @@
-import { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
-import { Form } from '@inertiajs/react';
-import { LoaderCircle, ArrowLeft } from 'lucide-react';
+import { Form, Head, router } from '@inertiajs/react';
+import { ArrowLeft, LoaderCircle } from 'lucide-react';
 
-import AppLayout from '@/layouts/app-layout';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import InputError from '@/components/input-error';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -34,12 +32,7 @@ export default function CreateDepartment() {
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => router.visit('/departments')}
-                            className="gap-2"
-                        >
+                        <Button variant="outline" size="sm" onClick={() => router.visit('/departments')} className="gap-2">
                             <ArrowLeft className="h-4 w-4" />
                             Назад
                         </Button>
@@ -52,11 +45,7 @@ export default function CreateDepartment() {
                         <CardTitle>Информация об отделе</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Form
-                            action="/departments/create"
-                            method="post"
-                            className="flex flex-col gap-6"
-                        >
+                        <Form action="/departments/create" method="post" className="flex flex-col gap-6">
                             {({ processing, errors }) => (
                                 <>
                                     <div className="grid gap-6">
@@ -77,30 +66,18 @@ export default function CreateDepartment() {
                                                 }}
                                             />
                                             <InputError message={errors.dep_code} />
-                                            <div className="text-xs text-muted-foreground">
-                                                Используйте короткий уникальный код (2-5 символов)
-                                            </div>
+                                            <div className="text-xs text-muted-foreground">Используйте короткий уникальный код (2-5 символов)</div>
                                         </div>
 
                                         <div className="grid gap-2">
                                             <Label htmlFor="title">Название отдела *</Label>
-                                            <Input
-                                                id="title"
-                                                name="title"
-                                                type="text"
-                                                placeholder="Введите полное название отдела"
-                                                required
-                                            />
+                                            <Input id="title" name="title" type="text" placeholder="Введите полное название отдела" required />
                                             <InputError message={errors.title} />
                                         </div>
                                     </div>
 
                                     <div className="flex gap-4 pt-4">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => router.visit('/departments')}
-                                        >
+                                        <Button type="button" variant="outline" onClick={() => router.visit('/departments')}>
                                             Отменить
                                         </Button>
                                         <Button type="submit" disabled={processing}>

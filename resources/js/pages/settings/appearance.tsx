@@ -1,10 +1,10 @@
+import AppearanceToggleTab from '@/components/appearance-tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { useAppearance } from '@/hooks/use-appearance';
 import SettingsLayout from '@/layouts/settings-layout';
 import { Head } from '@inertiajs/react';
-import { Palette, Sun, Moon, Monitor, CheckCircle } from 'lucide-react';
-import AppearanceToggleTab from '@/components/appearance-tabs';
-import { useAppearance } from '@/hooks/use-appearance';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { CheckCircle, Monitor, Moon, Palette, Sun } from 'lucide-react';
 
 export default function Appearance() {
     const { appearance } = useAppearance();
@@ -50,10 +50,7 @@ export default function Appearance() {
     const CurrentIcon = currentTheme.icon;
 
     return (
-        <SettingsLayout
-            title="Оформление"
-            description="Настройка внешнего вида интерфейса приложения"
-        >
+        <SettingsLayout title="Оформление" description="Настройка внешнего вида интерфейса приложения">
             <Head title="Настройки оформления" />
 
             <div className="space-y-8">
@@ -67,7 +64,7 @@ export default function Appearance() {
                     <Card className={`border-0 ${currentTheme.bgColor}`}>
                         <CardContent className="p-6">
                             <div className="flex items-center space-x-4">
-                                <div className={`p-3 rounded-full ${currentTheme.bgColor}`}>
+                                <div className={`rounded-full p-3 ${currentTheme.bgColor}`}>
                                     <CurrentIcon className={`h-6 w-6 ${currentTheme.color}`} />
                                 </div>
                                 <div className="flex-1">
@@ -75,9 +72,7 @@ export default function Appearance() {
                                         <h4 className="font-semibold">{currentTheme.title}</h4>
                                         <CheckCircle className="h-4 w-4 text-green-600" />
                                     </div>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                        {currentTheme.description}
-                                    </p>
+                                    <p className="mt-1 text-sm text-muted-foreground">{currentTheme.description}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -114,11 +109,11 @@ export default function Appearance() {
                                 </div>
                             </CardHeader>
                             <CardContent className="p-0">
-                                <div className="h-32 bg-gradient-to-br from-white to-gray-50 border-t">
-                                    <div className="p-4 space-y-2">
-                                        <div className="h-2 bg-gray-200 rounded w-3/4"></div>
-                                        <div className="h-2 bg-gray-100 rounded w-1/2"></div>
-                                        <div className="h-6 bg-blue-500 rounded w-20 mt-3"></div>
+                                <div className="h-32 border-t bg-gradient-to-br from-white to-gray-50">
+                                    <div className="space-y-2 p-4">
+                                        <div className="h-2 w-3/4 rounded bg-gray-200"></div>
+                                        <div className="h-2 w-1/2 rounded bg-gray-100"></div>
+                                        <div className="mt-3 h-6 w-20 rounded bg-blue-500"></div>
                                     </div>
                                 </div>
                             </CardContent>
@@ -138,11 +133,11 @@ export default function Appearance() {
                                 </div>
                             </CardHeader>
                             <CardContent className="p-0">
-                                <div className="h-32 bg-gradient-to-br from-gray-900 to-gray-800 border-t">
-                                    <div className="p-4 space-y-2">
-                                        <div className="h-2 bg-gray-600 rounded w-3/4"></div>
-                                        <div className="h-2 bg-gray-700 rounded w-1/2"></div>
-                                        <div className="h-6 bg-blue-500 rounded w-20 mt-3"></div>
+                                <div className="h-32 border-t bg-gradient-to-br from-gray-900 to-gray-800">
+                                    <div className="space-y-2 p-4">
+                                        <div className="h-2 w-3/4 rounded bg-gray-600"></div>
+                                        <div className="h-2 w-1/2 rounded bg-gray-700"></div>
+                                        <div className="mt-3 h-6 w-20 rounded bg-blue-500"></div>
                                     </div>
                                 </div>
                             </CardContent>
@@ -162,11 +157,11 @@ export default function Appearance() {
                                 </div>
                             </CardHeader>
                             <CardContent className="p-0">
-                                <div className="h-32 bg-gradient-to-r from-white via-gray-100 to-gray-900 border-t">
-                                    <div className="p-4 space-y-2">
-                                        <div className="h-2 bg-gradient-to-r from-gray-200 to-gray-600 rounded w-3/4"></div>
-                                        <div className="h-2 bg-gradient-to-r from-gray-100 to-gray-700 rounded w-1/2"></div>
-                                        <div className="h-6 bg-blue-500 rounded w-20 mt-3"></div>
+                                <div className="h-32 border-t bg-gradient-to-r from-white via-gray-100 to-gray-900">
+                                    <div className="space-y-2 p-4">
+                                        <div className="h-2 w-3/4 rounded bg-gradient-to-r from-gray-200 to-gray-600"></div>
+                                        <div className="h-2 w-1/2 rounded bg-gradient-to-r from-gray-100 to-gray-700"></div>
+                                        <div className="mt-3 h-6 w-20 rounded bg-blue-500"></div>
                                     </div>
                                 </div>
                             </CardContent>
@@ -181,22 +176,21 @@ export default function Appearance() {
 
                 {/* Additional Information */}
                 <div className="rounded-lg bg-muted/50 p-6">
-                    <h4 className="font-medium mb-3 flex items-center">
-                        <Palette className="h-4 w-4 mr-2" />
-                        О темах оформления
+                    <h4 className="mb-3 flex items-center font-medium">
+                        <Palette className="mr-2 h-4 w-4" />О темах оформления
                     </h4>
                     <div className="space-y-2 text-sm text-muted-foreground">
                         <p>
-                            <strong>Светлая тема:</strong> Классический светлый интерфейс с высоким контрастом, 
-                            идеальный для работы в хорошо освещенных помещениях.
+                            <strong>Светлая тема:</strong> Классический светлый интерфейс с высоким контрастом, идеальный для работы в хорошо
+                            освещенных помещениях.
                         </p>
                         <p>
-                            <strong>Темная тема:</strong> Современный темный интерфейс, который снижает нагрузку на глаза 
-                            и экономит заряд батареи на устройствах с OLED экранами.
+                            <strong>Темная тема:</strong> Современный темный интерфейс, который снижает нагрузку на глаза и экономит заряд батареи на
+                            устройствах с OLED экранами.
                         </p>
                         <p>
-                            <strong>Системная тема:</strong> Автоматически переключается между светлой и темной темой 
-                            в зависимости от настроек вашей операционной системы.
+                            <strong>Системная тема:</strong> Автоматически переключается между светлой и темной темой в зависимости от настроек вашей
+                            операционной системы.
                         </p>
                     </div>
                 </div>

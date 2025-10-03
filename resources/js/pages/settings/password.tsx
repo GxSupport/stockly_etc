@@ -1,13 +1,12 @@
-import SettingsLayout from '@/layouts/settings-layout';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Alert } from '@/components/ui/alert';
-import { useForm, Head } from '@inertiajs/react';
-import { FormEvent } from 'react';
-import { Lock, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { useState } from 'react';
+import SettingsLayout from '@/layouts/settings-layout';
+import { Head, useForm } from '@inertiajs/react';
+import { AlertCircle, CheckCircle, Eye, EyeOff, Lock } from 'lucide-react';
+import { FormEvent, useState } from 'react';
 
 export default function Password() {
     const [showPasswords, setShowPasswords] = useState({
@@ -40,17 +39,14 @@ export default function Password() {
     };
 
     const togglePasswordVisibility = (field: keyof typeof showPasswords) => {
-        setShowPasswords(prev => ({
+        setShowPasswords((prev) => ({
             ...prev,
-            [field]: !prev[field]
+            [field]: !prev[field],
         }));
     };
 
     return (
-        <SettingsLayout
-            title="Пароль"
-            description="Обновление пароля для обеспечения безопасности аккаунта"
-        >
+        <SettingsLayout title="Пароль" description="Обновление пароля для обеспечения безопасности аккаунта">
             <Head title="Изменить пароль" />
 
             <div className="space-y-6">
@@ -62,9 +58,7 @@ export default function Password() {
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <div className="ml-2">
-                        <p className="text-sm">
-                            Убедитесь, что ваш аккаунт использует длинный, случайный пароль, чтобы оставаться в безопасности.
-                        </p>
+                        <p className="text-sm">Убедитесь, что ваш аккаунт использует длинный, случайный пароль, чтобы оставаться в безопасности.</p>
                     </div>
                 </Alert>
 
@@ -88,7 +82,7 @@ export default function Password() {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                    className="absolute top-0 right-0 h-full px-3 py-2 hover:bg-transparent"
                                     onClick={() => togglePasswordVisibility('current')}
                                     disabled={processing}
                                 >
@@ -99,9 +93,7 @@ export default function Password() {
                                     )}
                                 </Button>
                             </div>
-                            {errors.current_password && (
-                                <p className="text-sm text-destructive">{errors.current_password}</p>
-                            )}
+                            {errors.current_password && <p className="text-sm text-destructive">{errors.current_password}</p>}
                         </div>
 
                         <Separator />
@@ -125,7 +117,7 @@ export default function Password() {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                    className="absolute top-0 right-0 h-full px-3 py-2 hover:bg-transparent"
                                     onClick={() => togglePasswordVisibility('new')}
                                     disabled={processing}
                                 >
@@ -136,12 +128,8 @@ export default function Password() {
                                     )}
                                 </Button>
                             </div>
-                            {errors.password && (
-                                <p className="text-sm text-destructive">{errors.password}</p>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                                Пароль должен содержать минимум 8 символов
-                            </p>
+                            {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                            <p className="text-xs text-muted-foreground">Пароль должен содержать минимум 8 символов</p>
                         </div>
 
                         {/* Confirm Password */}
@@ -162,7 +150,7 @@ export default function Password() {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                    className="absolute top-0 right-0 h-full px-3 py-2 hover:bg-transparent"
                                     onClick={() => togglePasswordVisibility('confirm')}
                                     disabled={processing}
                                 >
@@ -173,9 +161,7 @@ export default function Password() {
                                     )}
                                 </Button>
                             </div>
-                            {errors.password_confirmation && (
-                                <p className="text-sm text-destructive">{errors.password_confirmation}</p>
-                            )}
+                            {errors.password_confirmation && <p className="text-sm text-destructive">{errors.password_confirmation}</p>}
                         </div>
                     </div>
 
@@ -186,7 +172,7 @@ export default function Password() {
 
                         {recentlySuccessful && (
                             <div className="flex items-center text-sm text-green-600">
-                                <CheckCircle className="h-4 w-4 mr-1" />
+                                <CheckCircle className="mr-1 h-4 w-4" />
                                 Пароль изменен
                             </div>
                         )}
@@ -194,9 +180,9 @@ export default function Password() {
                 </form>
 
                 {/* Password Requirements */}
-                <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                    <h4 className="font-medium mb-2">Требования к паролю:</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
+                <div className="mt-6 rounded-lg bg-muted/50 p-4">
+                    <h4 className="mb-2 font-medium">Требования к паролю:</h4>
+                    <ul className="space-y-1 text-sm text-muted-foreground">
                         <li>• Минимум 8 символов</li>
                         <li>• Рекомендуется использовать буквы, цифры и специальные символы</li>
                         <li>• Не используйте простые или повторяющиеся пароли</li>

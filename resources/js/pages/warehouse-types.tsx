@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Head, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Plus, Archive } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface WarehouseType {
     id: number;
@@ -49,9 +49,7 @@ const generateFakeWarehouseTypes = (page: number, perPage: number, search: strin
 
     let filteredTypes = allTypes;
     if (search) {
-        filteredTypes = allTypes.filter(type => 
-            type.title.toLowerCase().includes(search.toLowerCase())
-        );
+        filteredTypes = allTypes.filter((type) => type.title.toLowerCase().includes(search.toLowerCase()));
     }
 
     const total = filteredTypes.length;
@@ -63,19 +61,25 @@ const generateFakeWarehouseTypes = (page: number, perPage: number, search: strin
         total,
         page,
         perPage,
-        search
+        search,
     };
 };
 
-export default function WarehouseTypes({ warehouse_types: initialWarehouseTypes = [], total: initialTotal = 0, page = 1, perPage = 10, search }: WarehouseTypesPageProps) {
+export default function WarehouseTypes({
+    warehouse_types: initialWarehouseTypes = [],
+    total: initialTotal = 0,
+    page = 1,
+    perPage = 10,
+    search,
+}: WarehouseTypesPageProps) {
     // Use fake data if no real data provided
     const fakeData = generateFakeWarehouseTypes(page, perPage, search);
     const warehouse_types = initialWarehouseTypes.length > 0 ? initialWarehouseTypes : fakeData.warehouse_types;
     const total = initialTotal > 0 ? initialTotal : fakeData.total;
-    
+
     const [localWarehouseTypes, setLocalWarehouseTypes] = useState<WarehouseType[]>(warehouse_types);
     const [searchQuery, setSearchQuery] = useState(search || '');
-    
+
     // Update local warehouse types when props change
     useEffect(() => {
         setLocalWarehouseTypes(warehouse_types);
@@ -94,19 +98,11 @@ export default function WarehouseTypes({ warehouse_types: initialWarehouseTypes 
     };
 
     const handleDeactivate = (id: number) => {
-        setLocalWarehouseTypes(prev =>
-            prev.map(type =>
-                type.id === id ? { ...type, is_active: false } : type
-            )
-        );
+        setLocalWarehouseTypes((prev) => prev.map((type) => (type.id === id ? { ...type, is_active: false } : type)));
     };
 
     const handleActivate = (id: number) => {
-        setLocalWarehouseTypes(prev =>
-            prev.map(type =>
-                type.id === id ? { ...type, is_active: true } : type
-            )
-        );
+        setLocalWarehouseTypes((prev) => prev.map((type) => (type.id === id ? { ...type, is_active: true } : type)));
     };
 
     return (
@@ -124,11 +120,7 @@ export default function WarehouseTypes({ warehouse_types: initialWarehouseTypes 
 
                 <div className="flex gap-4">
                     <div className="flex-1">
-                        <Input
-                            placeholder="Поиск по названию типа склада..."
-                            value={searchQuery}
-                            onChange={(e) => handleSearch(e.target.value)}
-                        />
+                        <Input placeholder="Поиск по названию типа склада..." value={searchQuery} onChange={(e) => handleSearch(e.target.value)} />
                     </div>
                 </div>
 
@@ -137,18 +129,10 @@ export default function WarehouseTypes({ warehouse_types: initialWarehouseTypes 
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b bg-muted/50">
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        ID
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Название
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Статус
-                                    </th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                                        Действия
-                                    </th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">ID</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Название</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Статус</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Действия</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -156,33 +140,23 @@ export default function WarehouseTypes({ warehouse_types: initialWarehouseTypes 
                                     localWarehouseTypes.map((warehouseType) => (
                                         <tr key={warehouseType.id} className="border-b">
                                             <td className="h-12 px-4 align-middle">
-                                                <div className="font-medium font-mono text-sm">
-                                                    {warehouseType.id}
-                                                </div>
+                                                <div className="font-mono text-sm font-medium">{warehouseType.id}</div>
                                             </td>
                                             <td className="h-12 px-4 align-middle">
                                                 <div className="font-medium">{warehouseType.title}</div>
                                             </td>
                                             <td className="h-12 px-4 align-middle">
-                                                <Badge variant={warehouseType.is_active ? "default" : "secondary"}>
+                                                <Badge variant={warehouseType.is_active ? 'default' : 'secondary'}>
                                                     {warehouseType.is_active ? 'Активен' : 'Неактивен'}
                                                 </Badge>
                                             </td>
                                             <td className="h-12 px-4 align-middle">
                                                 {warehouseType.is_active ? (
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        onClick={() => handleDeactivate(warehouseType.id)}
-                                                    >
+                                                    <Button variant="destructive" size="sm" onClick={() => handleDeactivate(warehouseType.id)}>
                                                         Деактивировать
                                                     </Button>
                                                 ) : (
-                                                    <Button
-                                                        variant="default"
-                                                        size="sm"
-                                                        onClick={() => handleActivate(warehouseType.id)}
-                                                    >
+                                                    <Button variant="default" size="sm" onClick={() => handleActivate(warehouseType.id)}>
                                                         Активировать
                                                     </Button>
                                                 )}
@@ -192,9 +166,7 @@ export default function WarehouseTypes({ warehouse_types: initialWarehouseTypes 
                                 ) : (
                                     <tr>
                                         <td colSpan={4} className="h-24 text-center">
-                                            <div className="text-muted-foreground">
-                                                Типы складов не найдены
-                                            </div>
+                                            <div className="text-muted-foreground">Типы складов не найдены</div>
                                         </td>
                                     </tr>
                                 )}
@@ -210,12 +182,7 @@ export default function WarehouseTypes({ warehouse_types: initialWarehouseTypes 
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handlePageChange(Math.max(page - 1, 1))}
-                                disabled={page === 1}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => handlePageChange(Math.max(page - 1, 1))} disabled={page === 1}>
                                 Предыдущая
                             </Button>
 
@@ -223,10 +190,10 @@ export default function WarehouseTypes({ warehouse_types: initialWarehouseTypes 
                                 {(() => {
                                     const maxVisiblePages = 5;
                                     const halfVisible = Math.floor(maxVisiblePages / 2);
-                                    
+
                                     let startPage = Math.max(1, page - halfVisible);
                                     let endPage = Math.min(totalPages, page + halfVisible);
-                                    
+
                                     // Adjust if we're near the beginning or end
                                     if (endPage - startPage + 1 < maxVisiblePages) {
                                         if (startPage === 1) {
@@ -235,57 +202,51 @@ export default function WarehouseTypes({ warehouse_types: initialWarehouseTypes 
                                             startPage = Math.max(1, endPage - maxVisiblePages + 1);
                                         }
                                     }
-                                    
+
                                     const pages = [];
-                                    
+
                                     // First page + ellipsis if needed
                                     if (startPage > 1) {
                                         pages.push(
-                                            <Button
-                                                key={1}
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handlePageChange(1)}
-                                                className="w-8"
-                                            >
+                                            <Button key={1} variant="outline" size="sm" onClick={() => handlePageChange(1)} className="w-8">
                                                 1
-                                            </Button>
+                                            </Button>,
                                         );
-                                        
+
                                         if (startPage > 2) {
                                             pages.push(
                                                 <span key="start-ellipsis" className="px-2 text-muted-foreground">
                                                     ...
-                                                </span>
+                                                </span>,
                                             );
                                         }
                                     }
-                                    
+
                                     // Visible pages
                                     for (let i = startPage; i <= endPage; i++) {
                                         pages.push(
                                             <Button
                                                 key={i}
-                                                variant={page === i ? "default" : "outline"}
+                                                variant={page === i ? 'default' : 'outline'}
                                                 size="sm"
                                                 onClick={() => handlePageChange(i)}
                                                 className="w-8"
                                             >
                                                 {i}
-                                            </Button>
+                                            </Button>,
                                         );
                                     }
-                                    
+
                                     // Last page + ellipsis if needed
                                     if (endPage < totalPages) {
                                         if (endPage < totalPages - 1) {
                                             pages.push(
                                                 <span key="end-ellipsis" className="px-2 text-muted-foreground">
                                                     ...
-                                                </span>
+                                                </span>,
                                             );
                                         }
-                                        
+
                                         pages.push(
                                             <Button
                                                 key={totalPages}
@@ -295,10 +256,10 @@ export default function WarehouseTypes({ warehouse_types: initialWarehouseTypes 
                                                 className="w-8"
                                             >
                                                 {totalPages}
-                                            </Button>
+                                            </Button>,
                                         );
                                     }
-                                    
+
                                     return pages;
                                 })()}
                             </div>

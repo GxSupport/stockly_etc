@@ -241,6 +241,103 @@ class ProductService
         }
     }
 
+    public function getProductsList(string $warehouseCode, string $warehouseTitle, ?string $date = null): array
+    {
+        $date = $date ?? date('d.m.Y');
+        $date = date('d.m.Y', strtotime($date));
+
+        $client = new Client([
+            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
+            'timeout' => 30,
+            'connect_timeout' => 10,
+            'verify' => false,
+        ]);
+
+        $baseUrl = 'http://89.236.216.12:8083';
+        $endpoint = '/base2/hs/CarData/os/empl';
+
+        $queryParams = [
+            'm' => 'get_stock_leftover',
+            'code' => $warehouseCode,
+            'wh_name' => $warehouseTitle,
+            'date' => $date,
+        ];
+
+        $fullUrl = $baseUrl.$endpoint.'?'.http_build_query($queryParams);
+
+        Log::info('1C Products Integration Request (Guzzle)', [
+            'base_url' => $baseUrl,
+            'endpoint' => $endpoint,
+            'query_params' => $queryParams,
+            'full_url' => $fullUrl,
+        ]);
+
+        try {
+            $response = $client->get($endpoint, [
+                'base_uri' => $baseUrl,
+                'query' => $queryParams,
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Accept' => '*/*',
+                    'Authorization' => 'Basic aHR0cGJvdDpodHRwYm90',
+                ],
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $body = $response->getBody()->getContents();
+
+            Log::info('1C Products Integration Response (Guzzle)', [
+                'status' => $statusCode,
+                'successful' => $statusCode >= 200 && $statusCode < 300,
+                'body_length' => strlen($body),
+            ]);
+
+            $products = [];
+
+            if ($statusCode >= 200 && $statusCode < 300) {
+                $clean = str_replace('﻿', '', $body);
+                $items = json_decode($clean, true);
+
+                Log::info('1C Products Integration Parsed Data (Guzzle)', [
+                    'items_count' => is_array($items) ? count($items) : 'not_array',
+                ]);
+
+                if (is_array($items)) {
+                    foreach ($items as $value) {
+                        $products[] = new \App\Data\ProductData(
+                            name: $value['Номенклатура'],
+                            warehouse: $value['Склад'],
+                            measure: $value['ЕдИзм'],
+                            price: $this->numberFromStringForProduct($value['СуммаОстаток']),
+                            count: $value['КоличествоОстаток'],
+                            nomenclature: $value['КодНоменклатуры']
+                        );
+                    }
+                } else {
+                    Log::warning('1C Products Integration: items is not array (Guzzle)', ['items' => $items]);
+                }
+            } else {
+                Log::error('1C Products Integration Failed (Guzzle)', [
+                    'status' => $statusCode,
+                    'body' => $body,
+                    'url' => $fullUrl,
+                ]);
+                throw new \Exception('Ошибка подключения к серверу, ошибка: '.$statusCode);
+            }
+
+            Log::info('1C Products Integration Final Result (Guzzle)', ['products_count' => count($products)]);
+
+            return $products;
+
+        } catch (\Exception $e) {
+            Log::error('1C Products Integration Exception (Guzzle)', [
+                'message' => $e->getMessage(),
+                'url' => $fullUrl,
+            ]);
+            throw new \Exception('Ошибка подключения к серверу: '.$e->getMessage());
+        }
+    }
+
     public function numberFromStringForProduct(string $number): float
     {
         // убираем запятые

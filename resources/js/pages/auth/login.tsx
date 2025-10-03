@@ -1,4 +1,3 @@
-
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -43,21 +42,24 @@ export default function Login({ status, canResetPassword }: LoginProps) {
         setPhone(formattedValue);
     };
     return (
-        <AuthLayout title="
+        <AuthLayout
+            title="
         Войти в аккаунт
-        " description="Введите свои учетные данные для входа в систему.">
-            <Head title="
+        "
+            description="Введите свои учетные данные для входа в систему."
+        >
+            <Head
+                title="
         Войти в аккаунт
-            " />
+            "
+            />
 
             <Form method="post" resetOnSuccess={['password']} className="flex flex-col gap-6">
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="phone">
-                                    Номер телефона
-                                </Label>
+                                <Label htmlFor="phone">Номер телефона</Label>
                                 <Input
                                     id="phone"
                                     type="text"
@@ -74,9 +76,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                             <div className="grid gap-2">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password">
-                                        Пароль
-                                    </Label>
+                                    <Label htmlFor="password">Пароль</Label>
                                     {canResetPassword && (
                                         <TextLink href={request()} className="ml-auto text-sm" tabIndex={5}>
                                             Забыли пароль?
@@ -97,9 +97,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                             <div className="flex items-center space-x-3">
                                 <Checkbox id="remember" name="remember" tabIndex={3} />
-                                <Label htmlFor="remember">
-                                    Запомнить меня
-                                </Label>
+                                <Label htmlFor="remember">Запомнить меня</Label>
                             </div>
 
                             <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
@@ -107,7 +105,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 Войти
                             </Button>
                         </div>
-
                     </>
                 )}
             </Form>

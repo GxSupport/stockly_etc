@@ -1,21 +1,45 @@
-import { useState, useEffect } from 'react';
-import { router, useForm } from '@inertiajs/react';
-import axios from 'axios';
-import { LoaderCircle, Plus, Trash2, Calendar, ToggleLeft, ToggleRight, Save, Send } from 'lucide-react';
 import SmsConfirmationModal from '@/components/SmsConfirmationModal';
+import { router } from '@inertiajs/react';
+import axios from 'axios';
+import { Calendar, LoaderCircle, Plus, Save, Send, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import InputError from '@/components/input-error';
 import { SearchableSelect } from '@/components/searchable-select';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 // Interfaces remain the same
-interface DocumentType { id: number; code: string; title: string; }
-interface Product { name: string; warehouse: string; measure: string; price: number; count: string; nomenclature: string; }
-interface Service { name: string; basic_resource_code: string; }
-export interface ProductItem { id: string | number; selected_product: Product | null; product_name: string; measure: string; quantity: number; amount: number; nomenclature: string; max_quantity: number; note: string; }
+interface DocumentType {
+    id: number;
+    code: string;
+    title: string;
+}
+interface Product {
+    name: string;
+    warehouse: string;
+    measure: string;
+    price: number;
+    count: string;
+    nomenclature: string;
+}
+interface Service {
+    name: string;
+    basic_resource_code: string;
+}
+export interface ProductItem {
+    id: string | number;
+    selected_product: Product | null;
+    product_name: string;
+    measure: string;
+    quantity: number;
+    amount: number;
+    nomenclature: string;
+    max_quantity: number;
+    note: string;
+}
 export interface DocumentData {
     id?: number;
     document_type_id: string | null;
@@ -43,7 +67,18 @@ interface DocumentFormProps {
     documentNotes?: any[];
 }
 
-export default function DocumentForm({ data, setData, errors, processing, onSubmit, documentTypes, allProducts, services, isEditMode = false, documentNotes = [] }: DocumentFormProps) {
+export default function DocumentForm({
+    data,
+    setData,
+    errors,
+    processing,
+    onSubmit,
+    documentTypes,
+    allProducts,
+    services,
+    isEditMode = false,
+    documentNotes = [],
+}: DocumentFormProps) {
     const currentYear = new Date().getFullYear();
     const [isMainToolFromService, setIsMainToolFromService] = useState(!!data.main_tool);
     const [composition, setComposition] = useState<any[]>([]);
@@ -58,28 +93,41 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
 
     // User role types for display
     const userRoles = {
-        'frp': 'МОЛ',
-        'header_frp': 'Руководители МОЛ',
-        'director': 'Технический директор',
-        'buxgalter': 'Бухгалтерия',
-        'admin': 'Администратор',
+        frp: 'МОЛ',
+        header_frp: 'Руководители МОЛ',
+        director: 'Технический директор',
+        buxgalter: 'Бухгалтерия',
+        admin: 'Администратор',
     };
 
     const addProduct = () => {
-        const newProduct: ProductItem = { id: Math.random().toString(36).substr(2, 9), selected_product: null, product_name: '', measure: '', quantity: 1, amount: 0, nomenclature: '', max_quantity: 0, note: '' };
+        const newProduct: ProductItem = {
+            id: Math.random().toString(36).substr(2, 9),
+            selected_product: null,
+            product_name: '',
+            measure: '',
+            quantity: 1,
+            amount: 0,
+            nomenclature: '',
+            max_quantity: 0,
+            note: '',
+        };
         setData('products', [...data.products, newProduct]);
     };
 
     const removeProduct = (id: string | number) => {
-        setData('products', data.products.filter(p => p.id !== id));
+        setData(
+            'products',
+            data.products.filter((p) => p.id !== id),
+        );
     };
 
     const updateProduct = (id: string | number, field: keyof ProductItem, value: any) => {
-        const updatedProducts = data.products.map(p => {
+        const updatedProducts = data.products.map((p) => {
             if (p.id === id) {
                 const updated = { ...p, [field]: value };
                 if (field === 'selected_product' && value) {
-                    const selectedProduct = allProducts.find(fp => fp.nomenclature === value);
+                    const selectedProduct = allProducts.find((fp) => fp.nomenclature === value);
                     if (selectedProduct) {
                         updated.selected_product = selectedProduct;
                         updated.product_name = selectedProduct.name;
@@ -109,7 +157,8 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
         setData('number', value.startsWith(prefix) ? value : prefix + value.replace(prefix, ''));
     };
 
-    const formatAmount = (amount: number) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
+    const formatAmount = (amount: number) =>
+        new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
 
     // Helper function to safely parse numeric values
     const parseNumericValue = (value: any): number => {
@@ -119,9 +168,11 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
 
     const totalAmount = data.products.reduce((sum, product) => sum + parseNumericValue(product.amount), 0);
     console.log('totalAmount', totalAmount);
-    const selectedDocumentType = documentTypes.find(d => d.id.toString() === data.document_type_id);
+    const selectedDocumentType = documentTypes.find((d) => d.id.toString() === data.document_type_id);
     const showMainToolInput = selectedDocumentType && selectedDocumentType.id === 1 && !isMainToolFromService;
-    const showMainToolSelect = selectedDocumentType && (selectedDocumentType.id === 4 || (selectedDocumentType.id === 1 && isMainToolFromService) || selectedDocumentType.id === 2);
+    const showMainToolSelect =
+        selectedDocumentType &&
+        (selectedDocumentType.id === 4 || (selectedDocumentType.id === 1 && isMainToolFromService) || selectedDocumentType.id === 2);
     const showProductNotes = selectedDocumentType && selectedDocumentType.id === 3;
     const showPlaceInstallation = selectedDocumentType && selectedDocumentType.id === 1;
     const showCompositionInterface = selectedDocumentType && selectedDocumentType.id === 2;
@@ -139,7 +190,19 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
             if (response.data.success) {
                 setComposition(response.data.composition);
                 if (selectedDocumentType?.id === 2) {
-                    const compositionProducts: ProductItem[] = [{ id: Math.random().toString(36).substr(2, 9), selected_product: null, product_name: '', measure: '', quantity: 1, amount: 0, nomenclature: '', max_quantity: 0, note: '' }];
+                    const compositionProducts: ProductItem[] = [
+                        {
+                            id: Math.random().toString(36).substr(2, 9),
+                            selected_product: null,
+                            product_name: '',
+                            measure: '',
+                            quantity: 1,
+                            amount: 0,
+                            nomenclature: '',
+                            max_quantity: 0,
+                            note: '',
+                        },
+                    ];
                     setData('products', compositionProducts);
                 }
             }
@@ -148,9 +211,12 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
         }
     };
 
-    const documentTypeOptions = documentTypes.map(docType => ({ value: docType.id.toString(), label: docType.title }));
-    const serviceOptions = services.map(service => ({ value: service.basic_resource_code, label: service.name }));
-    const productOptions = allProducts.map(product => ({ value: product.nomenclature, label: `${product.name.substring(0, 50)}... | ${product.measure} | ${formatAmount(product.price)} | Склад: ${product.count}` }));
+    const documentTypeOptions = documentTypes.map((docType) => ({ value: docType.id.toString(), label: docType.title }));
+    const serviceOptions = services.map((service) => ({ value: service.basic_resource_code, label: service.name }));
+    const productOptions = allProducts.map((product) => ({
+        value: product.nomenclature,
+        label: `${product.name.substring(0, 50)}... | ${product.measure} | ${formatAmount(product.price)} | Склад: ${product.count}`,
+    }));
 
     const handleSendToNext = async () => {
         if (!data.id) return;
@@ -183,7 +249,7 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
                     preserveState: false,
                     onSuccess: () => {
                         // Show success message
-                    }
+                    },
                 });
             }
         } catch (error) {
@@ -199,32 +265,51 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
             replace: true,
             onSuccess: () => {
                 // Show success message
-            }
+            },
         });
     };
 
     return (
-        <form onSubmit={(e) => {
-            // Prevent submission if SMS modal is open or sending to next
-            if (showSmsModal || sendingToNext) {
-                e.preventDefault();
-                return;
-            }
-            onSubmit(e);
-        }} className="flex flex-col gap-6">
+        <form
+            onSubmit={(e) => {
+                // Prevent submission if SMS modal is open or sending to next
+                if (showSmsModal || sendingToNext) {
+                    e.preventDefault();
+                    return;
+                }
+                onSubmit(e);
+            }}
+            className="flex flex-col gap-6"
+        >
             <Card className="max-w-full">
-                {errors.general && <div className="text-red-600 p-4">{errors.general}</div>}
-                <CardHeader><CardTitle>Основная информация</CardTitle></CardHeader>
+                {errors.general && <div className="p-4 text-red-600">{errors.general}</div>}
+                <CardHeader>
+                    <CardTitle>Основная информация</CardTitle>
+                </CardHeader>
                 <CardContent>
                     <div className="grid gap-6 md:grid-cols-2">
                         <div className="grid gap-2">
                             <Label>Тип документа *</Label>
-                            <SearchableSelect options={documentTypeOptions} value={data.document_type_id} onValueChange={(value) => setData('document_type_id', value)} placeholder="Выберите тип документа" searchPlaceholder="Поиск типа документа..." />
+                            <SearchableSelect
+                                options={documentTypeOptions}
+                                value={data.document_type_id}
+                                onValueChange={(value) => setData('document_type_id', value)}
+                                placeholder="Выберите тип документа"
+                                searchPlaceholder="Поиск типа документа..."
+                            />
                             <InputError message={errors.document_type_id} />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="number">Номер документа *</Label>
-                            <Input id="number" name="number" type="text" value={data.number} onChange={handleNumberChange} required className="font-mono" />
+                            <Input
+                                id="number"
+                                name="number"
+                                type="text"
+                                value={data.number}
+                                onChange={handleNumberChange}
+                                required
+                                className="font-mono"
+                            />
                             <InputError message={errors.number} />
                             <div className="text-xs text-muted-foreground">Префикс "{currentYear}/" нельзя удалить</div>
                         </div>
@@ -237,14 +322,35 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="total_amount">Общая сумма</Label>
-                            <Input id="total_amount" name="total_amount" type="text" value={formatAmount(totalAmount)} readOnly className="bg-muted font-mono" />
+                            <Input
+                                id="total_amount"
+                                name="total_amount"
+                                type="text"
+                                value={formatAmount(totalAmount)}
+                                readOnly
+                                className="bg-muted font-mono"
+                            />
                         </div>
                         {showMainToolInput && (
                             <div className="grid gap-2 md:col-span-2">
                                 <Label htmlFor="main_tool_input">Наименование ОС *</Label>
                                 <div className="flex gap-2">
-                                    <Input id="main_tool_input" type="text" value={data.main_tool} onChange={(e) => setData('main_tool', e.target.value)} placeholder="Введите наименование ОС" className="flex-1" required />
-                                    <Button type="button" variant="outline" size="sm" onClick={() => setIsMainToolFromService(!isMainToolFromService)} className="gap-2 whitespace-nowrap">
+                                    <Input
+                                        id="main_tool_input"
+                                        type="text"
+                                        value={data.main_tool}
+                                        onChange={(e) => setData('main_tool', e.target.value)}
+                                        placeholder="Введите наименование ОС"
+                                        className="flex-1"
+                                        required
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setIsMainToolFromService(!isMainToolFromService)}
+                                        className="gap-2 whitespace-nowrap"
+                                    >
                                         {isMainToolFromService ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
                                         Из списка
                                     </Button>
@@ -255,9 +361,25 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
                             <div className="grid gap-2 md:col-span-2">
                                 <Label>Наименование ОС *</Label>
                                 <div className="flex gap-2">
-                                    <SearchableSelect options={serviceOptions} value={data.main_tool} onValueChange={(value) => setData('main_tool', value)} placeholder="Выберите основное средство" searchPlaceholder="Поиск основного средства..." className="flex-1" />
+                                    <SearchableSelect
+                                        options={serviceOptions}
+                                        value={data.main_tool}
+                                        onValueChange={(value) => setData('main_tool', value)}
+                                        placeholder="Выберите основное средство"
+                                        searchPlaceholder="Поиск основного средства..."
+                                        className="flex-1"
+                                    />
                                     {selectedDocumentType?.id === 1 && (
-                                        <Button type="button" variant="outline" size="sm" onClick={() => { setIsMainToolFromService(!isMainToolFromService); setData('main_tool', ''); }} className="gap-2 whitespace-nowrap">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                setIsMainToolFromService(!isMainToolFromService);
+                                                setData('main_tool', '');
+                                            }}
+                                            className="gap-2 whitespace-nowrap"
+                                        >
                                             {isMainToolFromService ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
                                             Вручную
                                         </Button>
@@ -274,35 +396,92 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <CardTitle>Товары</CardTitle>
-                            <Button type="button" onClick={addProduct} className="gap-2"><Plus className="h-4 w-4" />Добавить товар</Button>
+                            <Button type="button" onClick={addProduct} className="gap-2">
+                                <Plus className="h-4 w-4" />
+                                Добавить товар
+                            </Button>
                         </div>
                     </CardHeader>
                     <CardContent>
                         {data.products.length === 0 ? (
-                            <div className="text-center py-8 text-muted-foreground">Нажмите "Добавить товар" чтобы начать</div>
+                            <div className="py-8 text-center text-muted-foreground">Нажмите "Добавить товар" чтобы начать</div>
                         ) : (
                             <div className="space-y-4">
                                 {data.products.map((product, index) => (
-                                    <div key={product.id} className="border rounded-lg p-4">
-                                        <div className="flex items-center justify-between mb-4">
+                                    <div key={product.id} className="rounded-lg border p-4">
+                                        <div className="mb-4 flex items-center justify-between">
                                             <h4 className="font-medium">Товар #{index + 1}</h4>
-                                            <Button type="button" variant="outline" size="sm" onClick={() => removeProduct(product.id)} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" />Удалить</Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => removeProduct(product.id)}
+                                                className="gap-2 text-destructive hover:text-destructive"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                                Удалить
+                                            </Button>
                                         </div>
-                                        <div className="flex gap-4 items-start">
-                                            <div className="flex-1 min-w-0">
-                                                <Label className="block mb-2">Товар *</Label>
-                                                <SearchableSelect options={productOptions} value={product.selected_product?.nomenclature} onValueChange={(value) => updateProduct(product.id, 'selected_product', value)} placeholder="Выберите товар" searchPlaceholder="Поиск товара..." />
+                                        <div className="flex items-start gap-4">
+                                            <div className="min-w-0 flex-1">
+                                                <Label className="mb-2 block">Товар *</Label>
+                                                <SearchableSelect
+                                                    options={productOptions}
+                                                    value={product.selected_product?.nomenclature}
+                                                    onValueChange={(value) => updateProduct(product.id, 'selected_product', value)}
+                                                    placeholder="Выберите товар"
+                                                    searchPlaceholder="Поиск товара..."
+                                                />
                                             </div>
-                                            <div className="w-24"><Label className="block mb-2">Ед.изм.</Label><Input value={product.measure} readOnly className="bg-muted h-10" /></div>
+                                            <div className="w-24">
+                                                <Label className="mb-2 block">Ед.изм.</Label>
+                                                <Input value={product.measure} readOnly className="h-10 bg-muted" />
+                                            </div>
                                             <div className="w-32">
-                                                <Label className="block mb-2">Количество *</Label>
-                                                <Input type="number" min="1" max={product.max_quantity > 0 ? product.max_quantity : undefined} value={product.quantity} onChange={(e) => updateProduct(product.id, 'quantity', parseInt(e.target.value) || 1)} className={`h-10 ${product.max_quantity > 0 && product.quantity > product.max_quantity ? 'border-red-500' : ''}`} />
-                                                {product.max_quantity > 0 && <div className="text-xs text-green-600 whitespace-nowrap">Макс: {product.max_quantity}</div>}
+                                                <Label className="mb-2 block">Количество *</Label>
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    max={product.max_quantity > 0 ? product.max_quantity : undefined}
+                                                    value={product.quantity}
+                                                    onChange={(e) => updateProduct(product.id, 'quantity', parseInt(e.target.value) || 1)}
+                                                    className={`h-10 ${product.max_quantity > 0 && product.quantity > product.max_quantity ? 'border-red-500' : ''}`}
+                                                />
+                                                {product.max_quantity > 0 && (
+                                                    <div className="text-xs whitespace-nowrap text-green-600">Макс: {product.max_quantity}</div>
+                                                )}
                                             </div>
-                                            <div className="w-40"><Label className="block mb-2">Сумма</Label><Input value={formatAmount(product.amount)} readOnly className="bg-muted font-mono h-10" /></div>
+                                            <div className="w-40">
+                                                <Label className="mb-2 block">Сумма</Label>
+                                                <Input value={formatAmount(product.amount)} readOnly className="h-10 bg-muted font-mono" />
+                                            </div>
                                         </div>
-                                        {showProductNotes && <div className="mt-4"><Label htmlFor={`note_${product.id}`}>Списания *</Label><Input id={`note_${product.id}`} type="text" value={product.note} onChange={(e) => updateProduct(product.id, 'note', e.target.value)} required={showProductNotes} className="mt-2" /></div>}
-                                        {showPlaceInstallation && <div className="mt-4"><Label htmlFor={`note_${product.id}`}>Место установки *</Label><Input id={`note_${product.id}`} type="text" value={product.note} onChange={(e) => updateProduct(product.id, 'note', e.target.value)} required={showPlaceInstallation} className="mt-2" /></div>}
+                                        {showProductNotes && (
+                                            <div className="mt-4">
+                                                <Label htmlFor={`note_${product.id}`}>Списания *</Label>
+                                                <Input
+                                                    id={`note_${product.id}`}
+                                                    type="text"
+                                                    value={product.note}
+                                                    onChange={(e) => updateProduct(product.id, 'note', e.target.value)}
+                                                    required={showProductNotes}
+                                                    className="mt-2"
+                                                />
+                                            </div>
+                                        )}
+                                        {showPlaceInstallation && (
+                                            <div className="mt-4">
+                                                <Label htmlFor={`note_${product.id}`}>Место установки *</Label>
+                                                <Input
+                                                    id={`note_${product.id}`}
+                                                    type="text"
+                                                    value={product.note}
+                                                    onChange={(e) => updateProduct(product.id, 'note', e.target.value)}
+                                                    required={showPlaceInstallation}
+                                                    className="mt-2"
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                                 {data.products.length > 0 && (
@@ -326,29 +505,79 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <CardTitle>Инструменты для демонтажа</CardTitle>
-                            <Button type="button" onClick={addProduct} className="gap-2" disabled={data.products.length >= composition.length}><Plus className="h-4 w-4" />Добавить инструмент</Button>
+                            <Button type="button" onClick={addProduct} className="gap-2" disabled={data.products.length >= composition.length}>
+                                <Plus className="h-4 w-4" />
+                                Добавить инструмент
+                            </Button>
                         </div>
                     </CardHeader>
                     <CardContent>
                         {data.products.length === 0 ? (
-                            <div className="text-center py-8 text-muted-foreground">{composition.length === 0 ? 'Выберите ОС для загрузки состава' : 'Нажмите "Добавить инструмент"'}</div>
+                            <div className="py-8 text-center text-muted-foreground">
+                                {composition.length === 0 ? 'Выберите ОС для загрузки состава' : 'Нажмите "Добавить инструмент"'}
+                            </div>
                         ) : (
                             <div className="space-y-4">
                                 {data.products.map((product, index) => (
-                                    <div key={product.id} className="border rounded-lg p-4">
-                                        <div className="flex items-center justify-between mb-4">
+                                    <div key={product.id} className="rounded-lg border p-4">
+                                        <div className="mb-4 flex items-center justify-between">
                                             <h4 className="font-medium">Инструмент #{index + 1}</h4>
-                                            <Button type="button" variant="outline" size="sm" onClick={() => removeProduct(product.id)} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" />Удалить</Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => removeProduct(product.id)}
+                                                className="gap-2 text-destructive hover:text-destructive"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                                Удалить
+                                            </Button>
                                         </div>
-                                        <div className="flex gap-4 items-start">
-                                            <div className="flex-1 min-w-0">
-                                                <Label className="block mb-2">Инструмент *</Label>
-                                                <SearchableSelect options={composition.map(comp => ({ value: comp.subconto_kt1, label: comp.subconto_kt1, disabled: data.products.some(p => p.product_name === comp.subconto_kt1 && p.id !== product.id) }))} value={product.product_name} onValueChange={(value) => { const selectedComp = composition.find(c => c.subconto_kt1 === value); if (selectedComp) { updateProduct(product.id, 'product_name', selectedComp.subconto_kt1); updateProduct(product.id, 'measure', selectedComp.quantity_turnover_kt); updateProduct(product.id, 'max_quantity', parseInt(selectedComp.quantity_turnover_kt)); } }} placeholder="Выберите инструмент" searchPlaceholder="Поиск инструмента..." />
+                                        <div className="flex items-start gap-4">
+                                            <div className="min-w-0 flex-1">
+                                                <Label className="mb-2 block">Инструмент *</Label>
+                                                <SearchableSelect
+                                                    options={composition.map((comp) => ({
+                                                        value: comp.subconto_kt1,
+                                                        label: comp.subconto_kt1,
+                                                        disabled: data.products.some(
+                                                            (p) => p.product_name === comp.subconto_kt1 && p.id !== product.id,
+                                                        ),
+                                                    }))}
+                                                    value={product.product_name}
+                                                    onValueChange={(value) => {
+                                                        const selectedComp = composition.find((c) => c.subconto_kt1 === value);
+                                                        if (selectedComp) {
+                                                            updateProduct(product.id, 'product_name', selectedComp.subconto_kt1);
+                                                            updateProduct(product.id, 'measure', selectedComp.quantity_turnover_kt);
+                                                            updateProduct(product.id, 'max_quantity', parseInt(selectedComp.quantity_turnover_kt));
+                                                        }
+                                                    }}
+                                                    placeholder="Выберите инструмент"
+                                                    searchPlaceholder="Поиск инструмента..."
+                                                />
                                             </div>
                                             <div className="w-32">
-                                                <Label className="block mb-2">Количество *</Label>
-                                                <Input type="number" min="1" max={product.max_quantity} value={product.quantity} onChange={(e) => updateProduct(product.id, 'quantity', Math.min(parseInt(e.target.value) || 1, product.max_quantity))} placeholder="1" className="h-10" disabled={!product.product_name} />
-                                                {product.max_quantity > 0 && <div className="text-xs text-green-600 mt-1">Макс: {product.max_quantity}</div>}
+                                                <Label className="mb-2 block">Количество *</Label>
+                                                <Input
+                                                    type="number"
+                                                    min="1"
+                                                    max={product.max_quantity}
+                                                    value={product.quantity}
+                                                    onChange={(e) =>
+                                                        updateProduct(
+                                                            product.id,
+                                                            'quantity',
+                                                            Math.min(parseInt(e.target.value) || 1, product.max_quantity),
+                                                        )
+                                                    }
+                                                    placeholder="1"
+                                                    className="h-10"
+                                                    disabled={!product.product_name}
+                                                />
+                                                {product.max_quantity > 0 && (
+                                                    <div className="mt-1 text-xs text-green-600">Макс: {product.max_quantity}</div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -362,7 +591,9 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
             {/* Notes section for returned documents */}
             {isEditMode && (
                 <Card className="max-w-6xl">
-                    <CardHeader><CardTitle>Дополнительная информация</CardTitle></CardHeader>
+                    <CardHeader>
+                        <CardTitle>Дополнительная информация</CardTitle>
+                    </CardHeader>
                     <CardContent>
                         <div className="grid gap-4">
                             <div className="grid gap-2">
@@ -371,7 +602,7 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
                                     id="note"
                                     value={data.note || ''}
                                     onChange={(e) => setData('note', e.target.value)}
-                                    className="w-full p-3 border border-input rounded-md resize-none min-h-[100px]"
+                                    className="min-h-[100px] w-full resize-none rounded-md border border-input p-3"
                                     placeholder="Введите причину списания..."
                                 />
                             </div>
@@ -384,11 +615,11 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
             {isReturned && documentNotes.length > 0 && (
                 <Card className="max-w-6xl border-red-500 bg-red-50">
                     <CardContent className="pt-6">
-                        <div className="bg-red-600 text-white p-4 rounded-md">
-                            <h4 className="font-semibold mb-2">Документ возвращен</h4>
+                        <div className="rounded-md bg-red-600 p-4 text-white">
+                            <h4 className="mb-2 font-semibold">Документ возвращен</h4>
                             {documentNotes.map((note, index) => (
                                 <div key={index} className="mb-4 last:mb-0">
-                                    {index > 0 && <hr className="border-red-300 my-2" />}
+                                    {index > 0 && <hr className="my-2 border-red-300" />}
                                     <div className="mb-1">
                                         <strong>Позиция:</strong> {userRoles[note.from_info?.type as keyof typeof userRoles] || note.from_info?.type}
                                     </div>
@@ -405,14 +636,16 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
                 </Card>
             )}
 
-            <div className="flex gap-4 pt-4 max-w-6xl">
-                <Button type="button" variant="outline" onClick={() => router.visit('/documents')}>Отменить</Button>
+            <div className="flex max-w-6xl gap-4 pt-4">
+                <Button type="button" variant="outline" onClick={() => router.visit('/documents')}>
+                    Отменить
+                </Button>
 
                 {/* Save button - show if can edit */}
                 {canEdit && (
                     <Button type="submit" disabled={processing || data.products.length === 0 || !data.document_type_id}>
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        <Save className="h-4 w-4 mr-2" />
+                        <Save className="mr-2 h-4 w-4" />
                         Сохранить
                     </Button>
                 )}
@@ -429,8 +662,8 @@ export default function DocumentForm({ data, setData, errors, processing, onSubm
                         disabled={sendingToNext || processing}
                         className="bg-green-600 hover:bg-green-700"
                     >
-                        {sendingToNext && <LoaderCircle className="h-4 w-4 animate-spin mr-2" />}
-                        <Send className="h-4 w-4 mr-2" />
+                        {sendingToNext && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                        <Send className="mr-2 h-4 w-4" />
                         Отправить следующему
                     </Button>
                 )}

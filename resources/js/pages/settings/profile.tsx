@@ -1,10 +1,10 @@
-import SettingsLayout from '@/layouts/settings-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useForm, Head } from '@inertiajs/react';
+import SettingsLayout from '@/layouts/settings-layout';
+import { Head, useForm } from '@inertiajs/react';
+import { CheckCircle, User } from 'lucide-react';
 import { FormEvent } from 'react';
-import { User, CheckCircle } from 'lucide-react';
 
 interface User {
     id: number;
@@ -17,8 +17,7 @@ interface Props {
     status?: string;
 }
 
-export default function Profile({ user}: Props) {
-
+export default function Profile({ user }: Props) {
     const { data, setData, patch, processing, errors, recentlySuccessful } = useForm({
         name: user?.name || '',
         chat_id: user?.chat_id || '',
@@ -37,12 +36,8 @@ export default function Profile({ user}: Props) {
         });
     };
 
-
     return (
-        <SettingsLayout
-            title="Профиль"
-            description="Управление личной информацией профиля"
-        >
+        <SettingsLayout title="Профиль" description="Управление личной информацией профиля">
             <Head title="Настройки профиля" />
 
             <div className="space-y-8">
@@ -67,15 +62,11 @@ export default function Profile({ user}: Props) {
                                     disabled={processing}
                                     required
                                 />
-                                {errors.name && (
-                                    <p className="text-sm text-destructive">{errors.name}</p>
-                                )}
+                                {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="chat_id">
-                                    Telegram Chat ID
-                                </Label>
+                                <Label htmlFor="chat_id">Telegram Chat ID</Label>
                                 <Input
                                     id="chat_id"
                                     type="text"
@@ -86,13 +77,9 @@ export default function Profile({ user}: Props) {
                                     disabled={processing}
                                     required
                                 />
-                                {errors.chat_id && (
-                                    <p className="text-sm text-destructive">{errors.chat_id}</p>
-                                )}
+                                {errors.chat_id && <p className="text-sm text-destructive">{errors.chat_id}</p>}
                             </div>
                         </div>
-
-
 
                         <div className="flex items-center gap-4">
                             <Button type="submit" disabled={processing}>
@@ -101,14 +88,13 @@ export default function Profile({ user}: Props) {
 
                             {recentlySuccessful && (
                                 <div className="flex items-center text-sm text-green-600">
-                                    <CheckCircle className="h-4 w-4 mr-1" />
+                                    <CheckCircle className="mr-1 h-4 w-4" />
                                     Сохранено
                                 </div>
                             )}
                         </div>
                     </form>
                 </div>
-
             </div>
         </SettingsLayout>
     );

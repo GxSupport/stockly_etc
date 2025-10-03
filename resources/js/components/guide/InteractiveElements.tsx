@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Check, Copy, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 
 // Copy to Clipboard Hook
 export const useCopyToClipboard = () => {
@@ -29,12 +29,7 @@ interface CodeBlockProps {
     showLineNumbers?: boolean;
 }
 
-export const InteractiveCodeBlock = ({ 
-    code, 
-    language = 'text', 
-    title,
-    showLineNumbers = false 
-}: CodeBlockProps) => {
+export const InteractiveCodeBlock = ({ code, language = 'text', title, showLineNumbers = false }: CodeBlockProps) => {
     const { copyToClipboard, copiedText } = useCopyToClipboard();
     const [isVisible, setIsVisible] = useState(true);
 
@@ -52,12 +47,7 @@ export const InteractiveCodeBlock = ({
                     <span className="code-language">{language}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsVisible(!isVisible)}
-                        className="text-gray-300 hover:text-white p-1 h-auto"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => setIsVisible(!isVisible)} className="h-auto p-1 text-gray-300 hover:text-white">
                         {isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                     </Button>
                     <Button
@@ -84,7 +74,7 @@ export const InteractiveCodeBlock = ({
                 <div className="code-content">
                     {showLineNumbers ? (
                         <div className="flex">
-                            <div className="flex flex-col pr-4 border-r border-gray-700 text-gray-500 text-sm font-mono select-none">
+                            <div className="flex flex-col border-r border-gray-700 pr-4 font-mono text-sm text-gray-500 select-none">
                                 {lines.map((_, index) => (
                                     <span key={index} className="leading-6">
                                         {index + 1}
@@ -92,16 +82,12 @@ export const InteractiveCodeBlock = ({
                                 ))}
                             </div>
                             <pre className="flex-1 pl-4">
-                                <code className="text-sm font-mono text-gray-100 whitespace-pre">
-                                    {code}
-                                </code>
+                                <code className="font-mono text-sm whitespace-pre text-gray-100">{code}</code>
                             </pre>
                         </div>
                     ) : (
                         <pre>
-                            <code className="text-sm font-mono text-gray-100 whitespace-pre">
-                                {code}
-                            </code>
+                            <code className="font-mono text-sm whitespace-pre text-gray-100">{code}</code>
                         </pre>
                     )}
                 </div>
@@ -148,12 +134,7 @@ interface HighlightBoxProps {
     collapsible?: boolean;
 }
 
-export const HighlightBox = ({ 
-    type, 
-    title, 
-    children, 
-    collapsible = false 
-}: HighlightBoxProps) => {
+export const HighlightBox = ({ type, title, children, collapsible = false }: HighlightBoxProps) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     const typeStyles = {
@@ -173,18 +154,13 @@ export const HighlightBox = ({
     return (
         <div className={typeStyles[type]}>
             {title && (
-                <div className="flex items-center justify-between mb-2">
-                    <h5 className="font-semibold flex items-center gap-2">
+                <div className="mb-2 flex items-center justify-between">
+                    <h5 className="flex items-center gap-2 font-semibold">
                         <span>{typeIcons[type]}</span>
                         {title}
                     </h5>
                     {collapsible && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setIsCollapsed(!isCollapsed)}
-                            className="p-1 h-auto"
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => setIsCollapsed(!isCollapsed)} className="h-auto p-1">
                             {isCollapsed ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                         </Button>
                     )}
@@ -208,28 +184,14 @@ export const ProgressSteps = ({ steps, currentStep, onStepClick }: ProgressSteps
             {steps.map((step, index) => (
                 <div key={index} className="flex items-center">
                     <button
-                        className={`progress-step ${
-                            index < currentStep 
-                                ? 'completed' 
-                                : index === currentStep 
-                                ? 'active' 
-                                : 'pending'
-                        }`}
+                        className={`progress-step ${index < currentStep ? 'completed' : index === currentStep ? 'active' : 'pending'}`}
                         onClick={() => onStepClick?.(index)}
                         title={step}
                         disabled={!onStepClick}
                     >
-                        {index < currentStep ? (
-                            <Check className="h-4 w-4" />
-                        ) : (
-                            index + 1
-                        )}
+                        {index < currentStep ? <Check className="h-4 w-4" /> : index + 1}
                     </button>
-                    {index < steps.length - 1 && (
-                        <div className={`progress-connector ${
-                            index < currentStep ? 'completed' : ''
-                        }`} />
-                    )}
+                    {index < steps.length - 1 && <div className={`progress-connector ${index < currentStep ? 'completed' : ''}`} />}
                 </div>
             ))}
         </div>
@@ -251,24 +213,18 @@ interface TabbedContentProps {
 export const TabbedContent = ({ tabs, defaultTab }: TabbedContentProps) => {
     const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id);
 
-    const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content;
+    const activeTabContent = tabs.find((tab) => tab.id === activeTab)?.content;
 
     return (
         <div className="tabbed-content">
             <div className="tab-headers">
-                {tabs.map(tab => (
-                    <button
-                        key={tab.id}
-                        className={`tab-header ${activeTab === tab.id ? 'active' : ''}`}
-                        onClick={() => setActiveTab(tab.id)}
-                    >
+                {tabs.map((tab) => (
+                    <button key={tab.id} className={`tab-header ${activeTab === tab.id ? 'active' : ''}`} onClick={() => setActiveTab(tab.id)}>
                         {tab.title}
                     </button>
                 ))}
             </div>
-            <div className="tab-content">
-                {activeTabContent}
-            </div>
+            <div className="tab-content">{activeTabContent}</div>
         </div>
     );
 };

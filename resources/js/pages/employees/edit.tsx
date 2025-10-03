@@ -1,16 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Head, router, usePage } from '@inertiajs/react';
-import { Form } from '@inertiajs/react';
-import { LoaderCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Form, Head, router, usePage } from '@inertiajs/react';
+import { ArrowLeft, Eye, EyeOff, LoaderCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-import AppLayout from '@/layouts/app-layout';
+import { DynamicSearchableSelect, DynamicSearchableSelectOption } from '@/components/dynamic-searchable-select';
+import InputError from '@/components/input-error';
+import { SearchableSelect, SearchableSelectOption } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SearchableSelect, SearchableSelectOption } from '@/components/searchable-select';
-import { DynamicSearchableSelect, DynamicSearchableSelectOption } from '@/components/dynamic-searchable-select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import InputError from '@/components/input-error';
+import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 
 interface Role {
@@ -26,7 +25,6 @@ interface Department {
     title: string;
     is_active: boolean;
 }
-
 
 interface Senior {
     id: number;
@@ -45,9 +43,9 @@ interface Employee {
     role?: Role;
     warehouse?: {
         warehouse_id: number;
-        warehouse:{
+        warehouse: {
             title: string;
-        }
+        };
     };
 }
 
@@ -69,12 +67,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function EditEmployee({
-    employee,
-    roles_list,
-    dep_list,
-    senior_list = []
-}: EditEmployeeProps) {
+export default function EditEmployee({ employee, roles_list, dep_list, senior_list = [] }: EditEmployeeProps) {
     const { auth } = usePage<SharedData>().props;
     const [selectedRole, setSelectedRole] = useState<string>(employee.role?.title || '');
     const [selectedDepartment, setSelectedDepartment] = useState<string>(employee.dep_code || '');
@@ -98,15 +91,15 @@ export default function EditEmployee({
 
     // Convert backend data to SearchableSelect options
     const roleOptions: SearchableSelectOption[] = roles_list
-        .filter(role => role.is_active)
-        .map(role => ({
+        .filter((role) => role.is_active)
+        .map((role) => ({
             value: role.title.toString(),
             label: role.name,
         }));
 
     const departmentOptions: SearchableSelectOption[] = dep_list
-        .filter(dept => dept.is_active)
-        .map(dept => ({
+        .filter((dept) => dept.is_active)
+        .map((dept) => ({
             value: dept.dep_code,
             label: `${dept.dep_code} - ${dept.title}`,
         }));
@@ -114,12 +107,12 @@ export default function EditEmployee({
     // Get current warehouse info for display
     const currentWarehouse: DynamicSearchableSelectOption | undefined = employee.warehouse?.warehouse_id
         ? {
-            id: employee.warehouse.warehouse_id.toString(),
-            title: employee.warehouse.warehouse.title // Will be replaced by dynamic search
-        }
+              id: employee.warehouse.warehouse_id.toString(),
+              title: employee.warehouse.warehouse.title, // Will be replaced by dynamic search
+          }
         : undefined;
 
-    const seniorOptions: SearchableSelectOption[] = senior_list.map(senior => ({
+    const seniorOptions: SearchableSelectOption[] = senior_list.map((senior) => ({
         value: senior.id.toString(),
         label: senior.name,
     }));
@@ -171,12 +164,7 @@ export default function EditEmployee({
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => router.visit('/employees')}
-                            className="gap-2"
-                        >
+                        <Button variant="outline" size="sm" onClick={() => router.visit('/employees')} className="gap-2">
                             <ArrowLeft className="h-4 w-4" />
                             Назад
                         </Button>
@@ -189,11 +177,7 @@ export default function EditEmployee({
                         <CardTitle>Информация о сотруднике</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Form
-                            action={`/employees/${employee.id}`}
-                            method="put"
-                            className="flex flex-col gap-6"
-                        >
+                        <Form action={`/employees/${employee.id}`} method="put" className="flex flex-col gap-6">
                             {({ processing, errors }) => (
                                 <>
                                     <div className="grid gap-6 md:grid-cols-2">
@@ -318,21 +302,17 @@ export default function EditEmployee({
                                                 <Input
                                                     id="password"
                                                     name="password"
-                                                    type={showPassword ? "text" : "password"}
+                                                    type={showPassword ? 'text' : 'password'}
                                                     placeholder="Введите новый пароль"
                                                 />
                                                 <Button
                                                     type="button"
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                                    className="absolute top-0 right-0 h-full px-3 py-2 hover:bg-transparent"
                                                     onClick={() => setShowPassword(!showPassword)}
                                                 >
-                                                    {showPassword ? (
-                                                        <EyeOff className="h-4 w-4" />
-                                                    ) : (
-                                                        <Eye className="h-4 w-4" />
-                                                    )}
+                                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                                 </Button>
                                             </div>
                                             <InputError message={errors.password} />
@@ -352,11 +332,7 @@ export default function EditEmployee({
                                     </div>
 
                                     <div className="flex gap-4 pt-4">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => router.visit('/employees')}
-                                        >
+                                        <Button type="button" variant="outline" onClick={() => router.visit('/employees')}>
                                             Отменить
                                         </Button>
                                         <Button type="submit" disabled={processing}>

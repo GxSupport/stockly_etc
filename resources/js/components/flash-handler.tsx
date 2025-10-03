@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { usePage } from '@inertiajs/react';
 import { useToast } from '@/hooks/use-toast';
+import { usePage } from '@inertiajs/react';
+import { useEffect, useRef } from 'react';
 
 interface FlashMessages {
     success?: string;
@@ -22,12 +22,12 @@ export function FlashHandler() {
     useEffect(() => {
         // Create a unique key for this flash message set
         const flashKey = JSON.stringify(flash);
-        
+
         // Skip if we've already processed these exact flash messages
         if (processedFlash.current === flashKey) {
             return;
         }
-        
+
         // Handle success messages
         if (flash.success) {
             toast.success(flash.success, 'Успешно');
@@ -47,7 +47,7 @@ export function FlashHandler() {
         if (flash.info) {
             toast.info(flash.info, 'Информация');
         }
-        
+
         // Mark these flash messages as processed
         processedFlash.current = flashKey;
     }, [flash, toast]);
