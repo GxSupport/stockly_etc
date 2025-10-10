@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 /**
  * App\Models\UserRoles Foydalanuvchi rollari modeli
+ *
  * @property int $id Roll ID raqami
  * @property string $title Roll nomi (inglizcha)
  * @property string $name Roll nomi
@@ -18,8 +18,10 @@ use Illuminate\Support\Carbon;
 class UserRoles extends Model
 {
     protected $table = 'user_roles';
+
     protected $fillable = [
-      'title',
-      'is_active'
+        'title',
+        'name',
+        'is_active',
     ];
 }

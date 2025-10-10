@@ -14,8 +14,10 @@ class StoreRequest extends FormRequest
             'password' => 'required|string|min:8',
             'role_id' => 'required|exists:user_roles,title',
             'dep_code' => 'required|exists:dep_list,dep_code',
+            'senior_id' => 'nullable|required_if:role_id,frp|exists:users,id',
         ];
     }
+
     public function messages(): array
     {
         return [
@@ -29,6 +31,10 @@ class StoreRequest extends FormRequest
             'role_id.exists' => 'Указанная роль не существует',
             'dep_code.required' => 'Необходимо указать отдел',
             'dep_code.exists' => 'Указанный отдел не существует',
+            'warehouse_id.required_if' => 'Необходимо указать склад для роли ФРП',
+            'warehouse_id.exists' => 'Указанный склад не существует',
+            'senior_id.required_if' => 'Необходимо указать руководителя для роли ФРП',
+            'senior_id.exists' => 'Указанный руководитель не существует',
         ];
     }
 }

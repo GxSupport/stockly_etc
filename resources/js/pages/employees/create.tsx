@@ -25,9 +25,23 @@ interface Department {
     is_active: boolean;
 }
 
+interface Warehouse {
+    id: number;
+    code: string;
+    title: string;
+    is_active: boolean;
+}
+
+interface Supervisor {
+    id: number;
+    name: string;
+}
+
 interface CreateEmployeeProps {
     roles_list: Role[];
     dep_list: Department[];
+    warehouses: Warehouse[];
+    supervisors: Supervisor[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -41,9 +55,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function CreateEmployee({ roles_list, dep_list }: CreateEmployeeProps) {
+export default function CreateEmployee({ roles_list, dep_list, warehouses, supervisors }: CreateEmployeeProps) {
     const [selectedRole, setSelectedRole] = useState<string>('');
     const [selectedDepartment, setSelectedDepartment] = useState<string>('');
+    const [selectedWarehouse, setSelectedWarehouse] = useState<string>('');
+    const [selectedSupervisor, setSelectedSupervisor] = useState<string>('');
     const [phoneValue, setPhoneValue] = useState<string>('');
 
     // Convert backend data to SearchableSelect options
@@ -60,6 +76,18 @@ export default function CreateEmployee({ roles_list, dep_list }: CreateEmployeeP
             value: dept.dep_code,
             label: `${dept.dep_code} - ${dept.title}`,
         }));
+
+    const warehouseOptions: SearchableSelectOption[] = warehouses
+        .filter((warehouse) => warehouse.is_active)
+        .map((warehouse) => ({
+            value: warehouse.code,
+            label: `${warehouse.code} - ${warehouse.title}`,
+        }));
+
+    const supervisorOptions: SearchableSelectOption[] = supervisors.map((supervisor) => ({
+        value: supervisor.id.toString(),
+        label: supervisor.name,
+    }));
 
     const formatPhoneNumber = (value: string) => {
         const cleaned = value.replace(/\D/g, '');
@@ -181,9 +209,40 @@ export default function CreateEmployee({ roles_list, dep_list }: CreateEmployeeP
                                             <input type="hidden" name="dep_code" value={selectedDepartment} />
                                         </div>
                                         <div className="grid gap-2">
-                                            <Label>Пароль *</Label>
+                                            <Label htmlFor="password">Пароль *</Label>
                                             <Input id="password" name="password" type="password" placeholder="Введите пароль" required />
+                                            <InputError message={errors.password} />
                                         </div>
+
+                                        {selectedRole === 'frp' && (
+                                            <>
+                                                <div className="grid gap-2">
+                                                    <Label>Склад *</Label>
+                                                    <SearchableSelect
+                                                        options={warehouseOptions}
+                                                        value={selectedWarehouse}
+                                                        onValueChange={setSelectedWarehouse}
+                                                        placeholder="Выберите склад"
+                                                        searchPlaceholder="Поиск склада..."
+                                                    />
+                                                    <InputError message={errors.warehouse_id} />
+                                                    <input type="hidden" name="warehouse_id" value={selectedWarehouse} />
+                                                </div>
+
+                                                <div className="grid gap-2">
+                                                    <Label>Руководитель *</Label>
+                                                    <SearchableSelect
+                                                        options={supervisorOptions}
+                                                        value={selectedSupervisor}
+                                                        onValueChange={setSelectedSupervisor}
+                                                        placeholder="Выберите руководителя"
+                                                        searchPlaceholder="Поиск руководителя..."
+                                                    />
+                                                    <InputError message={errors.senior_id} />
+                                                    <input type="hidden" name="senior_id" value={selectedSupervisor} />
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
 
                                     <div className="flex gap-4 pt-4">

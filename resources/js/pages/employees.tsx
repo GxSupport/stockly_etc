@@ -1,11 +1,12 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Edit, MoreHorizontal, Plus, Trash2, UserCheck, UserX } from 'lucide-react';
+import { Edit, MoreHorizontal, Plus, Trash2, UserCheck, Users, UserX } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Role {
@@ -21,12 +22,19 @@ interface Employee {
     role?: Role;
 }
 
+interface RoleStatistic {
+    role_id: string;
+    role_name: string;
+    count: number;
+}
+
 interface PaginatedData {
     employees: Employee[];
     total: number;
     page: number;
     perPage: number;
     search: string | null;
+    roleStatistics: RoleStatistic[];
 }
 
 type EmployeesPageProps = PaginatedData;
@@ -38,7 +46,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Employees({ employees, total, page, perPage, search }: EmployeesPageProps) {
+export default function Employees({ employees, total, page, perPage, search, roleStatistics }: EmployeesPageProps) {
     const [localEmployees, setLocalEmployees] = useState<Employee[]>(employees);
     const [searchQuery, setSearchQuery] = useState(search || '');
 
@@ -116,6 +124,34 @@ export default function Employees({ employees, total, page, perPage, search }: E
                         <Plus className="h-4 w-4" />
                         Добавить сотрудника
                     </Button>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {roleStatistics && roleStatistics.length > 0 ? (
+                        roleStatistics.map((stat) => (
+                            <Card key={stat.role_id}>
+                                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                    <CardTitle className="text-sm font-medium">{stat.role_name}</CardTitle>
+                                    <Users className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{stat.count}</div>
+                                    <p className="text-xs text-muted-foreground">
+                                        {stat.count === 1 ? 'сотрудник' : stat.count < 5 ? 'сотрудника' : 'сотрудников'}
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        ))
+                    ) : (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-sm font-medium">Всего сотрудников</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{total}</div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
 
                 <div className="flex gap-4">

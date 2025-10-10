@@ -7,6 +7,8 @@ use App\Models\Employee;
 use App\Models\User;
 use App\Models\UserRoles;
 use App\Models\UserWarehouse;
+use App\Models\Warehouse;
+use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
 
@@ -26,6 +28,7 @@ class EmployeService
         $total = $query->count();
         $employees = $query->skip(($page - 1) * $perPage)
             ->take($perPage)
+            ->orderBy('id', 'desc')
             ->get();
 
         return [
@@ -41,25 +44,57 @@ class EmployeService
         return UserRoles::all();
     }
 
+    /**
+     * @throws Exception
+     */
     public function createEmployee(array $data): User
     {
-        $user = new User;
-        $user->name = $data['name'];
-        $user->phone = $data['phone'];
-        $user->password = bcrypt($data['password']);
-        $user->type = $data['role_id'];
-        $user->dep_code = $data['dep_code'];
-        $user->save();
-        if ($user->type == 'frp') {
-            $warehouse_id = $data['dep_code'];
-            $this->addOrCheckUserWarehouse($user->id, $warehouse_id);
+
+        if ($data['dep_code']) {
+            $this->checkDepCode($data['dep_code']);
         }
+
+        $user = User::query()->create([
+            'name' => $data['name'],
+            'phone' => $data['phone'],
+            'password' => bcrypt($data['password']),
+            'type' => $data['role_id'],
+            'dep_code' => $data['dep_code'],
+            'senior_id' => $data['senior_id'] ?? null,
+        ]);
+
+        if ($user['type'] == 'frp' && isset($data['warehouse_id'])) {
+            $this->addOrCheckUserWarehouse($user->id, $data['warehouse_id']);
+        }
+
         (new SmsService($user->phone, $this->generateOtpMessage(
             $data['phone'],
             $data['password']
         )))->sendSms();
 
         return $user;
+    }
+
+    //    public function checkDepCode(string $dep_code): void
+    //    {
+    //        $dep = DepList::where([
+    //            'dep_code' => $dep_code,
+    //            'is_active' => true,
+    //        ])->first();
+    //
+    //        if (is_null($dep)) {
+    //            throw new \Exception('Department code does not exist or is inactive.');
+    //        }
+    //    }
+
+    public function getEmployeeById($id): ?User
+    {
+        return User::where('id', $id)->first();
+    }
+
+    public function getEmployeeByPhone($phone): ?User
+    {
+        return User::where('phone', $phone)->first();
     }
 
     public function generateOtpMessage($phone, $password): string
@@ -81,10 +116,14 @@ class EmployeService
 
     public function saveUserWarehouse($user_id, $warehouse_id): void
     {
-        $u_warehouse = new UserWarehouse;
-        $u_warehouse->user_id = $user_id;
-        $u_warehouse->warehouse_id = $warehouse_id;
-        $u_warehouse->save();
+        //        $u_warehouse = new UserWarehouse;
+        //        $u_warehouse->user_id = $user_id;
+        //        $u_warehouse->warehouse_id = $warehouse_id;
+        //        $u_warehouse->save();
+        UserWarehouse::query()->create([
+            'user_id' => $user_id,
+            'warehouse_id' => $warehouse_id,
+        ]);
     }
 
     public function updateEmployee(User $employee, array $data): User
@@ -139,7 +178,7 @@ class EmployeService
 
             // If user is 'frp' type, handle warehouse assignment
             if ($currentType === 'frp') {
-                if (isset($data['warehouse_id']) && ! empty($data['warehouse_id'])) {
+                if (! empty($data['warehouse_id'])) {
                     $this->addOrCheckUserWarehouse($employee->id, $data['warehouse_id']);
                 }
             } else {
@@ -201,5 +240,24 @@ class EmployeService
         return User::where('is_active', 1)->
         where('type', 'header_frp')
             ->get(['id', 'name']);
+    }
+
+    public function getRoleStatistics()
+    {
+        return User::query()
+            ->selectRaw('type, COUNT(*) as count')
+            ->whereNotNull('type')
+            ->groupBy('type')
+            ->get()
+            ->map(function ($item) {
+                // Load role relationship for each group
+                $role = UserRoles::where('title', $item->type)->first();
+
+                return [
+                    'role_id' => $item->type,
+                    'role_name' => $role?->name ?? 'Не указано',
+                    'count' => $item->count,
+                ];
+            });
     }
 }

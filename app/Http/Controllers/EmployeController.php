@@ -7,6 +7,7 @@ use App\Http\Requests\Employee\UpdateRequest;
 use App\Models\User;
 use App\Services\DepListService;
 use App\Services\EmployeService;
+use Exception;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -25,12 +26,15 @@ class EmployeController extends Controller
             $request->input('search', null)
         );
 
+        $roleStatistics = $this->employeService->getRoleStatistics();
+
         return Inertia::render('employees', [
             'employees' => $list['data'],
             'total' => $list['total'],
             'page' => $list['page'],
             'perPage' => $list['perPage'],
             'search' => $request->input('search', null),
+            'roleStatistics' => $roleStatistics,
         ]);
     }
 
@@ -38,18 +42,38 @@ class EmployeController extends Controller
     {
         $dep_list = $this->depListService->getDepList();
         $roles_list = $this->employeService->getRoleList();
+        $warehouses = $this->employeService->getWarehouseList();
+        $supervisors = $this->employeService->getSeniorList();
 
         return Inertia::render('employees/create', [
             'dep_list' => $dep_list,
             'roles_list' => $roles_list,
+            'warehouses' => $warehouses,
+            'supervisors' => $supervisors,
         ]);
     }
 
+    /**
+     * @throws Exception
+     */
     public function store(StoreRequest $request)
     {
         $data = $request->validated();
         $data['phone'] = preg_replace('/\D/', '', $data['phone']);
-        $this->employeService->createEmployee($data);
+        $exists = $this->employeService->getEmployeeByPhone($data['phone']);
+        if ($exists) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Пользователь с таким телефоном уже существует');
+        }
+        $user = $this->employeService->createEmployee($data);
+        if (! $user) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Ошибка при создании сотрудника');
+        }
 
         return redirect()
             ->route('employees.index')
