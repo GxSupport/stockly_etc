@@ -60,6 +60,7 @@ class EmployeController extends Controller
     {
         $data = $request->validated();
         $data['phone'] = preg_replace('/\D/', '', $data['phone']);
+
         $exists = $this->employeService->getEmployeeByPhone($data['phone']);
         if ($exists) {
             return redirect()
@@ -103,8 +104,8 @@ class EmployeController extends Controller
 
     public function searchWarehouses(Request $request)
     {
-        $search = $request->input('search', '');
-        $limit = $request->input('limit', 10);
+        $search = $request->input('search') ?? '';
+        $limit = (int) ($request->input('limit') ?? 10);
 
         $warehouses = $this->employeService->searchWarehouses($search, $limit);
 

@@ -26,6 +26,7 @@ interface CreateDocumentProps {
     documentTypes: DocumentType[];
     products: Product[];
     services: Service[];
+    nextNumber: string;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -33,10 +34,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Добавить АКТ', href: '/documents/create' },
 ];
 
-export default function CreateDocument({ documentTypes, products, services }: CreateDocumentProps) {
+export default function CreateDocument({ documentTypes, products, services, nextNumber }: CreateDocumentProps) {
     const { data, setData, post, processing, errors } = useForm<DocumentData>({
         document_type_id: '',
-        number: `${new Date().getFullYear()}/`,
+        number: nextNumber,
         products: [],
         main_tool: '',
         date_order: new Date().toISOString().split('T')[0],

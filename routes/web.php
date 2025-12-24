@@ -7,6 +7,7 @@ use App\Http\Controllers\EmployeController;
 use App\Http\Controllers\GuideController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\WarehouseTypeController;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
+
+    Route::put('user/chat-id', [UserController::class, 'updateChatId'])->name('user.update-chat-id');
     Route::middleware('management')->group(function () {
         Route::prefix('employees')->group(function () {
             Route::get('/', [EmployeController::class, 'index'])->name('employees.index');

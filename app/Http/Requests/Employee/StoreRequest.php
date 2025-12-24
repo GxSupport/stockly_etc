@@ -15,6 +15,7 @@ class StoreRequest extends FormRequest
             'role_id' => 'required|exists:user_roles,title',
             'dep_code' => 'required|exists:dep_list,dep_code',
             'senior_id' => 'nullable|required_if:role_id,frp|exists:users,id',
+            'warehouse_id' => 'nullable|required_if:role_id,frp|exists:warehouses,id',
         ];
     }
 

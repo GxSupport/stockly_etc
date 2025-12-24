@@ -3,26 +3,22 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\ResetPasswordRequest;
-use App\Models\User;
+use App\Http\Requests\Auth\VerifyOtpRequest;
 use Carbon\Carbon;
-use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class NewPasswordController extends Controller
+class VerifyOtpController extends Controller
 {
     /**
-     * Show the password reset page.
+     * Show the OTP verification page.
      */
     public function create(string $token): Response|RedirectResponse
     {
-        // Verify token exists and is valid
+        // Check if token exists
         $resetRecord = DB::table('password_reset_tokens')
             ->where('token', $token)
             ->first();
@@ -35,23 +31,19 @@ class NewPasswordController extends Controller
         // Check if token is expired (5 minutes)
         $createdAt = Carbon::parse($resetRecord->created_at);
         if ($createdAt->addMinutes(5)->isPast()) {
-            DB::table('password_reset_tokens')
-                ->where('token', $token)
-                ->delete();
-
             return redirect()->route('password.request')
                 ->with('status', 'Срок действия кода истёк. Попробуйте ещё раз');
         }
 
-        return Inertia::render('auth/reset-password', [
+        return Inertia::render('auth/verify-otp', [
             'token' => $token,
         ]);
     }
 
     /**
-     * Handle an incoming new password request.
+     * Verify the OTP code.
      */
-    public function store(ResetPasswordRequest $request): RedirectResponse
+    public function store(VerifyOtpRequest $request): RedirectResponse
     {
         $resetRecord = DB::table('password_reset_tokens')
             ->where('token', $request->token)
@@ -59,45 +51,31 @@ class NewPasswordController extends Controller
 
         if (! $resetRecord) {
             throw ValidationException::withMessages([
-                'password' => 'Неверный токен',
+                'code' => 'Неверный токен',
             ]);
         }
 
         // Check if token is expired (5 minutes)
         $createdAt = Carbon::parse($resetRecord->created_at);
         if ($createdAt->addMinutes(5)->isPast()) {
+            // Delete expired token
             DB::table('password_reset_tokens')
                 ->where('token', $request->token)
                 ->delete();
 
             throw ValidationException::withMessages([
-                'password' => 'Срок действия кода истёк. Попробуйте ещё раз',
+                'code' => 'Срок действия кода истёк. Попробуйте ещё раз',
             ]);
         }
 
-        // Find user by phone
-        $user = User::where('phone', $resetRecord->phone)->first();
-
-        if (! $user) {
+        // Verify OTP code
+        if ($resetRecord->otp_code !== $request->code) {
             throw ValidationException::withMessages([
-                'password' => 'Пользователь не найден',
+                'code' => 'Неверный код подтверждения',
             ]);
         }
 
-        // Update password
-        $user->forceFill([
-            'password' => Hash::make($request->password),
-            'remember_token' => Str::random(60),
-        ])->save();
-
-        event(new PasswordReset($user));
-
-        // Delete the reset token
-        DB::table('password_reset_tokens')
-            ->where('token', $request->token)
-            ->delete();
-
-        return redirect()->route('login')
-            ->with('status', 'Пароль успешно обновлён. Теперь вы можете войти в систему.');
+        // OTP verified, redirect to password reset page
+        return redirect()->route('password.reset', ['token' => $request->token]);
     }
 }

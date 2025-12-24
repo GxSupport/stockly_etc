@@ -12,6 +12,15 @@ class UpdateRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('is_active')) {
+            $this->merge([
+                'is_active' => filter_var($this->is_active, FILTER_VALIDATE_BOOLEAN),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         $employeeId = $this->route('employee')?->id;
@@ -30,7 +39,7 @@ class UpdateRequest extends FormRequest
             'dep_code' => 'sometimes|nullable|exists:dep_list,dep_code',
             'chat_id' => 'sometimes|nullable|string|max:255',
             'type' => 'sometimes|required|string|in:admin,director,buxgalter,user,frp',
-            'warehouse_id' => 'sometimes|nullable|exists:warehouses,id|required_if:type,frp',
+            'warehouse_id' => 'sometimes|nullable|exists:warehouse,id|required_if:type,frp',
             'senior_id' => 'sometimes|nullable|exists:users,id',
             'is_active' => 'sometimes|boolean',
         ];

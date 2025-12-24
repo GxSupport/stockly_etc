@@ -77,10 +77,30 @@ class DocumentController extends Controller
             Log::error('Ошибка при получении услуг: '.$e->getMessage());
         }
 
+        // Calculate next document number
+        $currentYear = date('Y');
+        $lastDocument = \App\Models\Documents::where('number', 'like', $currentYear.'/%')
+            ->get()
+            ->sortByDesc(function ($doc) {
+                $parts = explode('/', $doc->number);
+
+                return isset($parts[1]) ? (int) $parts[1] : 0;
+            })
+            ->first();
+
+        if ($lastDocument) {
+            $parts = explode('/', $lastDocument->number);
+            $lastNumber = isset($parts[1]) ? (int) $parts[1] : 0;
+            $nextNumber = $currentYear.'/'.($lastNumber + 1);
+        } else {
+            $nextNumber = $currentYear.'/1';
+        }
+
         return Inertia::render('documents/create', [
             'documentTypes' => $documentTypes,
             'products' => $products,
             'services' => $services,
+            'nextNumber' => $nextNumber,
         ]);
     }
 
@@ -242,6 +262,7 @@ class DocumentController extends Controller
     {
         try {
             $documentService = new DocumentService($id);
+
             return $documentService->runProcess($request);
         } catch (\Exception $e) {
             return response()->json([

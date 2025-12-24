@@ -77,7 +77,6 @@ export default function EditEmployee({ employee, roles_list, dep_list, senior_li
     const [phoneValue, setPhoneValue] = useState<string>('');
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [isActive, setIsActive] = useState<boolean>(employee.is_active);
-    console.log(employee);
     const isAdmin = auth.user.type === 'admin';
 
     // User type options
@@ -319,10 +318,12 @@ export default function EditEmployee({ employee, roles_list, dep_list, senior_li
                                         </div>
 
                                         <div className="flex items-center gap-2">
+                                            <input type="hidden" name="is_active" value="0" />
                                             <input
                                                 type="checkbox"
                                                 id="is_active"
                                                 name="is_active"
+                                                value="1"
                                                 checked={isActive}
                                                 onChange={(e) => setIsActive(e.target.checked)}
                                                 className="h-4 w-4"
