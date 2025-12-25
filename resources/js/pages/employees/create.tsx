@@ -144,7 +144,7 @@ export default function CreateEmployee({ roles_list, dep_list, warehouses, super
                         <CardTitle>Информация о сотруднике</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Form action="/employees" method="post" className="flex flex-col gap-6">
+                        <Form action="/employees/create" method="post" className="flex flex-col gap-6">
                             {({ processing, errors }) => (
                                 <>
                                     <div className="grid gap-6">

@@ -135,7 +135,10 @@ class DocumentController extends Controller
             $request['type'] = $request->document_type_id;
             $response = $this->documentService->create($request);
             if ($response->getStatusCode() === 201) {
-                return redirect()->route('documents.index')
+                $data = $response->getData(true);
+                $documentId = $data['data']['id'];
+
+                return redirect()->route('documents.edit', $documentId)
                     ->with('success', 'Документ успешно создан');
             }
 
