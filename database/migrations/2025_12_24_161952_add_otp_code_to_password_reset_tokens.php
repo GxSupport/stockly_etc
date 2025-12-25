@@ -11,9 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('password_reset_tokens', function (Blueprint $table) {
-            $table->string('otp_code', 6)->nullable()->after('token');
-        });
+        // Jadval mavjud bo'lmasa, avval yaratamiz
+        if (! Schema::hasTable('password_reset_tokens')) {
+            Schema::create('password_reset_tokens', function (Blueprint $table) {
+                $table->string('phone')->primary();
+                $table->string('token');
+                $table->string('otp_code', 6)->nullable();
+                $table->timestamp('created_at')->nullable();
+            });
+        } else {
+            Schema::table('password_reset_tokens', function (Blueprint $table) {
+                $table->string('otp_code', 6)->nullable()->after('token');
+            });
+        }
     }
 
     /**
@@ -21,8 +31,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('password_reset_tokens', function (Blueprint $table) {
-            $table->dropColumn('otp_code');
-        });
+        if (Schema::hasTable('password_reset_tokens')) {
+            if (Schema::hasColumn('password_reset_tokens', 'otp_code')) {
+                Schema::table('password_reset_tokens', function (Blueprint $table) {
+                    $table->dropColumn('otp_code');
+                });
+            }
+        }
     }
 };
