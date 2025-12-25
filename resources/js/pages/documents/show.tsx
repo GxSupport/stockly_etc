@@ -138,9 +138,54 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
     };
 
     const getResponsiblePerson = () => {
-        console.log(document.priority);
-        console.log(document.priority?.find((el) => el.user_role === 'frp')?.user_info);
         return document.priority?.find((el) => el.user_role === 'frp')?.user_info?.name || '';
+    };
+
+    const getDocumentDescription = () => {
+        const responsiblePerson = getResponsiblePerson();
+        const typeCode = document.document_type?.code;
+
+        switch (typeCode) {
+            case 'mounted':
+                return (
+                    <>
+                        Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы были получены и
+                        смонтированы на указанных объектах. Материалы переданы под ответственность Материально ответственного лица{' '}
+                        <span className="font-semibold">{responsiblePerson}</span>
+                    </>
+                );
+            case 'dismantling':
+                return (
+                    <>
+                        Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы были демонтированы
+                        с объектов и возвращены на склад. Материалы сняты с ответственности Материально ответственного лица{' '}
+                        <span className="font-semibold">{responsiblePerson}</span>
+                    </>
+                );
+            case 'write_offs':
+                return (
+                    <>
+                        Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы действительно пришли
+                        в непригодное состояние и их дальнейшее использование нецелесообразно. Подлежат к списанию с Материально
+                        ответственного лица <span className="font-semibold">{responsiblePerson}</span>
+                    </>
+                );
+            case 'modernization':
+                return (
+                    <>
+                        Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы были заменены в рамках
+                        модернизации оборудования. Старые материалы подлежат возврату на склад, новые материалы переданы под
+                        ответственность Материально ответственного лица <span className="font-semibold">{responsiblePerson}</span>
+                    </>
+                );
+            default:
+                return (
+                    <>
+                        Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы были обработаны.
+                        Материально ответственное лицо <span className="font-semibold">{responsiblePerson}</span>
+                    </>
+                );
+        }
     };
 
     return (
@@ -163,11 +208,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                         {/* Document Title and Description */}
                         <div className="mb-8 text-center">
                             <div className="mb-4 text-lg font-semibold">{getDocumentTypeTitle()}</div>
-                            <div className="text-justify">
-                                Мы нижеподписавщиеся соcтавили настоящий акт о том, что нижеуказанные материалы действительно пришли в непригодное
-                                состояние и их дальнейшее использование не целесообразно. Подлежат к списанию с Материального ответственного лица{' '}
-                                <span className="font-semibold">{getResponsiblePerson()}</span>
-                            </div>
+                            <div className="text-justify">{getDocumentDescription()}</div>
                         </div>
 
                         {/* Products Table */}
