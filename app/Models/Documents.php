@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  *
  * @property int $id ID raqami
  * @property int $user_id Foydalanuvchi ID
+ * @property int|null $assigned_user_id Tayinlangan xodim ID (workflow_type=2 uchun)
  * @property string $number Hujjat raqami
  * @property int $type Hujjat turi
  * @property string $subscriber_title Obunachi nomi
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property Carbon|null $created_at Yaratilgan vaqt
  * @property Carbon|null $updated_at Yangilangan vaqt
  * @property-read User $user_info Foydalanuvchi haqida ma'lumot
+ * @property-read User|null $assigned_user Tayinlangan xodim
  * @property-read DocumentProducts[]|null $products Hujjat mahsulotlari
  * @property-read DocumentType $document_type Hujjat turi haqida ma'lumot
  * @property-read DocumentReturned[]|null $notes Hujjat qaytgan mahsulotlari
@@ -40,6 +42,7 @@ class Documents extends Model
 
     protected $fillable = [
         'user_id',
+        'assigned_user_id',
         'number',
         'type',
         'main_tool',
@@ -65,6 +68,11 @@ class Documents extends Model
     public function user_info(): HasOne
     {
         return $this->hasOne(User::class, 'id', 'user_id');
+    }
+
+    public function assigned_user(): HasOne
+    {
+        return $this->hasOne(User::class, 'id', 'assigned_user_id');
     }
 
     public function products(): HasMany

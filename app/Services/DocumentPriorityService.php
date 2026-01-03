@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\DocumentPriority;
 use App\Models\DocumentPriorityConfig;
+use App\Models\Documents;
+use App\Models\DocumentType;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -32,25 +35,114 @@ class DocumentPriorityService
         DocumentPriority::create($data);
     }
 
-    public function createPriority($document_id, $type): void
+    public function createPriority($document_id, $type, ?string $creator_type = null): void
     {
         // Проверяем что type не null
         if (is_null($type)) {
             throw new \Exception('Тип документа не указан для создания приоритета');
         }
 
+        // DocumentType dan workflow_type ni olish
+        $documentType = DocumentType::find($type);
+        if (! $documentType) {
+            throw new \Exception('Тип документа не найден: '.$type);
+        }
+
+        // Workflow turiga qarab priority yaratish
+        if ($documentType->isDirectWorkflow()) {
+            $this->createDirectWorkflowPriority($document_id, $creator_type);
+        } else {
+            $this->createSequentialWorkflowPriority($document_id, $type, $creator_type);
+        }
+    }
+
+    /**
+     * Ketma-ket workflow uchun priority yaratish (hozirgi logika)
+     * deputy_director uchun - har bir deputy_director foydalanuvchi uchun alohida priority yaratiladi
+     * header_frp yaratganda - frp bosqichi skip qilinadi (FRP tasdiqlashi kerak emas)
+     */
+    private function createSequentialWorkflowPriority(int $document_id, int $type, ?string $creator_type = null): void
+    {
         $items = $this->getFromConfig($type);
         if ($items->isEmpty()) {
             throw new \Exception('Не найдено приоритета для типа документа: '.$type);
         }
         foreach ($items as $item) {
-            $data['document_id'] = $document_id;
-            $data['ordering'] = $item->ordering;
-            $data['user_role'] = $item->user_role;
-            $data['is_success'] = false;
-            $data['is_active'] = true;
-            $this->addPriority($data);
+            // header_frp yaratganda frp bosqichini skip qilish
+            // (ular uchun FRP tasdiqlashi kerak emas)
+            if ($creator_type === 'header_frp' && $item->user_role === 'frp') {
+                continue;
+            }
+
+            // deputy_director uchun - har bir deputy_director foydalanuvchi uchun alohida priority
+            if ($item->user_role === 'deputy_director') {
+                $deputyDirectors = User::where('type', 'deputy_director')->get();
+                foreach ($deputyDirectors as $deputy) {
+                    $this->addPriority([
+                        'document_id' => $document_id,
+                        'ordering' => $item->ordering,
+                        'user_id' => $deputy->id,
+                        'user_role' => 'deputy_director',
+                        'is_success' => false,
+                        'is_active' => true,
+                    ]);
+                }
+            } else {
+                // Boshqa rollar uchun oddiy priority
+                $data['document_id'] = $document_id;
+                $data['ordering'] = $item->ordering;
+                $data['user_role'] = $item->user_role;
+                $data['is_success'] = false;
+                $data['is_active'] = true;
+                $this->addPriority($data);
+            }
         }
+    }
+
+    /**
+     * To'g'ridan-to'g'ri workflow uchun priority yaratish
+     * Yaratuvchi (frp/header_frp) → Tayinlangan xodim → Buxgalter
+     */
+    private function createDirectWorkflowPriority(int $document_id, ?string $creator_type = null): void
+    {
+        $document = Documents::find($document_id);
+        if (! $document) {
+            throw new \Exception('Документ не найден: '.$document_id);
+        }
+
+        // Yaratuvchi rolini aniqlash (frp yoki header_frp)
+        $creatorRole = $creator_type ?? 'frp';
+
+        // 1-bosqich: Yaratuvchi (frp yoki header_frp)
+        $this->addPriority([
+            'document_id' => $document_id,
+            'ordering' => 1,
+            'user_id' => $document->user_id,
+            'user_role' => $creatorRole,
+            'is_success' => false,
+            'is_active' => true,
+        ]);
+
+        // 2-bosqich: Tayinlangan xodim
+        if ($document->assigned_user_id) {
+            $this->addPriority([
+                'document_id' => $document_id,
+                'ordering' => 2,
+                'user_id' => $document->assigned_user_id,
+                'user_role' => 'assigned',  // Maxsus rol - tayinlangan xodim
+                'is_success' => false,
+                'is_active' => true,
+            ]);
+        }
+
+        // 3-bosqich: Buxgalter
+        $this->addPriority([
+            'document_id' => $document_id,
+            'ordering' => $document->assigned_user_id ? 3 : 2,
+            'user_role' => 'buxgalter',
+            'is_success' => false,
+            'is_active' => true,
+        ]);
     }
 
     public function removePriority($document_id): void
@@ -118,6 +210,35 @@ class DocumentPriorityService
         }
 
         return $response;
+    }
+
+    /**
+     * Barcha deputy_director lar tasdiqlagan yoki yo'qligini tekshirish
+     */
+    public function allDeputyDirectorsApproved(int $document_id, int $ordering): bool
+    {
+        $pendingDeputies = DocumentPriority::where([
+            'document_id' => $document_id,
+            'ordering' => $ordering,
+            'user_role' => 'deputy_director',
+            'is_active' => true,
+            'is_success' => false,
+        ])->count();
+
+        return $pendingDeputies === 0;
+    }
+
+    /**
+     * Ma'lum foydalanuvchi uchun priority olish
+     */
+    public function getPriorityByOrderingAndUser(int $document_id, int $ordering, int $user_id): ?DocumentPriority
+    {
+        return DocumentPriority::query()->where([
+            'document_id' => $document_id,
+            'ordering' => $ordering,
+            'user_id' => $user_id,
+            'is_active' => true,
+        ])->first();
     }
 
     public function updateDocumentPriority($id, $data)

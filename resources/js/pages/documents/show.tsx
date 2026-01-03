@@ -87,6 +87,7 @@ const workerTypeLabels: Record<string, string> = {
     admin: 'Администратор',
     frp: 'МОЛ',
     dep_head: 'Начальник отдела',
+    deputy_director: 'Заместитель директора',
     director: 'Директор',
     buxgalter: 'Бухгалтер',
 };
@@ -118,7 +119,18 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
 
     const checkOrder = () => {
         const priority = document.priority?.find((el) => el?.ordering === document.status);
-        return priority && priority.user_role === user?.type;
+        if (!priority) return false;
+
+        // deputy_director uchun - user_id tekshirish va is_success = 0 bo'lishi kerak
+        if (priority.user_role === 'deputy_director') {
+            // Foydalanuvchi uchun maxsus priority topish
+            const userPriority = document.priority?.find(
+                (el) => el?.ordering === document.status && el?.user_role === 'deputy_director' && el?.user_info?.id === user?.id,
+            );
+            return userPriority && userPriority.is_success === 0;
+        }
+
+        return priority.user_role === user?.type;
     };
 
     const handleConfirm = (type: 'confirm' | 'cancel') => {

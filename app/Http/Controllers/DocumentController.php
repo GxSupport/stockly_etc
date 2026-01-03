@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDocumentRequest;
 use App\Models\DocumentType;
+use App\Models\User;
 use App\Services\DocumentService;
 use App\Services\ProductService;
 use App\Services\TelegramService;
@@ -96,11 +97,19 @@ class DocumentController extends Controller
             $nextNumber = $currentYear.'/1';
         }
 
+        // Xodimlar ro'yxati (to'g'ridan-to'g'ri workflow uchun)
+        $users = User::where('is_active', 1)
+            ->where('id', '!=', $user->id)  // O'zini chiqarib tashlash
+            ->select('id', 'name', 'type')
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('documents/create', [
             'documentTypes' => $documentTypes,
             'products' => $products,
             'services' => $services,
             'nextNumber' => $nextNumber,
+            'users' => $users,
         ]);
     }
 
@@ -230,11 +239,19 @@ class DocumentController extends Controller
                 Log::error('Ошибка при получении услуг: '.$e->getMessage());
             }
 
+            // Xodimlar ro'yxati (to'g'ridan-to'g'ri workflow uchun)
+            $users = User::where('is_active', 1)
+                ->where('id', '!=', $user->id)
+                ->select('id', 'name', 'type')
+                ->orderBy('name')
+                ->get();
+
             return Inertia::render('documents/edit', [
                 'document' => $document->load(['products', 'document_type', 'user_info', 'notes']),
                 'documentTypes' => $documentTypes,
                 'products' => $products,
                 'services' => $services,
+                'users' => $users,
             ]);
         } catch (\Exception $e) {
             return redirect()->route('documents.index')

@@ -1,15 +1,18 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface DocumentType {
     id: number;
     code: string;
     title: string;
+    workflow_type: number;
+    requires_deputy_approval: boolean;
 }
 
 interface PaginatedData {
@@ -80,6 +83,9 @@ export default function DocumentTypes({ document_types, total, page = 1, perPage
                                 <tr className="border-b bg-muted/50">
                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Код</th>
                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Название</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Тип согласования</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Зам. директор</th>
+                                    <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Действия</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -92,11 +98,40 @@ export default function DocumentTypes({ document_types, total, page = 1, perPage
                                             <td className="h-12 px-4 align-middle">
                                                 <div className="font-medium">{documentType.title}</div>
                                             </td>
+                                            <td className="h-12 px-4 align-middle">
+                                                {documentType.workflow_type === 1 ? (
+                                                    <Badge variant="secondary">Последовательное</Badge>
+                                                ) : (
+                                                    <Badge variant="default">Прямое назначение</Badge>
+                                                )}
+                                            </td>
+                                            <td className="h-12 px-4 align-middle">
+                                                {documentType.workflow_type === 1 ? (
+                                                    documentType.requires_deputy_approval ? (
+                                                        <Badge variant="default">Требуется</Badge>
+                                                    ) : (
+                                                        <Badge variant="outline">Не требуется</Badge>
+                                                    )
+                                                ) : (
+                                                    <span className="text-muted-foreground">—</span>
+                                                )}
+                                            </td>
+                                            <td className="h-12 px-4 align-middle text-right">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => router.visit(`/document-types/${documentType.id}/edit`)}
+                                                    className="gap-2"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                    Редактировать
+                                                </Button>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={2} className="h-24 text-center">
+                                        <td colSpan={5} className="h-24 text-center">
                                             <div className="text-muted-foreground">Типы документов не найдены</div>
                                         </td>
                                     </tr>

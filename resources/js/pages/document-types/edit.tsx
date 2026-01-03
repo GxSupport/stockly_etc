@@ -10,33 +10,45 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Типы документов',
-        href: '/document-types',
-    },
-    {
-        title: 'Добавить тип документа',
-        href: '/document-types/create',
-    },
-];
+interface DocumentType {
+    id: number;
+    code: string;
+    title: string;
+    workflow_type: number;
+    requires_deputy_approval: boolean;
+}
 
-export default function CreateDocumentType() {
-    const { data, setData, post, processing, errors } = useForm({
-        code: '',
-        title: '',
-        workflow_type: '1',
-        requires_deputy_approval: false,
+interface EditDocumentTypeProps {
+    documentType: DocumentType;
+}
+
+export default function EditDocumentType({ documentType }: EditDocumentTypeProps) {
+    const breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Типы документов',
+            href: '/document-types',
+        },
+        {
+            title: `Редактировать: ${documentType.title}`,
+            href: '#',
+        },
+    ];
+
+    const { data, setData, put, processing, errors } = useForm({
+        code: documentType.code,
+        title: documentType.title,
+        workflow_type: documentType.workflow_type.toString(),
+        requires_deputy_approval: documentType.requires_deputy_approval,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/document-types/create');
+        put(`/document-types/${documentType.id}`);
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Добавить тип документа" />
+            <Head title={`Редактировать тип документа: ${documentType.title}`} />
 
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
@@ -45,7 +57,7 @@ export default function CreateDocumentType() {
                             <ArrowLeft className="h-4 w-4" />
                             Назад
                         </Button>
-                        <h1 className="text-3xl font-bold tracking-tight">Добавить тип документа</h1>
+                        <h1 className="text-3xl font-bold tracking-tight">Редактировать тип документа</h1>
                     </div>
                 </div>
 
@@ -66,7 +78,6 @@ export default function CreateDocumentType() {
                                         onChange={(e) => setData('code', e.target.value.toUpperCase())}
                                         placeholder="Введите код документа (например: INV, ORD, REC)"
                                         required
-                                        autoFocus
                                         className="font-mono"
                                         style={{ textTransform: 'uppercase' }}
                                     />
@@ -171,8 +182,8 @@ export default function CreateDocumentType() {
                                     Отменить
                                 </Button>
                                 <Button type="submit" disabled={processing}>
-                                    {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                                    Сохранить тип документа
+                                    {processing && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                                    Сохранить изменения
                                 </Button>
                             </div>
                         </form>

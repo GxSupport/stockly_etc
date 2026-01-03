@@ -12,8 +12,8 @@ class DocumentTypeService
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', '%' . $search . '%')
-                  ->orWhere('code', 'like', '%' . $search . '%');
+                $q->where('title', 'like', '%'.$search.'%')
+                    ->orWhere('code', 'like', '%'.$search.'%');
             });
         }
 
@@ -37,14 +37,33 @@ class DocumentTypeService
         if (isset($data['code'])) {
             $data['code'] = strtoupper($data['code']);
         }
-        
+
         return DocumentType::create($data);
+    }
+
+    public function find(int $id): ?DocumentType
+    {
+        return DocumentType::find($id);
+    }
+
+    public function update(int $id, array $data): DocumentType
+    {
+        $documentType = DocumentType::findOrFail($id);
+
+        // Ensure code is uppercase
+        if (isset($data['code'])) {
+            $data['code'] = strtoupper($data['code']);
+        }
+
+        $documentType->update($data);
+
+        return $documentType;
     }
 
     public function checkCodeExists(string $code, ?int $excludeId = null): bool
     {
         $query = DocumentType::where('code', strtoupper($code));
-        
+
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
         }

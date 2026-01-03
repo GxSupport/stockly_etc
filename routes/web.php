@@ -57,6 +57,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/', [DocumentTypeController::class, 'index'])->name('document-types.index');
             Route::get('/create', [DocumentTypeController::class, 'create'])->name('document-types.create');
             Route::post('/create', [DocumentTypeController::class, 'store'])->name('document-types.store');
+            Route::get('/{id}/edit', [DocumentTypeController::class, 'edit'])->name('document-types.edit');
+            Route::put('/{id}', [DocumentTypeController::class, 'update'])->name('document-types.update');
         });
     });
 

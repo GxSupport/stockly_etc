@@ -8,6 +8,12 @@ interface DocumentType {
     id: number;
     code: string;
     title: string;
+    workflow_type: number;
+}
+interface User {
+    id: number;
+    name: string;
+    type: string;
 }
 interface Product {
     name: string;
@@ -27,6 +33,7 @@ interface CreateDocumentProps {
     products: Product[];
     services: Service[];
     nextNumber: string;
+    users: User[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -34,9 +41,10 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Добавить АКТ', href: '/documents/create' },
 ];
 
-export default function CreateDocument({ documentTypes, products, services, nextNumber }: CreateDocumentProps) {
+export default function CreateDocument({ documentTypes, products, services, nextNumber, users }: CreateDocumentProps) {
     const { data, setData, post, processing, errors } = useForm<DocumentData>({
         document_type_id: '',
+        assigned_user_id: undefined,
         number: nextNumber,
         products: [],
         main_tool: '',
@@ -70,6 +78,7 @@ export default function CreateDocument({ documentTypes, products, services, next
                     documentTypes={documentTypes}
                     allProducts={products}
                     services={services}
+                    users={users}
                 />
             </div>
         </AppLayout>

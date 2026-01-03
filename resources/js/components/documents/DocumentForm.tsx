@@ -11,11 +11,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-// Interfaces remain the same
+// Interfaces
 interface DocumentType {
     id: number;
     code: string;
     title: string;
+    workflow_type: number; // 1 = ketma-ket, 2 = to'g'ridan-to'g'ri
+}
+interface User {
+    id: number;
+    name: string;
+    type: string;
 }
 interface Product {
     name: string;
@@ -43,6 +49,7 @@ export interface ProductItem {
 export interface DocumentData {
     id?: number;
     document_type_id: string | null;
+    assigned_user_id?: string | undefined;
     number: string;
     products: ProductItem[];
     main_tool: string;
@@ -63,6 +70,7 @@ interface DocumentFormProps {
     documentTypes: DocumentType[];
     allProducts: Product[];
     services: Service[];
+    users?: User[];
     isEditMode?: boolean;
     documentNotes?: any[];
 }
@@ -76,6 +84,7 @@ export default function DocumentForm({
     documentTypes,
     allProducts,
     services,
+    users = [],
     isEditMode = false,
     documentNotes = [],
 }: DocumentFormProps) {
@@ -167,8 +176,9 @@ export default function DocumentForm({
     };
 
     const totalAmount = data.products.reduce((sum, product) => sum + parseNumericValue(product.amount), 0);
-    console.log('totalAmount', totalAmount);
     const selectedDocumentType = documentTypes.find((d) => d.id.toString() === data.document_type_id);
+    // To'g'ridan-to'g'ri workflow uchun xodim tanlash ko'rsatish
+    const showAssignedUserSelect = selectedDocumentType && selectedDocumentType.workflow_type === 2;
     const showMainToolInput = selectedDocumentType && selectedDocumentType.id === 1 && !isMainToolFromService;
     const showMainToolSelect =
         selectedDocumentType &&
@@ -213,6 +223,7 @@ export default function DocumentForm({
 
     const documentTypeOptions = documentTypes.map((docType) => ({ value: docType.id.toString(), label: docType.title }));
     const serviceOptions = services.map((service) => ({ value: service.basic_resource_code, label: service.name }));
+    const userOptions = users.map((user) => ({ value: user.id.toString(), label: `${user.name} (${userRoles[user.type as keyof typeof userRoles] || user.type})` }));
     const productOptions = allProducts.map((product) => ({
         value: product.nomenclature,
         label: `${product.name.substring(0, 50)}... | ${product.measure} | ${formatAmount(product.price)} | Склад: ${product.count}`,
@@ -292,13 +303,33 @@ export default function DocumentForm({
                             <Label>Тип документа *</Label>
                             <SearchableSelect
                                 options={documentTypeOptions}
-                                value={data.document_type_id}
-                                onValueChange={(value) => setData('document_type_id', value)}
+                                value={data.document_type_id ?? undefined}
+                                onValueChange={(value) => {
+                                    setData('document_type_id', value);
+                                    // Reset assigned_user_id when document type changes
+                                    setData('assigned_user_id', undefined);
+                                }}
                                 placeholder="Выберите тип документа"
                                 searchPlaceholder="Поиск типа документа..."
                             />
                             <InputError message={errors.document_type_id} />
                         </div>
+                        {showAssignedUserSelect && (
+                            <div className="grid gap-2">
+                                <Label>Назначить сотруднику *</Label>
+                                <SearchableSelect
+                                    options={userOptions}
+                                    value={data.assigned_user_id}
+                                    onValueChange={(value) => setData('assigned_user_id', value)}
+                                    placeholder="Выберите сотрудника"
+                                    searchPlaceholder="Поиск сотрудника..."
+                                />
+                                <InputError message={errors.assigned_user_id} />
+                                <div className="text-xs text-muted-foreground">
+                                    Документ будет отправлен выбранному сотруднику для подтверждения
+                                </div>
+                            </div>
+                        )}
                         <div className="grid gap-2">
                             <Label htmlFor="number">Номер документа *</Label>
                             <Input

@@ -8,6 +8,12 @@ interface DocumentType {
     id: number;
     code: string;
     title: string;
+    workflow_type: number;
+}
+interface User {
+    id: number;
+    name: string;
+    type: string;
 }
 interface Product {
     name: string;
@@ -49,9 +55,10 @@ interface EditDocumentProps {
     documentTypes: DocumentType[];
     products: Product[];
     services: Service[];
+    users: User[];
 }
 
-export default function EditDocument({ document, documentTypes, products, services }: EditDocumentProps) {
+export default function EditDocument({ document, documentTypes, products, services, users }: EditDocumentProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'АКТ', href: '/documents' },
         { title: `Редактировать АКТ №${document.number}`, href: '#' },
@@ -111,6 +118,7 @@ export default function EditDocument({ document, documentTypes, products, servic
                     documentTypes={documentTypes}
                     allProducts={products}
                     services={services}
+                    users={users}
                     isEditMode={true}
                     documentNotes={document.notes || []}
                 />

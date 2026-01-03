@@ -19,12 +19,20 @@ class StoreDocumentTypeRequest extends FormRequest
                 'required',
                 'string',
                 'max:10',
-                Rule::unique('document_type', 'code')
+                Rule::unique('document_type', 'code'),
             ],
             'title' => [
                 'required',
                 'string',
-                'max:255'
+                'max:255',
+            ],
+            'workflow_type' => [
+                'required',
+                'integer',
+                'in:1,2',
+            ],
+            'requires_deputy_approval' => [
+                'boolean',
             ],
         ];
     }
@@ -39,6 +47,10 @@ class StoreDocumentTypeRequest extends FormRequest
             'title.required' => 'Поле "Название" обязательно для заполнения.',
             'title.string' => 'Поле "Название" должно быть строкой.',
             'title.max' => 'Поле "Название" не должно превышать :max символов.',
+            'workflow_type.required' => 'Поле "Тип согласования" обязательно для заполнения.',
+            'workflow_type.integer' => 'Поле "Тип согласования" должно быть числом.',
+            'workflow_type.in' => 'Поле "Тип согласования" должно быть 1 или 2.',
+            'requires_deputy_approval.boolean' => 'Поле "Требуется согласование зам. директора" должно быть логическим значением.',
         ];
     }
 

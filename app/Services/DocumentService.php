@@ -11,6 +11,7 @@ use App\Models\DocumentPriorityConfig;
 use App\Models\DocumentProducts;
 use App\Models\DocumentReturned;
 use App\Models\Documents;
+use App\Models\DocumentType;
 use App\Models\User;
 use GuzzleHttp\Client;
 use Illuminate\Database\QueryException;
@@ -50,8 +51,21 @@ class DocumentService
 
     private function setPriority(): void
     {
-        $this->priority = (new DocumentPriorityService)
-            ->getPriorityByOrdering($this->document->id, $this->document->status);
+        $priorityService = new DocumentPriorityService;
+
+        // deputy_director uchun - o'zining maxsus priority yozuvini olish
+        if ($this->user && $this->user->type === 'deputy_director') {
+            $this->priority = $priorityService->getPriorityByOrderingAndUser(
+                $this->document->id,
+                $this->document->status,
+                $this->user->id
+            );
+        } else {
+            $this->priority = $priorityService->getPriorityByOrdering(
+                $this->document->id,
+                $this->document->status
+            );
+        }
     }
 
     private function setRequest($request): void
@@ -97,20 +111,38 @@ class DocumentService
                 'frp' => 1,
                 'header_frp' => 2,
                 'buxgalter' => 3,
-                'director' => 4,
+                'deputy_director' => 4,
+                'director' => 5,
             ];
             $min_status = $roleStatusMap[$this->user->type] ?? 0;
 
-            $priorityWhere = [
-                ['user_role', $this->user->type],
-                ['is_active', 1],
-            ];
-
             // Get the document IDs from the DocumentPriority table with filters
-            $documentIdsQuery = DocumentPriority::where($priorityWhere)
+            // Uchta holatni tekshirish kerak:
+            // 1. user_role = user->type (odatiy workflow - buxgalter, header_frp, frp, director)
+            // 2. user_role = 'assigned' va user_id = user->id (to'g'ridan-to'g'ri workflow)
+            // 3. user_role = 'deputy_director' va user_id = user->id va is_success = false (barcha deputy tasdiqlashi kerak)
+            $documentIdsQuery = DocumentPriority::where('is_active', 1)
                 ->where(function ($query) {
-                    $query->whereNull('user_id')
-                        ->orWhere('user_id', $this->user->id);
+                    // deputy_director uchun - faqat o'zining priority yozuvini ko'radi
+                    if ($this->user->type === 'deputy_director') {
+                        $query->where('user_role', 'deputy_director')
+                            ->where('user_id', $this->user->id)
+                            ->where('is_success', false);
+                    } else {
+                        // Odatiy workflow - rol bo'yicha
+                        $query->where(function ($q) {
+                            $q->where('user_role', $this->user->type)
+                                ->where(function ($q2) {
+                                    $q2->whereNull('user_id')
+                                        ->orWhere('user_id', $this->user->id);
+                                });
+                        })
+                        // To'g'ridan-to'g'ri workflow - assigned rol va user_id bo'yicha
+                            ->orWhere(function ($q) {
+                                $q->where('user_role', 'assigned')
+                                    ->where('user_id', $this->user->id);
+                            });
+                    }
                 })
                 ->whereHas('document', function ($query) use ($min_status, $search, $startDate, $endDate, $documentType, $documentStatus) {
                     $query->where('is_draft', 0)
@@ -202,6 +234,7 @@ class DocumentService
             $document->subscriber_title = $request->input('subscriber_title');
             $document->address = $request->input('address');
             $document->in_charge = $request->input('in_charge');
+            $document->assigned_user_id = $request->input('assigned_user_id');
             $document->is_draft = 1;
             $document->status = 1;
             $document->save();
@@ -216,7 +249,9 @@ class DocumentService
             $this->document = $document;
 
             // Проверяем приоритеты только для обычных документов (не возвращенных)
-            if (! $document->is_returned) {
+            // To'g'ridan-to'g'ri workflow uchun config tekshiruvini o'tkazib yuborish
+            $documentType = DocumentType::find($document->type);
+            if (! $document->is_returned && (! $documentType || ! $documentType->isDirectWorkflow())) {
                 $this->checkStartPriorityConfig();
                 $this->checkStartPriority();
             }
@@ -283,6 +318,7 @@ class DocumentService
             $document->subscriber_title = $request->input('subscriber_title');
             $document->address = $request->input('address');
             $document->in_charge = $request->input('in_charge');
+            $document->assigned_user_id = $request->input('assigned_user_id');
             $document->note = $request->input('note');
             $document->is_draft = 1;
             $document->status = 1;
@@ -297,8 +333,12 @@ class DocumentService
             $document->save();
             $this->document = $document;
 
-            // Проверяем приоритеты только для обычных документов (не возвращенных)
-            $this->checkStartPriorityConfig();
+            // To'g'ridan-to'g'ri workflow uchun config tekshiruvini o'tkazib yuborish
+            $documentType = DocumentType::find($document->type);
+            if (! $documentType || ! $documentType->isDirectWorkflow()) {
+                // Проверяем приоритеты только для обычных документов (не возвращенных)
+                $this->checkStartPriorityConfig();
+            }
             // $this->checkStartPriority();
 
             $this->removePriority();
@@ -362,9 +402,12 @@ class DocumentService
 
     public function checkStartPriorityConfig(): void
     {
+        // header_frp foydalanuvchilari uchun ordering=2 dan tekshirish
+        // (ular uchun FRP tasdiqlash bosqichi kerak emas)
+        $startOrdering = ($this->user->type === 'header_frp') ? 2 : 1;
 
         $item = (new DocumentPriorityService)
-            ->checkConfigByOrderingRole(1, $this->user->type, $this->document->type);
+            ->checkConfigByOrderingRole($startOrdering, $this->user->type, $this->document->type);
         if (is_null($item)) {
             throw new \Exception('Вы не можете перевести заявку на следующий этап');
         }
@@ -392,7 +435,19 @@ class DocumentService
             throw new \Exception('Документ или тип документа не установлен');
         }
 
-        (new DocumentPriorityService)->createPriority($this->document->id, $this->document->type);
+        (new DocumentPriorityService)->createPriority(
+            $this->document->id,
+            $this->document->type,
+            $this->user->type
+        );
+
+        // header_frp yaratganda status ni 2 ga o'tkazish
+        // (ular uchun FRP tasdiqlashi kerak emas, shuning uchun header_frp bosqichidan boshlanadi)
+        $documentType = DocumentType::find($this->document->type);
+        if ($this->user->type === 'header_frp' && $documentType && ! $documentType->isDirectWorkflow()) {
+            $this->document->status = 2;
+            $this->document->save();
+        }
     }
 
     public function getProductsFromApi($info)
@@ -553,17 +608,34 @@ class DocumentService
         $this->priority->is_success = true;
         $this->priority->user_id = $this->user->id;
         $this->savePriority();
-        if ($this->lastPriority()) {
-            $this->document->is_finished = 1;
+
+        $priorityService = new DocumentPriorityService;
+
+        // deputy_director uchun - barcha deputy_directorlar tasdiqlagunga qadar statusni o'zgartirmaslik
+        if ($this->priority->user_role === 'deputy_director') {
+            // Barcha deputy_directorlar tasdiqlagan bo'lsa, keyingi bosqichga o'tish
+            if ($priorityService->allDeputyDirectorsApproved($this->document->id, $this->priority->ordering)) {
+                if ($this->lastPriority()) {
+                    $this->document->is_finished = 1;
+                }
+                $this->document->status = $this->priority->ordering + 1;
+                $this->document->user_id = null;
+            }
+            // Aks holda status o'zgarmaydi, keyingi deputy_director tasdiqlashini kutadi
+        } else {
+            // Boshqa rollar uchun odatiy logika
+            if ($this->lastPriority()) {
+                $this->document->is_finished = 1;
+            }
+            $this->document->status = $this->priority->ordering + 1;
+            $this->document->user_id = $this->attachedHead && isset($this->user->senior_id) ? $this->user->senior_id : null;
         }
-        $this->document->status = $this->priority->ordering + 1;
-        $this->document->user_id = $this->attachedHead && isset($this->user->senior_id) ? $this->user->senior_id : null;
+
         if ($this->priority->ordering == 1) {
             $this->document->is_draft = 0;
-            $service = new DocumentPriorityService;
-            $second = $service->getPriorityByOrdering($this->document->id, 2);
-            if ($this->attachedHead && isset($this->user->senior_id)) {
-                $service->updateDocumentPriority($second->id, ['user_id' => $this->user->senior_id]);
+            $second = $priorityService->getPriorityByOrdering($this->document->id, 2);
+            if ($this->attachedHead && isset($this->user->senior_id) && $second) {
+                $priorityService->updateDocumentPriority($second->id, ['user_id' => $this->user->senior_id]);
             }
         }
         $this->saveDocument();
@@ -605,6 +677,34 @@ class DocumentService
     public function checkUserCondition()
     {
         $this->checkDocumentFinished();
+
+        // 'assigned' rol uchun - priority jadvalidan tekshirish
+        if ($this->priority->user_role === 'assigned') {
+            if ($this->priority->user_id === $this->user->id) {
+                // Tayinlangan xodim uchun config qaytarish
+                return (object) [
+                    'ordering' => $this->priority->ordering,
+                    'user_role' => 'assigned',
+                    'options' => json_encode(['sms_confirm' => true]),
+                ];
+            }
+
+            return null;
+        }
+
+        // 'deputy_director' rol uchun - priority jadvalidan tekshirish
+        if ($this->priority->user_role === 'deputy_director') {
+            if ($this->priority->user_id === $this->user->id && ! $this->priority->is_success) {
+                // deputy_director uchun config qaytarish
+                return (object) [
+                    'ordering' => $this->priority->ordering,
+                    'user_role' => 'deputy_director',
+                    'options' => json_encode(['sms_confirm' => true]),
+                ];
+            }
+
+            return null;
+        }
 
         return (new DocumentPriorityService)
             ->checkConfigByOrderingRole($this->priority->ordering, $this->user->type, $this->document->type);
@@ -811,6 +911,16 @@ class DocumentService
             'document_user_id' => $this->document->user_id ?? 'null',
             'current_user_id' => $this->user->id,
         ]);
+
+        // deputy_director uchun maxsus tekshiruv
+        if ($this->priority->user_role === 'deputy_director') {
+            if ($this->priority->user_id !== $this->user->id) {
+                throw new \Exception($message);
+            }
+
+            return;
+        }
+
         if ($this->priority->user_role != $this->user->type) {
             throw new \Exception($message);
         }
