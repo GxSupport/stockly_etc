@@ -46,6 +46,7 @@ interface Document {
     is_draft: boolean;
     is_returned: boolean;
     status: number;
+    assigned_user_id: number | null;
     products: DocumentProduct[];
     notes?: never[];
 }
@@ -67,6 +68,7 @@ export default function EditDocument({ document, documentTypes, products, servic
     const { data, setData, put, processing, errors } = useForm<DocumentData>({
         id: document.id,
         document_type_id: document.type.toString(),
+        assigned_user_id: document.assigned_user_id?.toString(),
         number: document.number,
         main_tool: document.main_tool,
         date_order: document.date_order,

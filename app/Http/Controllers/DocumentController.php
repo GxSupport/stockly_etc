@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDocumentRequest;
+use App\Models\DocumentPriority;
 use App\Models\DocumentType;
 use App\Models\User;
 use App\Services\DocumentService;
@@ -26,12 +27,30 @@ class DocumentController extends Controller
         $this->documentService = $documentService;
     }
 
-    public function index(Request $request, $status = 'draft')
+    public function index(Request $request, $status = null)
     {
         $user = auth()->user();
-        if ($user->type != 'frp') {
-            $status = 'sent';
+
+        // Default status aniqlash
+        if (is_null($status)) {
+            if ($user->type === 'frp' || $user->type === 'header_frp') {
+                $status = 'draft';
+            } else {
+                // Boshqa rollar uchun - agar tayinlangan hujjatlar bo'lsa incoming, aks holda sent
+                $status = 'sent';
+            }
         }
+
+        // Kelgan hujjatlar sonini olish (incoming badge uchun)
+        $incomingCount = DocumentPriority::where('is_active', 1)
+            ->where('is_success', false)
+            ->where('user_role', 'assigned')
+            ->where('user_id', $user->id)
+            ->whereHas('document', function ($query) {
+                $query->where('is_draft', 0)->where('is_returned', 0);
+            })
+            ->count();
+
         $documents = $this->documentService->list($request, $status);
         $documentTypes = DocumentType::all(['id', 'title']);
 
@@ -39,6 +58,7 @@ class DocumentController extends Controller
             'documents' => $documents,
             'status' => $status,
             'documentTypes' => $documentTypes,
+            'incomingCount' => $incomingCount,
             'filters' => [
                 'search' => $request->input('search'),
                 'start_date' => $request->input('start_date'),
@@ -138,10 +158,11 @@ class DocumentController extends Controller
 
     public function store(StoreDocumentRequest $request)
     {
-
         try {
-            $request['is_draft'] = ! $request->has('is_draft') || $request->is_draft;
-            $request['type'] = $request->document_type_id;
+            $request->merge([
+                'is_draft' => ! $request->has('is_draft') || $request->is_draft,
+                'type' => $request->input('document_type_id'),
+            ]);
             $response = $this->documentService->create($request);
             if ($response->getStatusCode() === 201) {
                 $data = $response->getData(true);
@@ -188,7 +209,7 @@ class DocumentController extends Controller
             }
 
             return Inertia::render('documents/show', [
-                'document' => $document->load(['products', 'document_type', 'user_info', 'notes', 'priority']),
+                'document' => $document->load(['products', 'document_type', 'user_info', 'notes', 'priority.user_info']),
                 'history' => $history,
                 'staff' => $staff,
                 'user' => auth()->user(),
@@ -326,6 +347,14 @@ class DocumentController extends Controller
             'type' => 'required|string',
         ]);
 
+        // Chat ID tekshiruvi
+        if (empty($user->chat_id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Telegram Chat ID не указан. Пожалуйста, укажите его в настройках профиля.',
+            ], 422);
+        }
+
         try {
             // Generate OTP token
             $token = bin2hex(random_bytes(16));
@@ -338,24 +367,34 @@ class DocumentController extends Controller
                 'document_id' => (int) $request->document_id,
             ]);
 
-            // Here you would send the OTP via SMS/Telegram
-            // For now, we'll just return success
-            Log::info('OTP sent for document: '.$request->document_id.', Code: '.$otp);
+            Log::info('OTP sent for document: '.$request->document_id.', Code: '.$otp.', Chat ID: '.$user->chat_id);
+
             $documentService = new DocumentService($request->document_id);
             $document = $documentService->document;
-            $this->telegramService->sendMessage($user->chat_id,
-                "Ваш код подтверждения для документа №{$document->number}: {$otp}"
+
+            $sent = $this->telegramService->sendMessage(
+                $user->chat_id,
+                "Ваш код подтверждения для документа №{$document->number}: <b>{$otp}</b>"
             );
+
+            if (! $sent) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Не удалось отправить код в Telegram. Проверьте Chat ID и убедитесь, что вы начали диалог с ботом.',
+                ], 422);
+            }
 
             return response()->json([
                 'success' => true,
                 'token' => $token,
-                'message' => 'Код подтверждения отправлен',
+                'message' => 'Код подтверждения отправлен в Telegram',
             ]);
         } catch (\Exception $e) {
+            Log::error('OTP sending error: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при отправке кода',
+                'message' => 'Ошибка при отправке кода: '.$e->getMessage(),
             ], 422);
         }
     }

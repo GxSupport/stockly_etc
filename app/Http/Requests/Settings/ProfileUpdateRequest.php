@@ -18,9 +18,10 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'chat_id' => ['nullable', 'string', 'max:255'],
 
             'email' => [
-                'required',
+                'sometimes',
                 'string',
                 'lowercase',
                 'email',

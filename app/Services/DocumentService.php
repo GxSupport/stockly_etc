@@ -37,6 +37,9 @@ class DocumentService
 
     public function __construct(?int $id = null)
     {
+        // User ni birinchi o'rnatish kerak, chunki setPriority() dan foydalanadi
+        $this->user = Auth::user();
+
         if (! is_null($id)) {
             $document = Documents::find($id);
             if (empty($document)) {
@@ -46,7 +49,6 @@ class DocumentService
                 $this->setPriority();
             }
         }
-        $this->user = Auth::user();
     }
 
     private function setPriority(): void
@@ -61,10 +63,25 @@ class DocumentService
                 $this->user->id
             );
         } else {
+            // Avval odatiy priority olish
             $this->priority = $priorityService->getPriorityByOrdering(
                 $this->document->id,
                 $this->document->status
             );
+
+            // Agar priority 'assigned' bo'lsa va user_id bilan bog'langan bo'lsa,
+            // faqat shu foydalanuvchi uchun priority olish
+            if ($this->priority && $this->priority->user_role === 'assigned' && $this->user) {
+                $assignedPriority = $priorityService->getPriorityByOrderingAndUser(
+                    $this->document->id,
+                    $this->document->status,
+                    $this->user->id
+                );
+                // Agar foydalanuvchi uchun maxsus priority topilsa, uni ishlatish
+                if ($assignedPriority && $assignedPriority->user_role === 'assigned') {
+                    $this->priority = $assignedPriority;
+                }
+            }
         }
     }
 
@@ -106,48 +123,53 @@ class DocumentService
 
         // For 'sent', we implement the detailed logic from the old service.
         if ($status === 'sent') {
-            $roleStatusMap = [
-                'admin' => 0,
-                'frp' => 1,
-                'header_frp' => 2,
-                'buxgalter' => 3,
-                'deputy_director' => 4,
-                'director' => 5,
-            ];
-            $min_status = $roleStatusMap[$this->user->type] ?? 0;
+            // FRP va Header FRP uchun - o'zlari yaratgan hujjatlarni ko'rsatish
+            // Ular hujjat qaysi etapda ekanini kuzatib borishi kerak
+            if ($this->user->type === 'frp' || $this->user->type === 'header_frp') {
+                $query = Documents::with(['user_info', 'document_type', 'products', 'priority.role_info'])
+                    ->where('is_draft', 0)
+                    ->where('is_returned', 0)
+                    ->whereHas('priority', function ($q) {
+                        // Foydalanuvchi yaratgan hujjatlar (birinchi priority - frp/header_frp)
+                        $q->where('ordering', 1)
+                            ->where('user_id', $this->user->id)
+                            ->where('is_active', 1);
+                    });
+
+                $this->applyFilters($query, $search, $startDate, $endDate, $documentType, $documentStatus);
+
+                return $query->latest()->paginate($perPage);
+            }
+
+            // Boshqa rollar uchun - tasdiqlash navbatidagi hujjatlar
+            // Priority bo'yicha filtrlanadi - status tekshiruvi kerak emas
+            // chunki har bir document type uchun ordering har xil bo'lishi mumkin
+            // (masalan, deputy_director skip qilinsa, director ordering=4 bo'ladi)
 
             // Get the document IDs from the DocumentPriority table with filters
-            // Uchta holatni tekshirish kerak:
-            // 1. user_role = user->type (odatiy workflow - buxgalter, header_frp, frp, director)
-            // 2. user_role = 'assigned' va user_id = user->id (to'g'ridan-to'g'ri workflow)
-            // 3. user_role = 'deputy_director' va user_id = user->id va is_success = false (barcha deputy tasdiqlashi kerak)
             $documentIdsQuery = DocumentPriority::where('is_active', 1)
+                ->where('is_success', false) // Faqat tasdiqlanmagan hujjatlarni ko'rsatish
+                ->where('user_role', '!=', 'assigned') // assigned hujjatlar faqat 'incoming' da ko'rinadi
                 ->where(function ($query) {
                     // deputy_director uchun - faqat o'zining priority yozuvini ko'radi
                     if ($this->user->type === 'deputy_director') {
                         $query->where('user_role', 'deputy_director')
-                            ->where('user_id', $this->user->id)
-                            ->where('is_success', false);
+                            ->where('user_id', $this->user->id);
                     } else {
-                        // Odatiy workflow - rol bo'yicha
-                        $query->where(function ($q) {
-                            $q->where('user_role', $this->user->type)
-                                ->where(function ($q2) {
-                                    $q2->whereNull('user_id')
-                                        ->orWhere('user_id', $this->user->id);
-                                });
-                        })
-                        // To'g'ridan-to'g'ri workflow - assigned rol va user_id bo'yicha
-                            ->orWhere(function ($q) {
-                                $q->where('user_role', 'assigned')
-                                    ->where('user_id', $this->user->id);
+                        // Odatiy workflow - rol bo'yicha (assigned emas)
+                        $query->where('user_role', $this->user->type)
+                            ->where(function ($q2) {
+                                $q2->whereNull('user_id')
+                                    ->orWhere('user_id', $this->user->id);
                             });
                     }
                 })
-                ->whereHas('document', function ($query) use ($min_status, $search, $startDate, $endDate, $documentType, $documentStatus) {
+                // Faqat hujjat shu bosqichga kelgan bo'lsa ko'rsatish
+                // document.status = priority.ordering
+                ->whereHas('document', function ($query) use ($search, $startDate, $endDate, $documentType, $documentStatus) {
                     $query->where('is_draft', 0)
                         ->where('is_returned', 0)
-                        ->where('status', '>=', $min_status);
+                        ->whereColumn('documents.status', 'document_priority.ordering');
 
                     // Apply filters to document relation
                     if ($search) {
@@ -184,6 +206,47 @@ class DocumentService
             $documentIds = $documentIdsQuery->pluck('document_id');
 
             // Now, fetch the documents with those IDs
+            return Documents::with(['user_info', 'document_type', 'products', 'priority.role_info'])
+                ->whereIn('id', $documentIds)
+                ->latest()
+                ->paginate($perPage);
+        }
+
+        // 'incoming' - Kelgan hujjatlar (faqat tayinlangan hujjatlar - oddiy ishchilar uchun)
+        if ($status === 'incoming') {
+            $documentIdsQuery = DocumentPriority::where('is_active', 1)
+                ->where('is_success', false)
+                ->where('user_role', 'assigned')
+                ->where('user_id', $this->user->id)
+                ->whereHas('document', function ($query) use ($search, $startDate, $endDate, $documentType, $documentStatus) {
+                    $query->where('is_draft', 0)
+                        ->where('is_returned', 0);
+
+                    if ($search) {
+                        $query->where('number', 'like', "%{$search}%");
+                    }
+
+                    if ($startDate) {
+                        $query->where('date_order', '>=', $startDate);
+                    }
+
+                    if ($endDate) {
+                        $query->where('date_order', '<=', $endDate);
+                    }
+
+                    if ($documentType) {
+                        $query->where('type', $documentType);
+                    }
+
+                    if ($documentStatus === 'finished') {
+                        $query->where('is_finished', 1);
+                    } elseif ($documentStatus === 'processing') {
+                        $query->where('is_finished', 0);
+                    }
+                });
+
+            $documentIds = $documentIdsQuery->pluck('document_id');
+
             return Documents::with(['user_info', 'document_type', 'products', 'priority.role_info'])
                 ->whereIn('id', $documentIds)
                 ->latest()
@@ -377,12 +440,25 @@ class DocumentService
         $product = new DocumentProducts;
         $product->document_id = $document_id;
         $product->user_id = $data['user_id'] ?? $this->user->id;
-        $product->title = $data['selected_product']['name'];
-        $product->measure = $data['selected_product']['measure'];
-        $product->quantity = $data['quantity'];
-        $product->amount = $data['selected_product']['price'];
-        $product->nomenclature = $data['selected_product']['nomenclature'] ?? '';
+
+        // Frontenddan to'g'ridan-to'g'ri kelgan maydonlarni ishlatish
+        // selected_product null bo'lishi mumkin (masalan, composition interface uchun)
+        if (isset($data['selected_product']) && is_array($data['selected_product'])) {
+            $product->title = $data['selected_product']['name'] ?? $data['product_name'] ?? '';
+            $product->measure = $data['selected_product']['measure'] ?? $data['measure'] ?? '';
+            $product->amount = $data['selected_product']['price'] ?? $data['amount'] ?? 0;
+            $product->nomenclature = $data['selected_product']['nomenclature'] ?? $data['nomenclature'] ?? '';
+        } else {
+            // selected_product bo'lmaganda to'g'ridan-to'g'ri maydonlardan olish
+            $product->title = $data['product_name'] ?? '';
+            $product->measure = $data['measure'] ?? '';
+            $product->amount = $data['amount'] ?? 0;
+            $product->nomenclature = $data['nomenclature'] ?? '';
+        }
+
+        $product->quantity = $data['quantity'] ?? 1;
         $product->note = $data['note'] ?? '';
+
         try {
             $product->save();
         } catch (QueryException $e) {
@@ -771,21 +847,29 @@ class DocumentService
         try {
             DB::beginTransaction();
 
-            // Check if document can be sent to next level
-            if ($this->document->is_finished || $this->document->status > 4) {
-                throw new \Exception('Документ уже завершен или достиг максимального статуса');
+            // Check if document is already finished
+            if ($this->document->is_finished) {
+                throw new \Exception('Документ уже завершен');
             }
-
-            // Update document status
-            $this->document->status = $this->document->status + 1;
-            $this->document->is_draft = 0;
-            $this->document->save();
 
             // Update priority if exists
             if ($this->priority) {
                 $this->priority->is_success = true;
                 $this->priority->user_id = $this->user->id;
                 $this->priority->save();
+            }
+
+            // Check if this is the last priority (e.g., director)
+            if ($this->lastPriority()) {
+                // Bu oxirgi bosqich - hujjatni yakunlash
+                $this->document->is_finished = 1;
+                $this->document->is_draft = 0;
+                $this->document->save();
+            } else {
+                // Keyingi bosqichga o'tkazish
+                $this->document->status = $this->document->status + 1;
+                $this->document->is_draft = 0;
+                $this->document->save();
             }
 
             DB::commit();
@@ -1010,14 +1094,25 @@ class DocumentService
 *Причина:* $note";
     }
 
-    public function numberFromStringForProduct(string $number): float
+    public function numberFromStringForProduct(?string $number): float
     {
-        // vergullarni olib tashlash
-        $number = str_replace(',', '', $number);
-        // so'mdagi summani tiyin qilish
-        $number = $number * 100;
-        // raqamni formatini float qilish
-        (float) $number = $number / 100;
+        // если значение пустое или null
+        if (empty($number)) {
+            return 0.0;
+        }
+
+        // убираем запятые и пробелы
+        $number = str_replace([',', ' '], '', $number);
+
+        // проверяем что значение числовое
+        if (! is_numeric($number)) {
+            return 0.0;
+        }
+
+        // конвертируем сумму в сумы в тийины
+        $number = (float) $number * 100;
+        // форматируем число в float
+        $number = $number / 100;
 
         return $number;
     }

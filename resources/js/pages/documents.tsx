@@ -62,22 +62,38 @@ interface Filters {
 
 interface DocumentsPageProps {
     documents: PaginatedData;
-    status: 'draft' | 'sent' | 'return';
+    status: 'draft' | 'sent' | 'return' | 'incoming';
     documentTypes: DocumentType[];
+    incomingCount: number;
     filters: Filters;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'АКТ', href: '/documents' }];
 
 const DocumentStatus = ({ document }: { document: Document }) => {
-    // if (document.is_returned) {
-    //     return <Badge variant="destructive">Возвращено</Badge>;
-    // }
-    //
-    // if (!document.priority || document.priority.length === 0) {
-    //     return <Badge variant="outline">Черновик</Badge>;
-    // }
+    // Yakunlangan hujjat
+    if (document.is_finished) {
+        return (
+            <div className="flex items-center gap-2">
+                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                    Завершен
+                </span>
+            </div>
+        );
+    }
 
+    // Qaytarilgan hujjat
+    if (document.is_returned) {
+        return (
+            <div className="flex items-center gap-2">
+                <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                    Возвращено
+                </span>
+            </div>
+        );
+    }
+
+    // Jarayonda - priority bo'yicha status
     return (
         <TooltipProvider>
             <div className="flex items-center gap-1">
@@ -96,7 +112,7 @@ const DocumentStatus = ({ document }: { document: Document }) => {
     );
 };
 
-export default function Documents({ documents, status: currentTab, documentTypes, filters }: DocumentsPageProps) {
+export default function Documents({ documents, status: currentTab, documentTypes, incomingCount, filters }: DocumentsPageProps) {
     const { auth } = usePage().props as unknown as { auth: { user: { type: string } } };
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [startDate, setStartDate] = useState(filters.start_date || '');
@@ -153,7 +169,7 @@ export default function Documents({ documents, status: currentTab, documentTypes
     };
 
     const handleRowClick = (doc: Document) => {
-        if (currentTab === 'sent') {
+        if (currentTab === 'sent' || currentTab === 'incoming') {
             if (doc.status === 0) {
                 router.visit(`/documents/${doc.id}/edit`);
             } else {
@@ -168,13 +184,17 @@ export default function Documents({ documents, status: currentTab, documentTypes
         new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
     const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('ru-RU');
 
-    const isFrp = auth.user?.type === 'frp';
+    const isFrp = auth.user?.type === 'frp' || auth.user?.type === 'header_frp';
     const isAdmin = auth.user?.type === 'admin';
-    const availableTabs = [];
+    const availableTabs: { value: string; label: string; badge?: number }[] = [];
     if (isAdmin || isFrp) {
         availableTabs.push({ value: 'draft', label: 'Черновик' });
     }
     availableTabs.push({ value: 'sent', label: isFrp ? 'Отправленные' : 'Полученные' });
+    // Kelgan hujjatlar - tayinlangan hujjatlar bor bo'lsa ko'rsatish
+    if (incomingCount > 0 || currentTab === 'incoming') {
+        availableTabs.push({ value: 'incoming', label: 'Келган', badge: incomingCount });
+    }
     if (isAdmin || isFrp) {
         availableTabs.push({ value: 'return', label: 'Возврат' });
     }
@@ -291,12 +311,23 @@ export default function Documents({ documents, status: currentTab, documentTypes
                 <Tabs value={currentTab} onValueChange={(value) => router.visit('/documents/' + value)} className="w-full">
                     <TabsList
                         className={`grid w-full ${
-                            availableTabs.length === 1 ? 'grid-cols-1' : availableTabs.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
+                            availableTabs.length === 1
+                                ? 'grid-cols-1'
+                                : availableTabs.length === 2
+                                  ? 'grid-cols-2'
+                                  : availableTabs.length === 3
+                                    ? 'grid-cols-3'
+                                    : 'grid-cols-4'
                         }`}
                     >
                         {availableTabs.map((tab) => (
-                            <TabsTrigger key={tab.value} value={tab.value}>
+                            <TabsTrigger key={tab.value} value={tab.value} className="relative">
                                 {tab.label}
+                                {tab.badge !== undefined && tab.badge > 0 && (
+                                    <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-medium text-white">
+                                        {tab.badge}
+                                    </span>
+                                )}
                             </TabsTrigger>
                         ))}
                     </TabsList>

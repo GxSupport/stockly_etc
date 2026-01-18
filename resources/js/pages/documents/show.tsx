@@ -86,10 +86,12 @@ interface ShowDocumentProps {
 const workerTypeLabels: Record<string, string> = {
     admin: 'Администратор',
     frp: 'МОЛ',
+    header_frp: 'Старший МОЛ',
     dep_head: 'Начальник отдела',
     deputy_director: 'Заместитель директора',
     director: 'Директор',
     buxgalter: 'Бухгалтер',
+    assigned: 'Назначенный сотрудник',
 };
 
 export default function ShowDocument({ document, history = [], staff, user }: ShowDocumentProps) {
@@ -123,14 +125,23 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
 
         // deputy_director uchun - user_id tekshirish va is_success = 0 bo'lishi kerak
         if (priority.user_role === 'deputy_director') {
-            // Foydalanuvchi uchun maxsus priority topish
             const userPriority = document.priority?.find(
                 (el) => el?.ordering === document.status && el?.user_role === 'deputy_director' && el?.user_info?.id === user?.id,
             );
             return userPriority && userPriority.is_success === 0;
         }
 
-        return priority.user_role === user?.type;
+        // assigned (tayinlangan xodim) uchun - user_id tekshirish
+        if (priority.user_role === 'assigned') {
+            const userPriority = document.priority?.find(
+                (el) => el?.ordering === document.status && el?.user_role === 'assigned' && el?.user_info?.id === user?.id,
+            );
+            return userPriority && userPriority.is_success === 0;
+        }
+
+        // Boshqa rollar (director, buxgalter, header_frp, frp) uchun
+        // user_role mos kelishi VA is_success = 0 bo'lishi kerak
+        return priority.user_role === user?.type && priority.is_success === 0;
     };
 
     const handleConfirm = (type: 'confirm' | 'cancel') => {

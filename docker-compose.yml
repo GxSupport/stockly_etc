@@ -1,0 +1,121 @@
+services:
+  # Nginx web server
+  nginx:
+    image: nginx:alpine
+    container_name: stockly_nginx
+    ports:
+      - "${APP_PORT:-80}:80"
+    volumes:
+      - .:/var/www
+      - ./docker/development/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - php-fpm
+    networks:
+      - stockly_network
+
+  # PHP-FPM service
+  php-fpm:
+    build:
+      context: .
+      dockerfile: docker/common/php-fpm/Dockerfile
+      target: development
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+        XDEBUG_ENABLED: ${XDEBUG_ENABLED:-false}
+        XDEBUG_MODE: ${XDEBUG_MODE:-develop,coverage,debug}
+        XDEBUG_HOST: ${XDEBUG_HOST:-host.docker.internal}
+        XDEBUG_IDE_KEY: ${XDEBUG_IDE_KEY:-DOCKER}
+        XDEBUG_LOG: ${XDEBUG_LOG:-/dev/stdout}
+        XDEBUG_LOG_LEVEL: ${XDEBUG_LOG_LEVEL:-0}
+    container_name: stockly_php
+    volumes:
+      - .:/var/www
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - stockly_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Workspace for artisan, composer, npm commands
+  workspace:
+    build:
+      context: .
+      dockerfile: docker/development/workspace/Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+        NODE_VERSION: ${NODE_VERSION:-22.0.0}
+        XDEBUG_ENABLED: ${XDEBUG_ENABLED:-false}
+        XDEBUG_MODE: ${XDEBUG_MODE:-develop,coverage,debug}
+        XDEBUG_HOST: ${XDEBUG_HOST:-host.docker.internal}
+        XDEBUG_IDE_KEY: ${XDEBUG_IDE_KEY:-DOCKER}
+        XDEBUG_LOG: ${XDEBUG_LOG:-/dev/stdout}
+        XDEBUG_LOG_LEVEL: ${XDEBUG_LOG_LEVEL:-0}
+    container_name: stockly_workspace
+    tty: true
+    stdin_open: true
+    volumes:
+      - .:/var/www
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    networks:
+      - stockly_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # MySQL database
+  mysql:
+    image: mysql:8.0
+    container_name: stockly_mysql
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-stockly}
+      MYSQL_USER: ${DB_USERNAME:-stockly}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - stockly_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL database (optional - uncomment if needed)
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: stockly_postgres
+  #   ports:
+  #     - "${DB_PORT:-5432}:5432"
+  #   environment:
+  #     POSTGRES_DB: ${DB_DATABASE:-stockly}
+  #     POSTGRES_USER: ${DB_USERNAME:-stockly}
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - stockly_network
+
+  # Redis cache (optional - uncomment if needed)
+  # redis:
+  #   image: redis:alpine
+  #   container_name: stockly_redis
+  #   ports:
+  #     - "${REDIS_PORT:-6379}:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - stockly_network
+
+networks:
+  stockly_network:
+    driver: bridge
+
+volumes:
+  mysql_data:

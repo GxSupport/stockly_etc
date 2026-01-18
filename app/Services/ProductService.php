@@ -338,14 +338,25 @@ class ProductService
         }
     }
 
-    public function numberFromStringForProduct(string $number): float
+    public function numberFromStringForProduct(string|null $number): float
     {
-        // убираем запятые
-        $number = str_replace(',', '', $number);
+        // если значение пустое или null
+        if (empty($number)) {
+            return 0.0;
+        }
+
+        // убираем запятые и пробелы
+        $number = str_replace([',', ' '], '', $number);
+
+        // проверяем что значение числовое
+        if (!is_numeric($number)) {
+            return 0.0;
+        }
+
         // конвертируем сумму в сумы в тийины
-        $number = $number * 100;
+        $number = (float) $number * 100;
         // форматируем число в float
-        $number = (float) $number / 100;
+        $number = $number / 100;
 
         return $number;
     }

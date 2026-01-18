@@ -1,13 +1,14 @@
 #!/bin/sh
-set -e
 
 # Check if $UID and $GID are set, else fallback to default (1000:1000)
 USER_ID=${UID:-1000}
 GROUP_ID=${GID:-1000}
 
-# Fix file ownership and permissions using the passed UID and GID
+# Fix file ownership and permissions using the passed UID and GID (skip if fails)
 echo "Fixing file permissions with UID=${USER_ID} and GID=${GROUP_ID}..."
-chown -R ${USER_ID}:${GROUP_ID} /var/www || echo "Some files could not be changed"
+chown -R ${USER_ID}:${GROUP_ID} /var/www 2>/dev/null || echo "Skipping permission fix (not required in development with bind mounts)"
+
+set -e
 
 # Clear configurations to avoid caching issues in development
 echo "Clearing configurations..."

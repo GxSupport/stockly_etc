@@ -18,7 +18,7 @@ class DocumentPriorityService
 {
     public function getFromConfig(int $type): ?Collection
     {
-        return DocumentPriorityConfig::where('type_id', $type)->get();
+        return DocumentPriorityConfig::where('type_id', $type)->orderBy('ordering')->get();
     }
 
     public function checkConfigByOrderingRole($ordering, $role, $type): ?DocumentPriorityConfig
@@ -57,9 +57,10 @@ class DocumentPriorityService
     }
 
     /**
-     * Ketma-ket workflow uchun priority yaratish (hozirgi logika)
-     * deputy_director uchun - har bir deputy_director foydalanuvchi uchun alohida priority yaratiladi
-     * header_frp yaratganda - frp bosqichi skip qilinadi (FRP tasdiqlashi kerak emas)
+     * Ketma-ket workflow uchun priority yaratish
+     * - deputy_director uchun - har bir deputy_director foydalanuvchi uchun alohida priority yaratiladi
+     * - header_frp yaratganda - frp bosqichi skip qilinadi (FRP tasdiqlashi kerak emas)
+     * - requires_deputy_approval = false bo'lsa, deputy_director bosqichi skip qilinadi
      */
     private function createSequentialWorkflowPriority(int $document_id, int $type, ?string $creator_type = null): void
     {
@@ -67,6 +68,14 @@ class DocumentPriorityService
         if ($items->isEmpty()) {
             throw new \Exception('Не найдено приоритета для типа документа: '.$type);
         }
+
+        // Document type ma'lumotlarini olish (requires_deputy_approval uchun)
+        $documentType = DocumentType::find($type);
+
+        // deputy_director skip qilinsa, director ordering ni 1 ga kamaytirish kerak
+        $skipDeputy = $documentType && ! $documentType->requires_deputy_approval;
+        $orderingAdjustment = 0;
+
         foreach ($items as $item) {
             // header_frp yaratganda frp bosqichini skip qilish
             // (ular uchun FRP tasdiqlashi kerak emas)
@@ -74,8 +83,16 @@ class DocumentPriorityService
                 continue;
             }
 
-            // deputy_director uchun - har bir deputy_director foydalanuvchi uchun alohida priority
+            // deputy_director uchun - requires_deputy_approval tekshiruvi
             if ($item->user_role === 'deputy_director') {
+                // Agar requires_deputy_approval = false bo'lsa, deputy_director ni skip qilish
+                if ($skipDeputy) {
+                    $orderingAdjustment = 1; // Keyingi bosqichlar ordering ni 1 ga kamaytirish
+
+                    continue;
+                }
+
+                // Har bir deputy_director foydalanuvchi uchun alohida priority
                 $deputyDirectors = User::where('type', 'deputy_director')->get();
                 foreach ($deputyDirectors as $deputy) {
                     $this->addPriority([
@@ -90,7 +107,7 @@ class DocumentPriorityService
             } else {
                 // Boshqa rollar uchun oddiy priority
                 $data['document_id'] = $document_id;
-                $data['ordering'] = $item->ordering;
+                $data['ordering'] = $item->ordering - $orderingAdjustment;
                 $data['user_role'] = $item->user_role;
                 $data['is_success'] = false;
                 $data['is_active'] = true;

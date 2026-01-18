@@ -64,7 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('documents')->group(function () {
         Route::get('/{status?}', [DocumentController::class, 'index'])
-            ->where('status', 'draft|sent|return')
+            ->where('status', 'draft|sent|return|incoming')
             ->name('documents.index');
         Route::get('/create', [DocumentController::class, 'create'])->name('documents.create');
         Route::post('/create', [DocumentController::class, 'store'])->name('documents.store');
