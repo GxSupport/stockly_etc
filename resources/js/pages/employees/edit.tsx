@@ -84,8 +84,9 @@ export default function EditEmployee({ employee, roles_list, dep_list, senior_li
         { value: 'admin', label: 'Администратор' },
         { value: 'director', label: 'Директор' },
         { value: 'buxgalter', label: 'Бухгалтер' },
-        { value: 'user', label: 'Пользователь' },
+        { value: 'header_frp', label: 'Старший МОЛ' },
         { value: 'frp', label: 'МОЛ' },
+        { value: 'user', label: 'Пользователь' },
     ];
 
     // Convert backend data to SearchableSelect options
