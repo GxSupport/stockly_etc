@@ -11,13 +11,6 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 
-interface Role {
-    id: number;
-    title: string;
-    name: string;
-    is_active: boolean;
-}
-
 interface Department {
     id: number;
     dep_code: string;
@@ -38,7 +31,6 @@ interface Supervisor {
 }
 
 interface CreateEmployeeProps {
-    roles_list: Role[];
     dep_list: Department[];
     warehouses: Warehouse[];
     supervisors: Supervisor[];
@@ -55,20 +47,23 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function CreateEmployee({ roles_list, dep_list, warehouses, supervisors }: CreateEmployeeProps) {
-    const [selectedRole, setSelectedRole] = useState<string>('');
+export default function CreateEmployee({ dep_list, warehouses, supervisors }: CreateEmployeeProps) {
+    const [selectedType, setSelectedType] = useState<string>('');
     const [selectedDepartment, setSelectedDepartment] = useState<string>('');
     const [selectedWarehouse, setSelectedWarehouse] = useState<string>('');
     const [selectedSupervisor, setSelectedSupervisor] = useState<string>('');
     const [phoneValue, setPhoneValue] = useState<string>('');
 
-    // Convert backend data to SearchableSelect options
-    const roleOptions: SearchableSelectOption[] = roles_list
-        .filter((role) => role.is_active)
-        .map((role) => ({
-            value: role.title.toString(),
-            label: role.name,
-        }));
+    // User type options
+    const userTypeOptions: SearchableSelectOption[] = [
+        { value: 'admin', label: 'Администратор' },
+        { value: 'director', label: 'Директор' },
+        { value: 'deputy_director', label: 'Заместитель директора' },
+        { value: 'buxgalter', label: 'Бухгалтер' },
+        { value: 'header_frp', label: 'Старший МОЛ' },
+        { value: 'frp', label: 'МОЛ' },
+        { value: 'user', label: 'Пользователь' },
+    ];
 
     const departmentOptions: SearchableSelectOption[] = dep_list
         .filter((dept) => dept.is_active)
@@ -169,16 +164,16 @@ export default function CreateEmployee({ roles_list, dep_list, warehouses, super
                                         </div>
 
                                         <div className="grid gap-2">
-                                            <Label>Роль *</Label>
+                                            <Label>Тип пользователя *</Label>
                                             <SearchableSelect
-                                                options={roleOptions}
-                                                value={selectedRole}
-                                                onValueChange={setSelectedRole}
-                                                placeholder="Выберите роль"
-                                                searchPlaceholder="Поиск роли..."
+                                                options={userTypeOptions}
+                                                value={selectedType}
+                                                onValueChange={setSelectedType}
+                                                placeholder="Выберите тип"
+                                                searchPlaceholder="Поиск типа..."
                                             />
-                                            <InputError message={errors.role_id} />
-                                            <input type="hidden" name="role_id" value={selectedRole} />
+                                            <InputError message={errors.type} />
+                                            <input type="hidden" name="type" value={selectedType} />
                                         </div>
 
                                         <div className="grid gap-2">
@@ -199,7 +194,7 @@ export default function CreateEmployee({ roles_list, dep_list, warehouses, super
                                             <InputError message={errors.password} />
                                         </div>
 
-                                        {selectedRole === 'frp' && (
+                                        {selectedType === 'frp' && (
                                             <>
                                                 <div className="grid gap-2">
                                                     <Label>Склад *</Label>

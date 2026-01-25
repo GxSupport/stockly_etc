@@ -12,10 +12,10 @@ class StoreRequest extends FormRequest
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20|unique:users,phone',
             'password' => 'required|string|min:8',
-            'role_id' => 'required|exists:user_roles,title',
+            'type' => 'required|string|in:admin,director,deputy_director,buxgalter,header_frp,frp,user',
             'dep_code' => 'required|exists:dep_list,dep_code',
-            'senior_id' => 'nullable|required_if:role_id,frp|exists:users,id',
-            'warehouse_id' => 'nullable|required_if:role_id,frp|exists:warehouses,id',
+            'senior_id' => 'nullable|required_if:type,frp|exists:users,id',
+            'warehouse_id' => 'nullable|required_if:type,frp|exists:warehouses,id',
         ];
     }
 
@@ -28,13 +28,13 @@ class StoreRequest extends FormRequest
             'password.required' => 'Необходимо указать пароль',
             'password.min' => 'Пароль должен быть не менее 8 символов',
             'password.confirmed' => 'Пароли не совпадают',
-            'role_id.required' => 'Необходимо указать роль',
-            'role_id.exists' => 'Указанная роль не существует',
+            'type.required' => 'Необходимо указать тип пользователя',
+            'type.in' => 'Недопустимый тип пользователя',
             'dep_code.required' => 'Необходимо указать отдел',
             'dep_code.exists' => 'Указанный отдел не существует',
-            'warehouse_id.required_if' => 'Необходимо указать склад для роли ФРП',
+            'warehouse_id.required_if' => 'Необходимо указать склад для МОЛ',
             'warehouse_id.exists' => 'Указанный склад не существует',
-            'senior_id.required_if' => 'Необходимо указать руководителя для роли ФРП',
+            'senior_id.required_if' => 'Необходимо указать руководителя для МОЛ',
             'senior_id.exists' => 'Указанный руководитель не существует',
         ];
     }

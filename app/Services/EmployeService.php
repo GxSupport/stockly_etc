@@ -58,7 +58,7 @@ class EmployeService
             'name' => $data['name'],
             'phone' => $data['phone'],
             'password' => bcrypt($data['password']),
-            'type' => $data['role_id'],
+            'type' => $data['type'],
             'dep_code' => $data['dep_code'],
             'senior_id' => $data['senior_id'] ?? null,
         ]);
@@ -145,10 +145,6 @@ class EmployeService
 
             if (isset($data['password']) && ! empty($data['password'])) {
                 $employee->password = bcrypt($data['password']);
-            }
-
-            if (isset($data['role_id']) && ! empty($data['role_id'])) {
-                $employee->type = $data['role_id'];
             }
 
             if (isset($data['dep_code']) && ! empty($data['dep_code'])) {

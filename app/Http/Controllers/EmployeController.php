@@ -41,13 +41,11 @@ class EmployeController extends Controller
     public function create()
     {
         $dep_list = $this->depListService->getDepList();
-        $roles_list = $this->employeService->getRoleList();
         $warehouses = $this->employeService->getWarehouseList();
         $supervisors = $this->employeService->getSeniorList();
 
         return Inertia::render('employees/create', [
             'dep_list' => $dep_list,
-            'roles_list' => $roles_list,
             'warehouses' => $warehouses,
             'supervisors' => $supervisors,
         ]);
@@ -91,13 +89,11 @@ class EmployeController extends Controller
     public function edit(User $employee)
     {
         $dep_list = $this->depListService->getDepList();
-        $roles_list = $this->employeService->getRoleList();
         $senior_list = $this->employeService->getSeniorList();
 
         return Inertia::render('employees/edit', [
-            'employee' => $employee->load(['role', 'warehouse']),
+            'employee' => $employee->load('warehouse'),
             'dep_list' => $dep_list,
-            'roles_list' => $roles_list,
             'senior_list' => $senior_list,
         ]);
     }

@@ -12,13 +12,6 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 
-interface Role {
-    id: number;
-    title: string;
-    name: string;
-    is_active: boolean;
-}
-
 interface Department {
     id: number;
     dep_code: string;
@@ -40,7 +33,6 @@ interface Employee {
     chat_id: string | null;
     senior_id: number | null;
     is_active: boolean;
-    role?: Role;
     warehouse?: {
         warehouse_id: number;
         warehouse: {
@@ -51,7 +43,6 @@ interface Employee {
 
 interface EditEmployeeProps {
     employee: Employee;
-    roles_list: Role[];
     dep_list: Department[];
     senior_list?: Senior[];
 }
@@ -67,9 +58,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function EditEmployee({ employee, roles_list, dep_list, senior_list = [] }: EditEmployeeProps) {
+export default function EditEmployee({ employee, dep_list, senior_list = [] }: EditEmployeeProps) {
     const { auth } = usePage<SharedData>().props;
-    const [selectedRole, setSelectedRole] = useState<string>(employee.role?.title || '');
     const [selectedDepartment, setSelectedDepartment] = useState<string>(employee.dep_code || '');
     const [selectedType, setSelectedType] = useState<string>(employee.type || '');
     const [selectedWarehouse, setSelectedWarehouse] = useState<string>((employee.warehouse?.warehouse_id || '').toString());
@@ -83,19 +73,12 @@ export default function EditEmployee({ employee, roles_list, dep_list, senior_li
     const userTypeOptions: SearchableSelectOption[] = [
         { value: 'admin', label: 'Администратор' },
         { value: 'director', label: 'Директор' },
+        { value: 'deputy_director', label: 'Заместитель директора' },
         { value: 'buxgalter', label: 'Бухгалтер' },
         { value: 'header_frp', label: 'Старший МОЛ' },
         { value: 'frp', label: 'МОЛ' },
         { value: 'user', label: 'Пользователь' },
     ];
-
-    // Convert backend data to SearchableSelect options
-    const roleOptions: SearchableSelectOption[] = roles_list
-        .filter((role) => role.is_active)
-        .map((role) => ({
-            value: role.title.toString(),
-            label: role.name,
-        }));
 
     const departmentOptions: SearchableSelectOption[] = dep_list
         .filter((dept) => dept.is_active)
@@ -207,20 +190,6 @@ export default function EditEmployee({ employee, roles_list, dep_list, senior_li
                                                 required
                                             />
                                             <InputError message={errors.phone} />
-                                        </div>
-
-                                        <div className="grid gap-2">
-                                            <Label>Роль *</Label>
-                                            <SearchableSelect
-                                                options={roleOptions}
-                                                value={selectedRole}
-                                                onValueChange={setSelectedRole}
-                                                placeholder="Выберите роль"
-                                                searchPlaceholder="Поиск роли..."
-                                                disabled={!isAdmin}
-                                            />
-                                            <InputError message={errors.role_id} />
-                                            <input type="hidden" name="role_id" value={selectedRole} />
                                         </div>
 
                                         <div className="grid gap-2">
