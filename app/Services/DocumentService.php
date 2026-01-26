@@ -123,17 +123,45 @@ class DocumentService
 
         // For 'sent', we implement the detailed logic from the old service.
         if ($status === 'sent') {
-            // FRP va Header FRP uchun - o'zlari yaratgan hujjatlarni ko'rsatish
-            // Ular hujjat qaysi etapda ekanini kuzatib borishi kerak
-            if ($this->user->type === 'frp' || $this->user->type === 'header_frp') {
+            // FRP uchun - faqat o'zlari yaratgan hujjatlarni ko'rsatish
+            if ($this->user->type === 'frp') {
                 $query = Documents::with(['user_info', 'document_type', 'products', 'priority.role_info'])
                     ->where('is_draft', 0)
                     ->where('is_returned', 0)
                     ->whereHas('priority', function ($q) {
-                        // Foydalanuvchi yaratgan hujjatlar (birinchi priority - frp/header_frp)
+                        // Foydalanuvchi yaratgan hujjatlar (birinchi priority - frp)
                         $q->where('ordering', 1)
                             ->where('user_id', $this->user->id)
                             ->where('is_active', 1);
+                    });
+
+                $this->applyFilters($query, $search, $startDate, $endDate, $documentType, $documentStatus);
+
+                return $query->latest()->paginate($perPage);
+            }
+
+            // Header FRP uchun - o'zlari yaratgan VA tasdiqlash kutayotgan hujjatlar
+            if ($this->user->type === 'header_frp') {
+                $query = Documents::with(['user_info', 'document_type', 'products', 'priority.role_info'])
+                    ->where('is_draft', 0)
+                    ->where('is_returned', 0)
+                    ->where(function ($q) {
+                        // 1. O'zlari yaratgan hujjatlar (ordering=1, user_id=current_user)
+                        $q->whereHas('priority', function ($subQ) {
+                            $subQ->where('ordering', 1)
+                                ->where('user_id', $this->user->id)
+                                ->where('is_active', 1);
+                        })
+                        // 2. YOKI FRP dan kelgan, tasdiqlash kutayotgan hujjatlar
+                            ->orWhere(function ($subQ) {
+                                $subQ->where('status', 2) // header_frp bosqichida
+                                    ->whereHas('priority', function ($priorityQ) {
+                                        $priorityQ->where('ordering', 2)
+                                            ->where('user_role', 'header_frp')
+                                            ->where('is_success', false)
+                                            ->where('is_active', 1);
+                                    });
+                            });
                     });
 
                 $this->applyFilters($query, $search, $startDate, $endDate, $documentType, $documentStatus);
