@@ -714,6 +714,8 @@ class DocumentService
         $this->savePriority();
 
         $priorityService = new DocumentPriorityService;
+        $shouldNotify = false;
+        $nextOrdering = $this->priority->ordering + 1;
 
         // deputy_director uchun - barcha deputy_directorlar tasdiqlagunga qadar statusni o'zgartirmaslik
         if ($this->priority->user_role === 'deputy_director') {
@@ -721,8 +723,10 @@ class DocumentService
             if ($priorityService->allDeputyDirectorsApproved($this->document->id, $this->priority->ordering)) {
                 if ($this->lastPriority()) {
                     $this->document->is_finished = 1;
+                } else {
+                    $shouldNotify = true;
                 }
-                $this->document->status = $this->priority->ordering + 1;
+                $this->document->status = $nextOrdering;
                 $this->document->user_id = null;
             }
             // Aks holda status o'zgarmaydi, keyingi deputy_director tasdiqlashini kutadi
@@ -730,8 +734,10 @@ class DocumentService
             // Boshqa rollar uchun odatiy logika
             if ($this->lastPriority()) {
                 $this->document->is_finished = 1;
+            } else {
+                $shouldNotify = true;
             }
-            $this->document->status = $this->priority->ordering + 1;
+            $this->document->status = $nextOrdering;
             $this->document->user_id = $this->attachedHead && isset($this->user->senior_id) ? $this->user->senior_id : null;
         }
 
@@ -743,6 +749,11 @@ class DocumentService
             }
         }
         $this->saveDocument();
+
+        // Keyingi odamga Telegram orqali xabar yuborish
+        if ($shouldNotify) {
+            (new TelegramService)->notifyNextApprover($this->document, $nextOrdering);
+        }
     }
 
     public function lastPriority(): bool
@@ -895,9 +906,13 @@ class DocumentService
                 $this->document->save();
             } else {
                 // Keyingi bosqichga o'tkazish
-                $this->document->status = $this->document->status + 1;
+                $nextOrdering = $this->document->status + 1;
+                $this->document->status = $nextOrdering;
                 $this->document->is_draft = 0;
                 $this->document->save();
+
+                // Keyingi odamga Telegram orqali xabar yuborish
+                (new TelegramService)->notifyNextApprover($this->document, $nextOrdering);
             }
 
             DB::commit();
@@ -994,14 +1009,13 @@ class DocumentService
 
             $this->deActiveDocumentPriority();
 
-            // TODO: Send telegram notification to document owner if needed
-            // $owner = $this->getDocumentOwner();
-            // if (isset($owner->chat_id)) {
-            //     $message = $this->returnMessage($note);
-            //     // Send telegram message
-            // }
-
             DB::commit();
+
+            // Hujjat egasiga Telegram orqali qaytarilganlik haqida xabar yuborish
+            $toUser = User::find($to_id);
+            if ($toUser) {
+                (new TelegramService)->notifyDocumentReturned($this->document, $toUser, $note);
+            }
 
             return true;
         } catch (\Exception $e) {
