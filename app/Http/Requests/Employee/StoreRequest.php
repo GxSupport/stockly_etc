@@ -15,7 +15,7 @@ class StoreRequest extends FormRequest
             'type' => 'required|string|in:admin,director,deputy_director,buxgalter,header_frp,frp,user',
             'dep_code' => 'required|exists:dep_list,dep_code',
             'senior_id' => 'nullable|required_if:type,frp|exists:users,id',
-            'warehouse_id' => 'nullable|required_if:type,frp|exists:warehouses,id',
+            'warehouse_id' => 'nullable|required_if:type,frp|exists:warehouse,id',
         ];
     }
 
