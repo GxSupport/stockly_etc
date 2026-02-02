@@ -1,7 +1,7 @@
 import PasswordResetLinkController from '@/actions/App/Http/Controllers/Auth/PasswordResetLinkController';
 import { login } from '@/routes';
 import { Form, Head } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { ExternalLink, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 
 import InputError from '@/components/input-error';
@@ -77,6 +77,13 @@ export default function ForgotPassword({ status }: { status?: string }) {
                         </>
                     )}
                 </Form>
+
+                <Button variant="outline" className="w-full" asChild>
+                    <a href="https://t.me/IstTelecomDocumentTestBot" target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                        Запустить Telegram бот
+                    </a>
+                </Button>
 
                 <div className="space-x-1 text-center text-sm text-muted-foreground">
                     <span>Или</span>

@@ -51,7 +51,7 @@ class PasswordResetLinkController extends Controller
         // Check if user has Telegram chat_id
         if (! $user->chat_id) {
             throw ValidationException::withMessages([
-                'phone' => 'Telegram бот не подключён. Пожалуйста, свяжитесь с администратором',
+                'phone' => 'Telegram бот не подключён. Запустите бот @IstTelecomDocumentTestBot и повторите попытку',
             ]);
         }
 
@@ -78,7 +78,7 @@ class PasswordResetLinkController extends Controller
 
         if (! $sent) {
             throw ValidationException::withMessages([
-                'phone' => 'Ошибка при отправке сообщения через Telegram',
+                'phone' => 'Ошибка при отправке сообщения через Telegram. Убедитесь, что вы запустили бот @IstTelecomDocumentTestBot',
             ]);
         }
 
