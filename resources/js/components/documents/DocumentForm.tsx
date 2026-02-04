@@ -104,6 +104,7 @@ export default function DocumentForm({
     const userRoles = {
         frp: 'МОЛ',
         header_frp: 'Руководители МОЛ',
+        deputy_director: 'Заместитель директора',
         director: 'Технический директор',
         buxgalter: 'Бухгалтерия',
         admin: 'Администратор',

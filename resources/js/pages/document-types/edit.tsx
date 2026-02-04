@@ -121,7 +121,7 @@ export default function EditDocumentType({ documentType }: EditDocumentTypeProps
                                             <div className="grid gap-1">
                                                 <span className="font-medium">Последовательное согласование</span>
                                                 <p className="text-sm text-muted-foreground">
-                                                    Документ проходит через всех сотрудников по очереди: МОЛ → Начальник → Бухгалтер → Директор
+                                                    Документ проходит через всех сотрудников по очереди: МОЛ → Начальник → Директор → Бухгалтер
                                                 </p>
                                             </div>
                                         </label>
