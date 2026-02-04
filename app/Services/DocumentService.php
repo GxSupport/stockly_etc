@@ -172,7 +172,7 @@ class DocumentService
             // Boshqa rollar uchun - tasdiqlash navbatidagi hujjatlar
             // Priority bo'yicha filtrlanadi - status tekshiruvi kerak emas
             // chunki har bir document type uchun ordering har xil bo'lishi mumkin
-            // (masalan, deputy_director skip qilinsa, director ordering=4 bo'ladi)
+            // (masalan, deputy_director skip qilinsa, director ordering=3 bo'ladi)
 
             // Get the document IDs from the DocumentPriority table with filters
             $documentIdsQuery = DocumentPriority::where('is_active', 1)
