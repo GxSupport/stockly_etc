@@ -620,8 +620,8 @@ export default function DocumentForm({
                 </Card>
             )}
 
-            {/* Notes section for returned documents */}
-            {isEditMode && (
+            {/* Notes section for write-off documents */}
+            {isEditMode && showProductNotes && (
                 <Card className="max-w-6xl">
                     <CardHeader>
                         <CardTitle>Дополнительная информация</CardTitle>
