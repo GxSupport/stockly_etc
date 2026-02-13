@@ -39,7 +39,7 @@ class Warehouse extends Connector
     protected function defaultConfig(): array
     {
         return [
-            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
+            // 'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
             'timeout' => 30,
             'connect_timeout' => 10,
             'verify' => false, // SSL verification off for local development

@@ -16,7 +16,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run format:check` - Check code formatting
 - `npm run types` - Run TypeScript type checking
 
-### Backend Development  
+### SOCKS5 Proxy (Docker uchun)
+Docker konteynerlar tashqi API'larga murojaat qilishi uchun host mashinada SOCKS5 proxy yoqish kerak:
+- `ssh -D 8089 -N -f user@server_ip` - SOCKS5 proxy yoqish (port 8089)
+- `ss -tlnp | grep 8089` - Proxy ishlayotganini tekshirish (LISTEN bo'lishi kerak)
+- Proxy config: `config/services.php` -> `services.app.local` (`APP_ENV=local` bo'lganda `socks5h://host.docker.internal:8089` ishlatiladi)
+- O'chirish: `kill $(lsof -t -i:8089)`
+
+### Backend Development
 - `composer run dev` - Start full development environment (server, queue, logs, vite)
 - `composer run dev:ssr` - Start development with SSR
 - `composer run test` - Run all tests (clears config first)

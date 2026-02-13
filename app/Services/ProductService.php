@@ -42,7 +42,7 @@ class ProductService
 
         // Plain Guzzle HTTP client
         $client = new Client([
-            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
+            // 'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
             'timeout' => 30,
             'connect_timeout' => 10,
             'verify' => false,
@@ -151,7 +151,7 @@ class ProductService
         $osCode = str_replace(' ', '', $osCode);
 
         $client = new Client([
-            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
+            // 'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
             'timeout' => 30,
             'connect_timeout' => 10,
             'verify' => false,
@@ -247,7 +247,7 @@ class ProductService
         $date = date('d.m.Y', strtotime($date));
 
         $client = new Client([
-            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
+            // 'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
             'timeout' => 30,
             'connect_timeout' => 10,
             'verify' => false,
