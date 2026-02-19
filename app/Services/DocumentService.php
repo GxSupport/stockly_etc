@@ -598,7 +598,7 @@ class DocumentService
     {
         // Use direct Guzzle instead of Saloon for testing
         $client = new Client([
-            // 'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
+            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
             'timeout' => 30,
             'connect_timeout' => 10,
             'verify' => false,
