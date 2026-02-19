@@ -13,12 +13,12 @@ class ProductServiceData extends Data
         public ?string $deprecation_balance,
         public ?string $revaluation_balance,
         public ?string $organization,
-//        public ?string $warehouse_frp,
         public ?string $account,
         public ?string $deprecation_account,
         public ?string $basic_resource_code,
         public ?string $warehouse_code,
         public ?string $frp_code,
-        public ?string $organization_code
-    ){}
+        public ?string $organization_code,
+        public ?string $warehouse_name = null,
+    ) {}
 }

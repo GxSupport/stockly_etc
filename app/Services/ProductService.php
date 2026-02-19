@@ -118,7 +118,8 @@ class ProductService
                             basic_resource_code: $value['ОсновноеСредствоКод'],
                             warehouse_code: $value['СкладКод'],
                             frp_code: $value['МОЛКод'],
-                            organization_code: $value['ПодразделениеОрганизацииКод']
+                            organization_code: $value['ПодразделениеОрганизацииКод'],
+                            warehouse_name: $value['Склад'] ?? null,
                         );
                     }
                 } else {

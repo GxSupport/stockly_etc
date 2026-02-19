@@ -34,6 +34,7 @@ interface Product {
 interface Service {
     name: string;
     basic_resource_code: string;
+    warehouse_name: string;
 }
 export interface ProductItem {
     id: string | number;
@@ -229,6 +230,7 @@ export default function DocumentForm({
         value: product.nomenclature,
         label: `${product.name.substring(0, 50)}... | ${product.measure} | ${formatAmount(product.price)} | Склад: ${product.count}`,
     }));
+    const locationOptions = [...new Set(services.map((s) => s.warehouse_name).filter(Boolean))].map((name) => ({ value: name, label: name }));
 
     const handleSendToNext = async () => {
         if (!data.id) return;
@@ -503,13 +505,14 @@ export default function DocumentForm({
                                         )}
                                         {showPlaceInstallation && (
                                             <div className="mt-4">
-                                                <Label htmlFor={`note_${product.id}`}>Место установки *</Label>
-                                                <Input
-                                                    id={`note_${product.id}`}
-                                                    type="text"
+                                                <Label>Место установки *</Label>
+                                                <SearchableSelect
+                                                    options={locationOptions}
                                                     value={product.note}
-                                                    onChange={(e) => updateProduct(product.id, 'note', e.target.value)}
-                                                    required={showPlaceInstallation}
+                                                    onValueChange={(val) => updateProduct(product.id, 'note', val)}
+                                                    placeholder="Выберите или введите место установки"
+                                                    searchPlaceholder="Поиск по адресу..."
+                                                    allowCustomValue={true}
                                                     className="mt-2"
                                                 />
                                             </div>

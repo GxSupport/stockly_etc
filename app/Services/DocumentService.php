@@ -583,6 +583,7 @@ class DocumentService
                     $value['СкладКод'],
                     $value['МОЛКод'],
                     $value['ПодразделениеОрганизацииКод'],
+                    $value['Склад'] ?? null,
                 );
             }
         } else {
