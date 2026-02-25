@@ -140,3 +140,47 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* Print styles for document act */
+@media print {
+    /* Hide layout elements */
+    nav,
+    header,
+    aside,
+    .print\\:hidden {
+        display: none !important;
+    }
+
+    /* Reset page layout */
+    body {
+        background: white !important;
+        color: black !important;
+    }
+
+    .print\\:block {
+        display: block !important;
+    }
+
+    /* Printable area takes full width */
+    .print-area {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* Table borders always black for print */
+    .print-area table,
+    .print-area th,
+    .print-area td {
+        border-color: black !important;
+    }
+
+    /* Remove card styling in print */
+    .print-area .card-print {
+        box-shadow: none !important;
+        border: none !important;
+    }
+}

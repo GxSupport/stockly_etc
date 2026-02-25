@@ -6,8 +6,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronDownIcon, ChevronUpIcon, Printer } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 // Interfaces
 interface DocumentType {
@@ -211,12 +211,28 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
         }
     };
 
+    const printRef = useRef<HTMLDivElement>(null);
+
+    const handlePrint = () => {
+        window.print();
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`АКТ №${document.number}`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                {/* Print Button */}
+                <div className="print:hidden mx-auto flex w-full max-w-4xl justify-end">
+                    {document.is_finished && (
+                        <Button onClick={handlePrint} variant="default" className="gap-2">
+                            <Printer className="h-4 w-4" />
+                            Сохранить
+                        </Button>
+                    )}
+                </div>
+
                 {/* Document View Container */}
-                <Card className="mx-auto w-full max-w-4xl">
+                <Card className="print-area card-print mx-auto w-full max-w-4xl" ref={printRef}>
                     <CardContent className="p-8" style={{ fontFamily: 'Times New Roman, Times, serif' }}>
                         {/* Header with Approval Section */}
                         <div className="mb-8 flex justify-end">
@@ -265,7 +281,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                         </div>
 
                         {/* History Section */}
-                        <div className="mb-8">
+                        <div className="print:hidden mb-8">
                             <Collapsible open={historyExpanded} onOpenChange={setHistoryExpanded}>
                                 <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg p-4">
                                     <span className="font-medium">История документа</span>
@@ -364,7 +380,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
 
                 {/* Action Buttons */}
                 {!document.is_finished && checkOrder() && (
-                    <div className="mx-auto flex max-w-4xl gap-4">
+                    <div className="print:hidden mx-auto flex max-w-4xl gap-4">
                         <Button onClick={() => handleConfirm('confirm')} className="min-w-[200px]" size="lg">
                             Подтвердить
                         </Button>
