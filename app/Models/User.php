@@ -71,6 +71,11 @@ class User extends Authenticatable
             'id')->select('user_id', 'warehouse_id')->with('warehouse');
     }
 
+    public function documents(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Documents::class, 'user_id', 'id');
+    }
+
     /**
      * Get the attributes that should be cast.
      *
