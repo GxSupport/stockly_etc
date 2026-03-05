@@ -7,7 +7,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { ChevronDownIcon, ChevronUpIcon, Printer } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 // Interfaces
 interface DocumentType {
@@ -211,8 +211,6 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
         }
     };
 
-    const printRef = useRef<HTMLDivElement>(null);
-
     const handlePrint = () => {
         window.print();
     };
@@ -232,7 +230,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                 </div>
 
                 {/* Document View Container */}
-                <Card className="print-area card-print mx-auto w-full max-w-4xl" ref={printRef}>
+                <Card className="print-area mx-auto w-full max-w-4xl">
                     <CardContent className="p-8" style={{ fontFamily: 'Times New Roman, Times, serif' }}>
                         {/* Header with Approval Section */}
                         <div className="mb-8 flex justify-end">
