@@ -1,0 +1,60 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: stockly_nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-80}:80"
+    volumes:
+      - .:/var/www
+      - ./docker/production/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - php-fpm
+    networks:
+      - stockly_network
+
+  php-fpm:
+    build:
+      context: .
+      dockerfile: docker/common/php-fpm/Dockerfile
+      target: production
+    container_name: stockly_php
+    restart: unless-stopped
+    volumes:
+      - ./storage:/var/www/storage
+      - ./public/build:/var/www/public/build
+    entrypoint: ["/usr/local/bin/entrypoint.sh"]
+    command: ["php-fpm"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - stockly_network
+
+  mysql:
+    image: mysql:8.0
+    container_name: stockly_mysql
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-stockly}
+      MYSQL_USER: ${DB_USERNAME:-stockly}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - stockly_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  stockly_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
