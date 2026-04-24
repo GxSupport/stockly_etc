@@ -1,3 +1,15 @@
+# Stage 0: Frontend assets build
+FROM node:22-alpine AS frontend-builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+
 # Stage 1: Build environment and Composer dependencies
 FROM php:8.3-fpm AS builder
 
@@ -128,6 +140,9 @@ RUN echo "pm.status_path = /status" >> /usr/local/etc/php-fpm.d/www.conf
 
 # Copy the application code and dependencies from the build stage
 COPY --from=builder /var/www /var/www
+
+# Copy frontend build assets
+COPY --from=frontend-builder /app/public/build /var/www/public/build
 
 # Set working directory
 WORKDIR /var/www
