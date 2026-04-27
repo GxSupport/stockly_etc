@@ -22,7 +22,6 @@ services:
     restart: unless-stopped
     volumes:
       - ./storage:/var/www/storage
-      - ./public/build:/var/www/public/build
     entrypoint: ["/usr/local/bin/entrypoint.sh"]
     command: ["php-fpm"]
     depends_on:
