@@ -62,14 +62,8 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
     && composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
 
 
-# Stage 2: Frontend assets build (after builder so vendor is available)
+# Stage 2: Frontend assets build
 FROM node:22-alpine AS frontend-builder
-
-# PHP kerak (wayfinder:generate uchun)
-RUN apk add --no-cache php83 php83-cli php83-phar php83-mbstring php83-openssl \
-    php83-tokenizer php83-xml php83-dom php83-xmlwriter php83-simplexml \
-    php83-fileinfo php83-json php83-pcntl php83-curl php83-session \
-    && ln -sf /usr/bin/php83 /usr/bin/php
 
 WORKDIR /app
 
@@ -77,9 +71,6 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-
-# Copy vendor from builder so wayfinder:generate can run
-COPY --from=builder /var/www/vendor /app/vendor
 
 RUN npm run build
 
