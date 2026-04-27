@@ -28,5 +28,4 @@ yarn-error.log
 packge-lock.json
 yarn.lock
 .DS_Store
-composer.lock
 /docs/*
