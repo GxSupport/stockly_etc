@@ -1,5 +1,5 @@
 # Stage 1: Build environment and Composer dependencies
-FROM php:8.3-fpm AS builder
+FROM php:8.4-fpm AS builder
 
 # Install system dependencies and PHP extensions required for Laravel + MySQL/PostgreSQL support
 # Some dependencies are required for PHP extensions only in the build stage
@@ -85,7 +85,7 @@ RUN npm run build
 
 
 # Stage 3: Production environment
-FROM php:8.3-fpm AS production
+FROM php:8.4-fpm AS production
 
 # Install only runtime libraries needed in production
 # libfcgi-bin and procps are required for the php-fpm-healthcheck script
