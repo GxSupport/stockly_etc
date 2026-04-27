@@ -72,7 +72,7 @@ RUN npm ci
 
 COPY . .
 
-RUN npm run build
+RUN SKIP_WAYFINDER=true npm run build
 
 
 # Stage 3: Production environment
