@@ -187,10 +187,14 @@ export default function DocumentForm({
     const selectedDocumentType = documentTypes.find((d) => d.id.toString() === data.document_type_id);
     // To'g'ridan-to'g'ri workflow uchun xodim tanlash ko'rsatish
     const showAssignedUserSelect = selectedDocumentType && selectedDocumentType.workflow_type === 2;
-    const showMainToolInput = selectedDocumentType && selectedDocumentType.id === 1 && !isMainToolFromService;
+    const isDirectWorkflowType = selectedDocumentType?.workflow_type === 2;
+    // Qo'lda kiritish rejimi смонтаж (id 1) va priyom-peredacha (to'g'ridan-to'g'ri workflow) uchun mavjud
+    const canToggleManualMainTool = selectedDocumentType && (selectedDocumentType.id === 1 || isDirectWorkflowType);
+    const showMainToolInput = canToggleManualMainTool && !isMainToolFromService;
     const showMainToolSelect =
         selectedDocumentType &&
-        (selectedDocumentType.id === 4 || (selectedDocumentType.id === 1 && isMainToolFromService) || selectedDocumentType.id === 2);
+        (selectedDocumentType.id === 2 ||
+            ((selectedDocumentType.id === 4 || selectedDocumentType.id === 1 || isDirectWorkflowType) && isMainToolFromService));
     const showProductNotes = selectedDocumentType && selectedDocumentType.id === 3;
     // Приём-передача (to'g'ridan-to'g'ri workflow) — har bir tovarga ixtiyoriy komentariya
     const showProductComment = selectedDocumentType?.workflow_type === 2;
@@ -556,6 +560,22 @@ export default function DocumentForm({
                                         >
                                             <PackageSearch className="h-4 w-4" />
                                             Товары
+                                        </Button>
+                                    )}
+                                    {isDirectWorkflowType && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                setIsMainToolFromService(false);
+                                                setMainToolOption(undefined);
+                                                setData('main_tool', '');
+                                            }}
+                                            className="gap-2 whitespace-nowrap"
+                                        >
+                                            <ToggleLeft className="h-4 w-4" />
+                                            Вручную
                                         </Button>
                                     )}
                                 </div>
