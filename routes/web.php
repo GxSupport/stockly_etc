@@ -46,7 +46,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/create', [WarehouseController::class, 'create'])->name('warehouses.create');
             Route::post('/create', [WarehouseController::class, 'store'])->name('warehouses.store');
             Route::get('/{warehouse}', [WarehouseController::class, 'show'])->name('warehouses.show');
-            Route::get('/{warehouse}/products', [WarehouseController::class, 'products'])->name('warehouses.products');
         });
 
         Route::prefix('warehouse-types')->group(function () {
@@ -93,6 +92,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('api/basic-resources')->group(function () {
         Route::get('/search', [BasicResourceController::class, 'search'])->name('api.basic-resources.search');
         Route::post('/refresh', [BasicResourceController::class, 'refresh'])->name('api.basic-resources.refresh');
+    });
+
+    Route::prefix('api/warehouses')->group(function () {
+        Route::get('/search', [WarehouseController::class, 'search'])->name('api.warehouses.search');
+        Route::get('/{warehouse}/products', [WarehouseController::class, 'products'])->name('warehouses.products');
     });
 
     Route::prefix('reports')->group(function () {

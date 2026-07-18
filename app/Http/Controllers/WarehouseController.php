@@ -34,6 +34,21 @@ class WarehouseController extends Controller
         ]);
     }
 
+    public function search(Request $request): JsonResponse
+    {
+        $search = (string) $request->input('search', '');
+        $limit = min((int) $request->input('limit', 20), 50);
+        $page = max(0, (int) $request->input('page', 0));
+
+        $warehouses = $this->warehouseService->search($search, $limit, $page);
+
+        return response()->json($warehouses->map(fn (Warehouse $warehouse) => [
+            'id' => $warehouse->id,
+            'code' => $warehouse->code,
+            'title' => $warehouse->title,
+        ]));
+    }
+
     public function show(Warehouse $warehouse)
     {
         $warehouse->load('type_info');

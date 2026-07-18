@@ -13,7 +13,7 @@ export interface DynamicSearchableSelectOption {
 
 interface DynamicSearchableSelectProps {
     value?: string;
-    onValueChange?: (value: string) => void;
+    onValueChange?: (value: string, option?: DynamicSearchableSelectOption) => void;
     placeholder?: string;
     searchPlaceholder?: string;
     emptyText?: string;
@@ -109,9 +109,12 @@ export function DynamicSearchableSelect({
 
     const handleSelect = (selectedValue: string) => {
         if (selectedValue === value) {
-            onValueChange?.('');
+            onValueChange?.('', undefined);
         } else {
-            onValueChange?.(selectedValue);
+            onValueChange?.(
+                selectedValue,
+                options.find((option) => option.id === selectedValue),
+            );
         }
         setOpen(false);
     };

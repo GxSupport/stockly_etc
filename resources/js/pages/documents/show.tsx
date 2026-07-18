@@ -172,8 +172,8 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
             case 'mounted':
                 return (
                     <>
-                        Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы были получены и
-                        смонтированы на указанных объектах. Материалы переданы под ответственность Материально ответственного лица{' '}
+                        Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы были установлены{' '}
+                        <span className="font-semibold">{document.main_tool}</span>. Материально ответственное лицо{' '}
                         <span className="font-semibold">{responsiblePerson}</span>
                     </>
                 );
@@ -257,9 +257,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                                         <th className="border p-2 text-center dark:border-white">Наименование</th>
                                         <th className="border p-2 text-center dark:border-white">Ед.изм.</th>
                                         <th className="border p-2 text-center dark:border-white">Кол-во</th>
-                                        <th className="border p-2 text-center dark:border-white">
-                                            {document.type === 1 ? 'Место установки' : 'Причина списания'}
-                                        </th>
+                                        {document.type === 3 && <th className="border p-2 text-center dark:border-white">Причина списания</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -269,9 +267,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                                             <td className="border p-2 text-center dark:border-white">{product.title}</td>
                                             <td className="border p-2 text-center dark:border-white">{product.measure}.</td>
                                             <td className="border p-2 text-center dark:border-white">{product.quantity}</td>
-                                            <td className="border p-2 text-center dark:border-white">
-                                                {document.type === 3 || document.type === 1 ? product.note : ''}
-                                            </td>
+                                            {document.type === 3 && <td className="border p-2 text-center dark:border-white">{product.note}</td>}
                                         </tr>
                                     ))}
                                 </tbody>

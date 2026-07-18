@@ -110,6 +110,40 @@ test('warehouse products endpoint returns error when integration fails', functio
     ]);
 });
 
+test('non-management users can fetch warehouse products for document creation', function () {
+    $user = User::query()->where('type', 'frp')->first();
+    $warehouse = Warehouse::query()->first();
+
+    $this->mock(ProductService::class)
+        ->shouldReceive('getProductsList')
+        ->once()
+        ->andReturn([]);
+
+    $this->actingAs($user);
+
+    $response = $this->getJson(route('warehouses.products', $warehouse));
+
+    $response->assertSuccessful();
+    $response->assertJson(['success' => true]);
+});
+
+test('warehouse search returns active warehouses for any authenticated user', function () {
+    $user = User::query()->where('type', 'frp')->first();
+    Warehouse::query()->where('code', 'like', 'TSRCH%')->delete();
+    $active = Warehouse::create(['code' => 'TSRCH1', 'title' => 'Поисковый склад', 'type' => 1, 'is_active' => true]);
+    $inactive = Warehouse::create(['code' => 'TSRCH2', 'title' => 'Поисковый склад неактивный', 'type' => 1, 'is_active' => false]);
+
+    $this->actingAs($user);
+
+    $response = $this->getJson(route('api.warehouses.search').'?'.http_build_query(['search' => 'Поисковый']));
+
+    $response->assertSuccessful();
+    $response->assertJsonCount(1);
+    $response->assertJsonFragment(['code' => 'TSRCH1', 'title' => 'Поисковый склад']);
+
+    Warehouse::query()->whereIn('id', [$active->id, $inactive->id])->delete();
+});
+
 test('warehouse products endpoint validates the date format', function () {
     $user = User::query()->where('type', 'admin')->first();
     $warehouse = Warehouse::query()->first();

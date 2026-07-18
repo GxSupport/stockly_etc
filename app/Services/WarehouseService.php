@@ -17,15 +17,15 @@ class WarehouseService
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
-                  ->orWhere('title', 'like', "%{$search}%");
+                    ->orWhere('title', 'like', "%{$search}%");
             });
         }
 
         $total = $query->count();
         $warehouses = $query->orderBy('code', 'asc')
-                           ->skip(($page - 1) * $perPage)
-                           ->take($perPage)
-                           ->get();
+            ->skip(($page - 1) * $perPage)
+            ->take($perPage)
+            ->get();
 
         return [
             'data' => $warehouses,
@@ -45,6 +45,7 @@ class WarehouseService
 
         return Warehouse::create($data);
     }
+
     public function getWarehouseByUserId($user_id): ?UserWarehouse
     {
         return UserWarehouse::query()
@@ -58,6 +59,25 @@ class WarehouseService
         return WarehouseType::query()
             ->where('is_active', true)
             ->orderBy('title', 'asc')
+            ->get();
+    }
+
+    public function search(string $search = '', int $limit = 20, int $page = 0): Collection
+    {
+        $query = Warehouse::query()
+            ->where('is_active', true)
+            ->select(['id', 'code', 'title']);
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                    ->orWhere('title', 'like', "%{$search}%");
+            });
+        }
+
+        return $query->orderBy('title')
+            ->skip($page * $limit)
+            ->limit($limit)
             ->get();
     }
 

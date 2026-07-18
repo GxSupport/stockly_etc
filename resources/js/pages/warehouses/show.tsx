@@ -82,7 +82,7 @@ export default function WarehouseShow({ warehouse }: WarehouseShowPageProps) {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`/warehouses/${warehouse.id}/products?date=${date}`, {
+            const response = await fetch(`/api/warehouses/${warehouse.id}/products?date=${date}`, {
                 headers: {
                     Accept: 'application/json',
                 },
