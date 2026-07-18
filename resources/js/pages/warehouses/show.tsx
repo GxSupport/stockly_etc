@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { ArrowLeft, Calendar, Loader2, Package, Search } from 'lucide-react';
+import { ArrowLeft, Calendar, Download, Loader2, Package, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface WarehouseType {
@@ -109,6 +109,35 @@ export default function WarehouseShow({ warehouse }: WarehouseShowPageProps) {
         setSelectedDate(fromInputDate(e.target.value));
     };
 
+    const handleExport = async () => {
+        const XLSX = await import('xlsx');
+
+        const rows = filteredProducts.map((p) => ({
+            Номенклатура: p.name,
+            'Ед.Изм': p.measure,
+            Цена: p.price,
+            Количество: parseFloat(p.count || '0'),
+            Сумма: Math.round(p.price * parseFloat(p.count || '0') * 100) / 100,
+            Код: p.nomenclature,
+        }));
+
+        rows.push({
+            Номенклатура: 'Итого:',
+            'Ед.Изм': '',
+            Цена: '' as unknown as number,
+            Количество: Math.round(totalQuantity * 100) / 100,
+            Сумма: Math.round(totalAmount * 100) / 100,
+            Код: '',
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        worksheet['!cols'] = [{ wch: 50 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 14 }];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, warehouse.code);
+        XLSX.writeFile(workbook, `sklad_${warehouse.code}_${selectedDate.replace(/\./g, '_')}.xlsx`);
+    };
+
     // Filter products by search query
     const filteredProducts = products.filter(
         (product) =>
@@ -182,7 +211,13 @@ export default function WarehouseShow({ warehouse }: WarehouseShowPageProps) {
                         <div className="flex items-end gap-4">
                             <div className="max-w-xs flex-1">
                                 <Label htmlFor="products-date">Дата</Label>
-                                <Input id="products-date" type="date" value={toInputDate(selectedDate)} onChange={handleDateChange} className="mt-1.5" />
+                                <Input
+                                    id="products-date"
+                                    type="date"
+                                    value={toInputDate(selectedDate)}
+                                    onChange={handleDateChange}
+                                    className="mt-1.5"
+                                />
                             </div>
                             <Button onClick={() => fetchProducts(selectedDate)} disabled={loading}>
                                 {loading ? (
@@ -224,13 +259,21 @@ export default function WarehouseShow({ warehouse }: WarehouseShowPageProps) {
                 {!loading && loaded && !error && (
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Package className="h-5 w-5" />
-                                Товары на складе
-                            </CardTitle>
-                            <CardDescription>
-                                Найдено товаров: {filteredProducts.length} из {products.length}
-                            </CardDescription>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Package className="h-5 w-5" />
+                                        Товары на складе
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Найдено товаров: {filteredProducts.length} из {products.length}
+                                    </CardDescription>
+                                </div>
+                                <Button variant="outline" onClick={handleExport} disabled={filteredProducts.length === 0}>
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Экспорт Excel
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="mb-4">
