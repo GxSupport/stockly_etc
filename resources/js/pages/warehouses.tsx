@@ -2,8 +2,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/react';
+import { type BreadcrumbItem, type SharedData } from '@/types';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Plus, Warehouse } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -41,6 +41,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Warehouses({ warehouses, total, page, perPage, search }: WarehousesPageProps) {
+    const { auth } = usePage<SharedData>().props;
+    const canManage = ['admin', 'director', 'buxgalter'].includes(auth.user.type);
     const [localWarehouses, setLocalWarehouses] = useState<Warehouse[]>(warehouses);
     const [searchQuery, setSearchQuery] = useState(search || '');
 
@@ -91,10 +93,12 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold tracking-tight">Склады</h1>
-                    <Button onClick={() => router.visit('/warehouses/create')} className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        Добавить склад
-                    </Button>
+                    {canManage && (
+                        <Button onClick={() => router.visit('/warehouses/create')} className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            Добавить склад
+                        </Button>
+                    )}
                 </div>
 
                 <div className="flex gap-4">
@@ -117,7 +121,7 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Тип</th>
                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Статус</th>
                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Комментарий</th>
-                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Действия</th>
+                                    {canManage && <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Действия</th>}
                                 </tr>
                             </thead>
                             <tbody>
@@ -147,22 +151,24 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                                             <td className="h-12 max-w-xs px-4 align-middle">
                                                 <div className="truncate text-sm text-muted-foreground">{warehouse.comment || '—'}</div>
                                             </td>
-                                            <td className="h-12 px-4 align-middle" onClick={(e) => e.stopPropagation()}>
-                                                {warehouse.is_active ? (
-                                                    <Button variant="destructive" size="sm" onClick={() => handleDeactivate(warehouse.id)}>
-                                                        Деактивировать
-                                                    </Button>
-                                                ) : (
-                                                    <Button variant="default" size="sm" onClick={() => handleActivate(warehouse.id)}>
-                                                        Активировать
-                                                    </Button>
-                                                )}
-                                            </td>
+                                            {canManage && (
+                                                <td className="h-12 px-4 align-middle" onClick={(e) => e.stopPropagation()}>
+                                                    {warehouse.is_active ? (
+                                                        <Button variant="destructive" size="sm" onClick={() => handleDeactivate(warehouse.id)}>
+                                                            Деактивировать
+                                                        </Button>
+                                                    ) : (
+                                                        <Button variant="default" size="sm" onClick={() => handleActivate(warehouse.id)}>
+                                                            Активировать
+                                                        </Button>
+                                                    )}
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={6} className="h-24 text-center">
+                                        <td colSpan={canManage ? 6 : 5} className="h-24 text-center">
                                             <div className="text-muted-foreground">Склады не найдены</div>
                                         </td>
                                     </tr>

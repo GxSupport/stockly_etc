@@ -36,13 +36,22 @@ test('management users can view the warehouse show page', function () {
     );
 });
 
-test('non-management users cannot view the warehouse show page', function () {
+test('non-management users can view the warehouses list and show pages', function () {
     $user = User::query()->where('type', 'frp')->first();
     $warehouse = Warehouse::query()->first();
 
     $this->actingAs($user);
 
-    $this->get(route('warehouses.show', $warehouse))->assertForbidden();
+    $this->get(route('warehouses.index'))->assertOk();
+    $this->get(route('warehouses.show', $warehouse))->assertOk();
+});
+
+test('non-management users cannot access the warehouse create page', function () {
+    $user = User::query()->where('type', 'frp')->first();
+
+    $this->actingAs($user);
+
+    $this->get(route('warehouses.create'))->assertForbidden();
 });
 
 test('show page returns 404 for a missing warehouse', function () {

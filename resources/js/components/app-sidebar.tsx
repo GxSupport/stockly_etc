@@ -51,7 +51,7 @@ const allNavItems: NavItem[] = [
     },
 ];
 
-const managementRoutes = ['/employees', '/departments', '/warehouses', '/warehouse-types', '/document-types'];
+const managementRoutes = ['/employees', '/departments', '/warehouse-types', '/document-types'];
 
 function hasManagementAccess(userType: string): boolean {
     return ['admin', 'director', 'buxgalter'].includes(userType);
