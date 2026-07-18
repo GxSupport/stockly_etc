@@ -1,4 +1,5 @@
 import OsCompositionModal from '@/components/documents/OsCompositionModal';
+import WarehouseProductsModal from '@/components/documents/WarehouseProductsModal';
 import SmsConfirmationModal from '@/components/SmsConfirmationModal';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
@@ -97,6 +98,7 @@ export default function DocumentForm({
     const [selectedWarehouse, setSelectedWarehouse] = useState<DynamicSearchableSelectOption | undefined>(undefined);
     const [warehouseProducts, setWarehouseProducts] = useState<Product[] | null>(null);
     const [loadingWarehouseProducts, setLoadingWarehouseProducts] = useState(false);
+    const [showWarehouseProductsModal, setShowWarehouseProductsModal] = useState(false);
     const [composition, setComposition] = useState<any[]>([]);
     const [showSmsModal, setShowSmsModal] = useState(false);
     const [sendingToNext, setSendingToNext] = useState(false);
@@ -406,10 +408,7 @@ export default function DocumentForm({
                                     // Reset assigned_user_id when document type changes
                                     setData('assigned_user_id', undefined);
                                     const docType = documentTypes.find((d) => d.id.toString() === value);
-                                    setData(
-                                        'requires_deputy_approval',
-                                        docType?.workflow_type === 1 ? !!docType.requires_deputy_approval : false,
-                                    );
+                                    setData('requires_deputy_approval', docType?.workflow_type === 1 ? !!docType.requires_deputy_approval : false);
                                 }}
                                 placeholder="Выберите тип документа"
                                 searchPlaceholder="Поиск типа документа..."
@@ -515,12 +514,24 @@ export default function DocumentForm({
                                         emptyText="Склады не найдены"
                                         searchUrl="/api/warehouses/search"
                                         selectedOption={
-                                            selectedWarehouse ??
-                                            (data.main_tool ? { id: data.main_tool, title: data.main_tool } : undefined)
+                                            selectedWarehouse ?? (data.main_tool ? { id: data.main_tool, title: data.main_tool } : undefined)
                                         }
                                         paginated={true}
                                         className="flex-1"
                                     />
+                                    {selectedWarehouse && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowWarehouseProductsModal(true)}
+                                            title="Показать товары выбранного склада"
+                                            className="gap-2 whitespace-nowrap"
+                                        >
+                                            <PackageSearch className="h-4 w-4" />
+                                            Товары
+                                        </Button>
+                                    )}
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -536,9 +547,7 @@ export default function DocumentForm({
                                         Вручную
                                     </Button>
                                 </div>
-                                {loadingWarehouseProducts && (
-                                    <div className="text-xs text-muted-foreground">Загрузка товаров склада...</div>
-                                )}
+                                {loadingWarehouseProducts && <div className="text-xs text-muted-foreground">Загрузка товаров склада...</div>}
                             </div>
                         )}
                         {showMainToolSelect && !isInstallationDocument && (
@@ -857,6 +866,15 @@ export default function DocumentForm({
                     </Button>
                 )}
             </div>
+
+            {/* Warehouse Products Modal (смонтаж) */}
+            <WarehouseProductsModal
+                isOpen={showWarehouseProductsModal}
+                onClose={() => setShowWarehouseProductsModal(false)}
+                warehouseTitle={selectedWarehouse?.title ?? data.main_tool}
+                products={warehouseProducts ?? []}
+                loading={loadingWarehouseProducts}
+            />
 
             {/* OS Composition Modal */}
             <OsCompositionModal
