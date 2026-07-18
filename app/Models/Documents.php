@@ -56,8 +56,16 @@ class Documents extends Model
         'is_draft',
         'is_finished',
         'is_returned',
+        'requires_deputy_approval',
         'note',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'requires_deputy_approval' => 'boolean',
+        ];
+    }
 
     public static array $type = [
         1 => 'смонтированных',

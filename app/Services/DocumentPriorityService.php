@@ -61,7 +61,8 @@ class DocumentPriorityService
      * Tartib: FRP(1) → Header FRP(2) → Deputy Director(3) → Director(4) → Buxgalter(5)
      * - deputy_director uchun - har bir deputy_director foydalanuvchi uchun alohida priority yaratiladi
      * - header_frp yaratganda - frp bosqichi skip qilinadi (FRP tasdiqlashi kerak emas)
-     * - requires_deputy_approval = false bo'lsa, deputy_director bosqichi skip qilinadi
+     * - hujjatning requires_deputy_approval = false bo'lsa, deputy_director bosqichi skip qilinadi
+     *   (flag hujjat yaratilayotganda foydalanuvchi tomonidan belgilanadi)
      */
     private function createSequentialWorkflowPriority(int $document_id, int $type, ?string $creator_type = null): void
     {
@@ -70,11 +71,11 @@ class DocumentPriorityService
             throw new \Exception('Не найдено приоритета для типа документа: '.$type);
         }
 
-        // Document type ma'lumotlarini olish (requires_deputy_approval uchun)
-        $documentType = DocumentType::find($type);
+        // Hujjatning o'zidan requires_deputy_approval flagini olish
+        $document = Documents::find($document_id);
 
         // deputy_director skip qilinsa, director va buxgalter ordering ni 1 ga kamaytirish kerak
-        $skipDeputy = $documentType && ! $documentType->requires_deputy_approval;
+        $skipDeputy = ! $document || ! $document->requires_deputy_approval;
         $orderingAdjustment = 0;
 
         foreach ($items as $item) {

@@ -9,6 +9,7 @@ interface DocumentType {
     code: string;
     title: string;
     workflow_type: number;
+    requires_deputy_approval: boolean;
 }
 interface User {
     id: number;
@@ -43,6 +44,7 @@ interface Document {
     is_returned: boolean;
     status: number;
     assigned_user_id: number | null;
+    requires_deputy_approval: boolean;
     products: DocumentProduct[];
     notes?: never[];
 }
@@ -67,6 +69,7 @@ export default function EditDocument({ document, documentTypes, products, users 
         number: document.number,
         main_tool: document.main_tool,
         date_order: document.date_order,
+        requires_deputy_approval: document.requires_deputy_approval,
         is_draft: document.is_draft,
         is_returned: document.is_returned,
         status: document.status,

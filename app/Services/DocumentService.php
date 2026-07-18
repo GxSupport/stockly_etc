@@ -326,6 +326,7 @@ class DocumentService
             $document->address = $request->input('address');
             $document->in_charge = $request->input('in_charge');
             $document->assigned_user_id = $request->input('assigned_user_id');
+            $document->requires_deputy_approval = (bool) $request->input('requires_deputy_approval', false);
             $document->is_draft = 1;
             $document->status = 1;
             $document->save();
@@ -410,6 +411,7 @@ class DocumentService
             $document->address = $request->input('address');
             $document->in_charge = $request->input('in_charge');
             $document->assigned_user_id = $request->input('assigned_user_id');
+            $document->requires_deputy_approval = (bool) $request->input('requires_deputy_approval', false);
             $document->note = $request->input('note');
             $document->is_draft = 1;
             $document->status = 1;

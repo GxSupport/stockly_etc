@@ -9,6 +9,7 @@ interface DocumentType {
     code: string;
     title: string;
     workflow_type: number;
+    requires_deputy_approval: boolean;
 }
 interface User {
     id: number;
@@ -43,6 +44,7 @@ export default function CreateDocument({ documentTypes, products, nextNumber, us
         products: [],
         main_tool: '',
         date_order: new Date().toISOString().split('T')[0],
+        requires_deputy_approval: false,
     });
 
     const handleSubmit = (e: React.FormEvent) => {

@@ -21,6 +21,7 @@ class StoreDocumentRequest extends FormRequest
             'date_order' => 'nullable|date',
             'in_charge' => 'nullable|string|max:255',
             'main_tool' => 'nullable|string|max:255',
+            'requires_deputy_approval' => 'nullable|boolean',
             'total_amount' => 'nullable|numeric',
             'is_finished' => 'boolean',
             'note' => 'nullable|string|max:1000',

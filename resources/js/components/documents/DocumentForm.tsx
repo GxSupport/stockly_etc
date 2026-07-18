@@ -10,6 +10,7 @@ import InputError from '@/components/input-error';
 import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -19,6 +20,7 @@ interface DocumentType {
     code: string;
     title: string;
     workflow_type: number; // 1 = ketma-ket, 2 = to'g'ridan-to'g'ri
+    requires_deputy_approval: boolean;
 }
 interface User {
     id: number;
@@ -52,6 +54,7 @@ export interface DocumentData {
     products: ProductItem[];
     main_tool: string;
     date_order: string;
+    requires_deputy_approval?: boolean;
     total_amount?: number;
     is_draft?: boolean;
     is_returned?: boolean;
@@ -350,11 +353,28 @@ export default function DocumentForm({
                                     setData('document_type_id', value);
                                     // Reset assigned_user_id when document type changes
                                     setData('assigned_user_id', undefined);
+                                    const docType = documentTypes.find((d) => d.id.toString() === value);
+                                    setData(
+                                        'requires_deputy_approval',
+                                        docType?.workflow_type === 1 ? !!docType.requires_deputy_approval : false,
+                                    );
                                 }}
                                 placeholder="Выберите тип документа"
                                 searchPlaceholder="Поиск типа документа..."
                             />
                             <InputError message={errors.document_type_id} />
+                            {selectedDocumentType && selectedDocumentType.workflow_type === 1 && (
+                                <div className="mt-1 flex items-center gap-2">
+                                    <Checkbox
+                                        id="requires_deputy_approval"
+                                        checked={!!data.requires_deputy_approval}
+                                        onCheckedChange={(checked) => setData('requires_deputy_approval', checked === true)}
+                                    />
+                                    <Label htmlFor="requires_deputy_approval" className="cursor-pointer text-sm font-normal">
+                                        Требуется согласование заместителя директора
+                                    </Label>
+                                </div>
+                            )}
                         </div>
                         {showAssignedUserSelect && (
                             <div className="grid gap-2">
