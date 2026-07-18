@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\ReportController::index
-* @see Http/Controllers/ReportController.php:10
+* @see app/Http/Controllers/ReportController.php:10
 * @route '/reports'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\ReportController::index
-* @see Http/Controllers/ReportController.php:10
+* @see app/Http/Controllers/ReportController.php:10
 * @route '/reports'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ReportController::index
-* @see Http/Controllers/ReportController.php:10
+* @see app/Http/Controllers/ReportController.php:10
 * @route '/reports'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\ReportController::index
-* @see Http/Controllers/ReportController.php:10
+* @see app/Http/Controllers/ReportController.php:10
 * @route '/reports'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\ReportController::index
-* @see Http/Controllers/ReportController.php:10
+* @see app/Http/Controllers/ReportController.php:10
 * @route '/reports'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\ReportController::index
-* @see Http/Controllers/ReportController.php:10
+* @see app/Http/Controllers/ReportController.php:10
 * @route '/reports'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\ReportController::index
-* @see Http/Controllers/ReportController.php:10
+* @see app/Http/Controllers/ReportController.php:10
 * @route '/reports'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\ReportController::products
-* @see Http/Controllers/ReportController.php:15
+* @see app/Http/Controllers/ReportController.php:15
 * @route '/reports/products'
 */
 export const products = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ products.definition = {
 
 /**
 * @see \App\Http\Controllers\ReportController::products
-* @see Http/Controllers/ReportController.php:15
+* @see app/Http/Controllers/ReportController.php:15
 * @route '/reports/products'
 */
 products.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ products.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ReportController::products
-* @see Http/Controllers/ReportController.php:15
+* @see app/Http/Controllers/ReportController.php:15
 * @route '/reports/products'
 */
 products.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ products.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\ReportController::products
-* @see Http/Controllers/ReportController.php:15
+* @see app/Http/Controllers/ReportController.php:15
 * @route '/reports/products'
 */
 products.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ products.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\ReportController::products
-* @see Http/Controllers/ReportController.php:15
+* @see app/Http/Controllers/ReportController.php:15
 * @route '/reports/products'
 */
 const productsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const productsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =
 
 /**
 * @see \App\Http\Controllers\ReportController::products
-* @see Http/Controllers/ReportController.php:15
+* @see app/Http/Controllers/ReportController.php:15
 * @route '/reports/products'
 */
 productsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ productsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\ReportController::products
-* @see Http/Controllers/ReportController.php:15
+* @see app/Http/Controllers/ReportController.php:15
 * @route '/reports/products'
 */
 productsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

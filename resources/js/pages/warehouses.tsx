@@ -123,7 +123,11 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                             <tbody>
                                 {localWarehouses.length > 0 ? (
                                     localWarehouses.map((warehouse) => (
-                                        <tr key={warehouse.id} className="border-b">
+                                        <tr
+                                            key={warehouse.id}
+                                            className="cursor-pointer border-b transition-colors hover:bg-muted/50"
+                                            onClick={() => router.visit(`/warehouses/${warehouse.id}`)}
+                                        >
                                             <td className="h-12 px-4 align-middle">
                                                 <div className="font-mono text-sm font-medium">{warehouse.code}</div>
                                             </td>
@@ -143,7 +147,7 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                                             <td className="h-12 max-w-xs px-4 align-middle">
                                                 <div className="truncate text-sm text-muted-foreground">{warehouse.comment || '—'}</div>
                                             </td>
-                                            <td className="h-12 px-4 align-middle">
+                                            <td className="h-12 px-4 align-middle" onClick={(e) => e.stopPropagation()}>
                                                 {warehouse.is_active ? (
                                                     <Button variant="destructive" size="sm" onClick={() => handleDeactivate(warehouse.id)}>
                                                         Деактивировать

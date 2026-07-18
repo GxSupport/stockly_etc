@@ -178,7 +178,7 @@ home.form = homeForm
 
 /**
 * @see \App\Http\Controllers\DashboardController::dashboard
-* @see Http/Controllers/DashboardController.php:13
+* @see app/Http/Controllers/DashboardController.php:13
 * @route '/dashboard'
 */
 export const dashboard = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -193,7 +193,7 @@ dashboard.definition = {
 
 /**
 * @see \App\Http\Controllers\DashboardController::dashboard
-* @see Http/Controllers/DashboardController.php:13
+* @see app/Http/Controllers/DashboardController.php:13
 * @route '/dashboard'
 */
 dashboard.url = (options?: RouteQueryOptions) => {
@@ -202,7 +202,7 @@ dashboard.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\DashboardController::dashboard
-* @see Http/Controllers/DashboardController.php:13
+* @see app/Http/Controllers/DashboardController.php:13
 * @route '/dashboard'
 */
 dashboard.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -212,7 +212,7 @@ dashboard.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\DashboardController::dashboard
-* @see Http/Controllers/DashboardController.php:13
+* @see app/Http/Controllers/DashboardController.php:13
 * @route '/dashboard'
 */
 dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -222,7 +222,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\DashboardController::dashboard
-* @see Http/Controllers/DashboardController.php:13
+* @see app/Http/Controllers/DashboardController.php:13
 * @route '/dashboard'
 */
 const dashboardForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -232,7 +232,7 @@ const dashboardForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> 
 
 /**
 * @see \App\Http\Controllers\DashboardController::dashboard
-* @see Http/Controllers/DashboardController.php:13
+* @see app/Http/Controllers/DashboardController.php:13
 * @route '/dashboard'
 */
 dashboardForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -242,7 +242,7 @@ dashboardForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\DashboardController::dashboard
-* @see Http/Controllers/DashboardController.php:13
+* @see app/Http/Controllers/DashboardController.php:13
 * @route '/dashboard'
 */
 dashboardForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -333,7 +333,7 @@ appearance.form = appearanceForm
 
 /**
 * @see \App\Http\Controllers\Auth\RegisteredUserController::register
-* @see Http/Controllers/Auth/RegisteredUserController.php:21
+* @see app/Http/Controllers/Auth/RegisteredUserController.php:21
 * @route '/register'
 */
 export const register = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -348,7 +348,7 @@ register.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\RegisteredUserController::register
-* @see Http/Controllers/Auth/RegisteredUserController.php:21
+* @see app/Http/Controllers/Auth/RegisteredUserController.php:21
 * @route '/register'
 */
 register.url = (options?: RouteQueryOptions) => {
@@ -357,7 +357,7 @@ register.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\RegisteredUserController::register
-* @see Http/Controllers/Auth/RegisteredUserController.php:21
+* @see app/Http/Controllers/Auth/RegisteredUserController.php:21
 * @route '/register'
 */
 register.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -367,7 +367,7 @@ register.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\RegisteredUserController::register
-* @see Http/Controllers/Auth/RegisteredUserController.php:21
+* @see app/Http/Controllers/Auth/RegisteredUserController.php:21
 * @route '/register'
 */
 register.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -377,7 +377,7 @@ register.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\RegisteredUserController::register
-* @see Http/Controllers/Auth/RegisteredUserController.php:21
+* @see app/Http/Controllers/Auth/RegisteredUserController.php:21
 * @route '/register'
 */
 const registerForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -387,7 +387,7 @@ const registerForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =
 
 /**
 * @see \App\Http\Controllers\Auth\RegisteredUserController::register
-* @see Http/Controllers/Auth/RegisteredUserController.php:21
+* @see app/Http/Controllers/Auth/RegisteredUserController.php:21
 * @route '/register'
 */
 registerForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -397,7 +397,7 @@ registerForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\Auth\RegisteredUserController::register
-* @see Http/Controllers/Auth/RegisteredUserController.php:21
+* @see app/Http/Controllers/Auth/RegisteredUserController.php:21
 * @route '/register'
 */
 registerForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -414,7 +414,7 @@ register.form = registerForm
 
 /**
 * @see \App\Http\Controllers\Auth\AuthenticatedSessionController::login
-* @see Http/Controllers/Auth/AuthenticatedSessionController.php:19
+* @see app/Http/Controllers/Auth/AuthenticatedSessionController.php:19
 * @route '/login'
 */
 export const login = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -429,7 +429,7 @@ login.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\AuthenticatedSessionController::login
-* @see Http/Controllers/Auth/AuthenticatedSessionController.php:19
+* @see app/Http/Controllers/Auth/AuthenticatedSessionController.php:19
 * @route '/login'
 */
 login.url = (options?: RouteQueryOptions) => {
@@ -438,7 +438,7 @@ login.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\AuthenticatedSessionController::login
-* @see Http/Controllers/Auth/AuthenticatedSessionController.php:19
+* @see app/Http/Controllers/Auth/AuthenticatedSessionController.php:19
 * @route '/login'
 */
 login.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -448,7 +448,7 @@ login.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\AuthenticatedSessionController::login
-* @see Http/Controllers/Auth/AuthenticatedSessionController.php:19
+* @see app/Http/Controllers/Auth/AuthenticatedSessionController.php:19
 * @route '/login'
 */
 login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -458,7 +458,7 @@ login.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\AuthenticatedSessionController::login
-* @see Http/Controllers/Auth/AuthenticatedSessionController.php:19
+* @see app/Http/Controllers/Auth/AuthenticatedSessionController.php:19
 * @route '/login'
 */
 const loginForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -468,7 +468,7 @@ const loginForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Auth\AuthenticatedSessionController::login
-* @see Http/Controllers/Auth/AuthenticatedSessionController.php:19
+* @see app/Http/Controllers/Auth/AuthenticatedSessionController.php:19
 * @route '/login'
 */
 loginForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -478,7 +478,7 @@ loginForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\AuthenticatedSessionController::login
-* @see Http/Controllers/Auth/AuthenticatedSessionController.php:19
+* @see app/Http/Controllers/Auth/AuthenticatedSessionController.php:19
 * @route '/login'
 */
 loginForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -495,7 +495,7 @@ login.form = loginForm
 
 /**
 * @see \App\Http\Controllers\Auth\AuthenticatedSessionController::logout
-* @see Http/Controllers/Auth/AuthenticatedSessionController.php:42
+* @see app/Http/Controllers/Auth/AuthenticatedSessionController.php:42
 * @route '/logout'
 */
 export const logout = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -510,7 +510,7 @@ logout.definition = {
 
 /**
 * @see \App\Http\Controllers\Auth\AuthenticatedSessionController::logout
-* @see Http/Controllers/Auth/AuthenticatedSessionController.php:42
+* @see app/Http/Controllers/Auth/AuthenticatedSessionController.php:42
 * @route '/logout'
 */
 logout.url = (options?: RouteQueryOptions) => {
@@ -519,7 +519,7 @@ logout.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Auth\AuthenticatedSessionController::logout
-* @see Http/Controllers/Auth/AuthenticatedSessionController.php:42
+* @see app/Http/Controllers/Auth/AuthenticatedSessionController.php:42
 * @route '/logout'
 */
 logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -529,7 +529,7 @@ logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Auth\AuthenticatedSessionController::logout
-* @see Http/Controllers/Auth/AuthenticatedSessionController.php:42
+* @see app/Http/Controllers/Auth/AuthenticatedSessionController.php:42
 * @route '/logout'
 */
 const logoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -539,7 +539,7 @@ const logoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\Auth\AuthenticatedSessionController::logout
-* @see Http/Controllers/Auth/AuthenticatedSessionController.php:42
+* @see app/Http/Controllers/Auth/AuthenticatedSessionController.php:42
 * @route '/logout'
 */
 logoutForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

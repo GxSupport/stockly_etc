@@ -44,6 +44,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/', [WarehouseController::class, 'index'])->name('warehouses.index');
             Route::get('/create', [WarehouseController::class, 'create'])->name('warehouses.create');
             Route::post('/create', [WarehouseController::class, 'store'])->name('warehouses.store');
+            Route::get('/{warehouse}', [WarehouseController::class, 'show'])->name('warehouses.show');
+            Route::get('/{warehouse}/products', [WarehouseController::class, 'products'])->name('warehouses.products');
         });
 
         Route::prefix('warehouse-types')->group(function () {

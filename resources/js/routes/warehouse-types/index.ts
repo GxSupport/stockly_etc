@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::index
-* @see Http/Controllers/WarehouseTypeController.php:14
+* @see app/Http/Controllers/WarehouseTypeController.php:14
 * @route '/warehouse-types'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::index
-* @see Http/Controllers/WarehouseTypeController.php:14
+* @see app/Http/Controllers/WarehouseTypeController.php:14
 * @route '/warehouse-types'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::index
-* @see Http/Controllers/WarehouseTypeController.php:14
+* @see app/Http/Controllers/WarehouseTypeController.php:14
 * @route '/warehouse-types'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::index
-* @see Http/Controllers/WarehouseTypeController.php:14
+* @see app/Http/Controllers/WarehouseTypeController.php:14
 * @route '/warehouse-types'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::index
-* @see Http/Controllers/WarehouseTypeController.php:14
+* @see app/Http/Controllers/WarehouseTypeController.php:14
 * @route '/warehouse-types'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::index
-* @see Http/Controllers/WarehouseTypeController.php:14
+* @see app/Http/Controllers/WarehouseTypeController.php:14
 * @route '/warehouse-types'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::index
-* @see Http/Controllers/WarehouseTypeController.php:14
+* @see app/Http/Controllers/WarehouseTypeController.php:14
 * @route '/warehouse-types'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::create
-* @see Http/Controllers/WarehouseTypeController.php:31
+* @see app/Http/Controllers/WarehouseTypeController.php:31
 * @route '/warehouse-types/create'
 */
 export const create = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ create.definition = {
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::create
-* @see Http/Controllers/WarehouseTypeController.php:31
+* @see app/Http/Controllers/WarehouseTypeController.php:31
 * @route '/warehouse-types/create'
 */
 create.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ create.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::create
-* @see Http/Controllers/WarehouseTypeController.php:31
+* @see app/Http/Controllers/WarehouseTypeController.php:31
 * @route '/warehouse-types/create'
 */
 create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::create
-* @see Http/Controllers/WarehouseTypeController.php:31
+* @see app/Http/Controllers/WarehouseTypeController.php:31
 * @route '/warehouse-types/create'
 */
 create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::create
-* @see Http/Controllers/WarehouseTypeController.php:31
+* @see app/Http/Controllers/WarehouseTypeController.php:31
 * @route '/warehouse-types/create'
 */
 const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::create
-* @see Http/Controllers/WarehouseTypeController.php:31
+* @see app/Http/Controllers/WarehouseTypeController.php:31
 * @route '/warehouse-types/create'
 */
 createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::create
-* @see Http/Controllers/WarehouseTypeController.php:31
+* @see app/Http/Controllers/WarehouseTypeController.php:31
 * @route '/warehouse-types/create'
 */
 createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -163,7 +163,7 @@ create.form = createForm
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::store
-* @see Http/Controllers/WarehouseTypeController.php:36
+* @see app/Http/Controllers/WarehouseTypeController.php:36
 * @route '/warehouse-types/create'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -178,7 +178,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::store
-* @see Http/Controllers/WarehouseTypeController.php:36
+* @see app/Http/Controllers/WarehouseTypeController.php:36
 * @route '/warehouse-types/create'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -187,7 +187,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::store
-* @see Http/Controllers/WarehouseTypeController.php:36
+* @see app/Http/Controllers/WarehouseTypeController.php:36
 * @route '/warehouse-types/create'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -197,7 +197,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::store
-* @see Http/Controllers/WarehouseTypeController.php:36
+* @see app/Http/Controllers/WarehouseTypeController.php:36
 * @route '/warehouse-types/create'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -207,7 +207,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\WarehouseTypeController::store
-* @see Http/Controllers/WarehouseTypeController.php:36
+* @see app/Http/Controllers/WarehouseTypeController.php:36
 * @route '/warehouse-types/create'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

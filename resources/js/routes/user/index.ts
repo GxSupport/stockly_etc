@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\UserController::updateChatId
-* @see Http/Controllers/UserController.php:10
+* @see app/Http/Controllers/UserController.php:10
 * @route '/user/chat-id'
 */
 export const updateChatId = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -16,7 +16,7 @@ updateChatId.definition = {
 
 /**
 * @see \App\Http\Controllers\UserController::updateChatId
-* @see Http/Controllers/UserController.php:10
+* @see app/Http/Controllers/UserController.php:10
 * @route '/user/chat-id'
 */
 updateChatId.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ updateChatId.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\UserController::updateChatId
-* @see Http/Controllers/UserController.php:10
+* @see app/Http/Controllers/UserController.php:10
 * @route '/user/chat-id'
 */
 updateChatId.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -35,7 +35,7 @@ updateChatId.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
 
 /**
 * @see \App\Http\Controllers\UserController::updateChatId
-* @see Http/Controllers/UserController.php:10
+* @see app/Http/Controllers/UserController.php:10
 * @route '/user/chat-id'
 */
 const updateChatIdForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -50,7 +50,7 @@ const updateChatIdForm = (options?: RouteQueryOptions): RouteFormDefinition<'pos
 
 /**
 * @see \App\Http\Controllers\UserController::updateChatId
-* @see Http/Controllers/UserController.php:10
+* @see app/Http/Controllers/UserController.php:10
 * @route '/user/chat-id'
 */
 updateChatIdForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

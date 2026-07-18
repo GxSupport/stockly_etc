@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
 /**
 * @see \App\Http\Controllers\DepartmentController::index
-* @see Http/Controllers/DepartmentController.php:18
+* @see app/Http/Controllers/DepartmentController.php:18
 * @route '/departments'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\DepartmentController::index
-* @see Http/Controllers/DepartmentController.php:18
+* @see app/Http/Controllers/DepartmentController.php:18
 * @route '/departments'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\DepartmentController::index
-* @see Http/Controllers/DepartmentController.php:18
+* @see app/Http/Controllers/DepartmentController.php:18
 * @route '/departments'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\DepartmentController::index
-* @see Http/Controllers/DepartmentController.php:18
+* @see app/Http/Controllers/DepartmentController.php:18
 * @route '/departments'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\DepartmentController::index
-* @see Http/Controllers/DepartmentController.php:18
+* @see app/Http/Controllers/DepartmentController.php:18
 * @route '/departments'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\DepartmentController::index
-* @see Http/Controllers/DepartmentController.php:18
+* @see app/Http/Controllers/DepartmentController.php:18
 * @route '/departments'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\DepartmentController::index
-* @see Http/Controllers/DepartmentController.php:18
+* @see app/Http/Controllers/DepartmentController.php:18
 * @route '/departments'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\DepartmentController::create
-* @see Http/Controllers/DepartmentController.php:35
+* @see app/Http/Controllers/DepartmentController.php:35
 * @route '/departments/create'
 */
 export const create = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ create.definition = {
 
 /**
 * @see \App\Http\Controllers\DepartmentController::create
-* @see Http/Controllers/DepartmentController.php:35
+* @see app/Http/Controllers/DepartmentController.php:35
 * @route '/departments/create'
 */
 create.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ create.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\DepartmentController::create
-* @see Http/Controllers/DepartmentController.php:35
+* @see app/Http/Controllers/DepartmentController.php:35
 * @route '/departments/create'
 */
 create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\DepartmentController::create
-* @see Http/Controllers/DepartmentController.php:35
+* @see app/Http/Controllers/DepartmentController.php:35
 * @route '/departments/create'
 */
 create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\DepartmentController::create
-* @see Http/Controllers/DepartmentController.php:35
+* @see app/Http/Controllers/DepartmentController.php:35
 * @route '/departments/create'
 */
 const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\DepartmentController::create
-* @see Http/Controllers/DepartmentController.php:35
+* @see app/Http/Controllers/DepartmentController.php:35
 * @route '/departments/create'
 */
 createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\DepartmentController::create
-* @see Http/Controllers/DepartmentController.php:35
+* @see app/Http/Controllers/DepartmentController.php:35
 * @route '/departments/create'
 */
 createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -163,7 +163,7 @@ create.form = createForm
 
 /**
 * @see \App\Http\Controllers\DepartmentController::store
-* @see Http/Controllers/DepartmentController.php:40
+* @see app/Http/Controllers/DepartmentController.php:40
 * @route '/departments/create'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -178,7 +178,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\DepartmentController::store
-* @see Http/Controllers/DepartmentController.php:40
+* @see app/Http/Controllers/DepartmentController.php:40
 * @route '/departments/create'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -187,7 +187,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\DepartmentController::store
-* @see Http/Controllers/DepartmentController.php:40
+* @see app/Http/Controllers/DepartmentController.php:40
 * @route '/departments/create'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -197,7 +197,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\DepartmentController::store
-* @see Http/Controllers/DepartmentController.php:40
+* @see app/Http/Controllers/DepartmentController.php:40
 * @route '/departments/create'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -207,7 +207,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\DepartmentController::store
-* @see Http/Controllers/DepartmentController.php:40
+* @see app/Http/Controllers/DepartmentController.php:40
 * @route '/departments/create'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

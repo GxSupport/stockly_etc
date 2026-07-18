@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../wayfinder'
 /**
 * @see \App\Http\Controllers\ProductController::list
-* @see Http/Controllers/ProductController.php:15
+* @see app/Http/Controllers/ProductController.php:15
 * @route '/api/product/list'
 */
 export const list = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ list.definition = {
 
 /**
 * @see \App\Http\Controllers\ProductController::list
-* @see Http/Controllers/ProductController.php:15
+* @see app/Http/Controllers/ProductController.php:15
 * @route '/api/product/list'
 */
 list.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ list.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\ProductController::list
-* @see Http/Controllers/ProductController.php:15
+* @see app/Http/Controllers/ProductController.php:15
 * @route '/api/product/list'
 */
 list.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ list.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\ProductController::list
-* @see Http/Controllers/ProductController.php:15
+* @see app/Http/Controllers/ProductController.php:15
 * @route '/api/product/list'
 */
 list.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ list.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\ProductController::list
-* @see Http/Controllers/ProductController.php:15
+* @see app/Http/Controllers/ProductController.php:15
 * @route '/api/product/list'
 */
 const listForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const listForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\ProductController::list
-* @see Http/Controllers/ProductController.php:15
+* @see app/Http/Controllers/ProductController.php:15
 * @route '/api/product/list'
 */
 listForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ listForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\ProductController::list
-* @see Http/Controllers/ProductController.php:15
+* @see app/Http/Controllers/ProductController.php:15
 * @route '/api/product/list'
 */
 listForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
