@@ -22,6 +22,8 @@ interface DynamicSearchableSelectProps {
     searchUrl: string;
     initialOptions?: DynamicSearchableSelectOption[];
     selectedOption?: DynamicSearchableSelectOption;
+    paginated?: boolean;
+    pageSize?: number;
 }
 
 export function DynamicSearchableSelect({
@@ -35,14 +37,38 @@ export function DynamicSearchableSelect({
     searchUrl,
     initialOptions = [],
     selectedOption,
+    paginated = false,
+    pageSize = 20,
 }: DynamicSearchableSelectProps) {
     const [open, setOpen] = useState(false);
     const [options, setOptions] = useState<DynamicSearchableSelectOption[]>(initialOptions);
     const [loading, setLoading] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const debounceRef = useRef<NodeJS.Timeout>();
+    const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
     const selectedOptionData = selectedOption || options.find((option) => option.id === value);
+
+    const fetchOptions = async (query: string, pageToLoad: number, append: boolean) => {
+        try {
+            const response = await fetch(`${searchUrl}?search=${encodeURIComponent(query)}&limit=${pageSize}&page=${pageToLoad}`);
+            if (response.ok) {
+                const data = await response.json();
+                const formattedOptions = data.map((item: any) => ({
+                    id: item.id.toString(),
+                    code: item.code,
+                    title: item.title,
+                }));
+                setOptions((prev) => (append ? [...prev, ...formattedOptions] : formattedOptions));
+                setPage(pageToLoad);
+                setHasMore(paginated && formattedOptions.length === pageSize);
+            }
+        } catch (error) {
+            console.error('Error searching options:', error);
+        }
+    };
 
     const searchWarehouses = async (query: string) => {
         if (debounceRef.current) {
@@ -51,23 +77,23 @@ export function DynamicSearchableSelect({
 
         debounceRef.current = setTimeout(async () => {
             setLoading(true);
-            try {
-                const response = await fetch(`${searchUrl}?search=${encodeURIComponent(query)}&limit=20`);
-                if (response.ok) {
-                    const data = await response.json();
-                    const formattedOptions = data.map((item: any) => ({
-                        id: item.id.toString(),
-                        code: item.code,
-                        title: item.title,
-                    }));
-                    setOptions(formattedOptions);
-                }
-            } catch (error) {
-                console.error('Error searching warehouses:', error);
-            } finally {
-                setLoading(false);
-            }
+            await fetchOptions(query, 0, false);
+            setLoading(false);
         }, 300);
+    };
+
+    const loadMore = async () => {
+        if (loadingMore || loading || !hasMore) return;
+        setLoadingMore(true);
+        await fetchOptions(searchQuery, page + 1, true);
+        setLoadingMore(false);
+    };
+
+    const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+        const target = event.currentTarget;
+        if (target.scrollTop + target.clientHeight >= target.scrollHeight - 40) {
+            loadMore();
+        }
     };
 
     useEffect(() => {
@@ -114,7 +140,7 @@ export function DynamicSearchableSelect({
             <PopoverContent className="w-full p-0" style={{ width: 'var(--radix-popover-trigger-width)' }}>
                 <div className="p-2">
                     <Input placeholder={searchPlaceholder} value={searchQuery} onChange={(e) => handleSearch(e.target.value)} className="mb-2" />
-                    <div className="max-h-60 overflow-auto">
+                    <div className="max-h-60 overflow-auto" onScroll={handleScroll}>
                         {loading ? (
                             <div className="flex items-center justify-center p-4">
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -141,6 +167,12 @@ export function DynamicSearchableSelect({
                                         </div>
                                     );
                                 })}
+                                {loadingMore && (
+                                    <div className="flex items-center justify-center px-2 py-2 text-sm text-muted-foreground">
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Загрузка...
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

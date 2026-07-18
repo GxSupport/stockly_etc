@@ -60,6 +60,25 @@ test('search respects the limit parameter', function () {
     $response->assertJsonCount(3);
 });
 
+test('search paginates results with the page parameter', function () {
+    $user = User::query()->first();
+    foreach (range(1, 5) as $index) {
+        BasicResource::factory()->create(['code' => 'TST-PAGE-'.$index, 'name' => 'Пагинируемый объект №'.$index]);
+    }
+
+    $this->actingAs($user);
+
+    $firstPage = $this->getJson(route('api.basic-resources.search').'?'.http_build_query(['search' => 'Пагинируемый', 'limit' => 2, 'page' => 0]));
+    $secondPage = $this->getJson(route('api.basic-resources.search').'?'.http_build_query(['search' => 'Пагинируемый', 'limit' => 2, 'page' => 1]));
+    $lastPage = $this->getJson(route('api.basic-resources.search').'?'.http_build_query(['search' => 'Пагинируемый', 'limit' => 2, 'page' => 2]));
+
+    $firstPage->assertSuccessful()->assertJsonCount(2);
+    $secondPage->assertSuccessful()->assertJsonCount(2);
+    $lastPage->assertSuccessful()->assertJsonCount(1);
+
+    expect(collect($firstPage->json())->pluck('code')->intersect(collect($secondPage->json())->pluck('code')))->toBeEmpty();
+});
+
 test('refresh syncs basic resources from the integration', function () {
     $user = User::query()->first();
 

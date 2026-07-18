@@ -82,7 +82,7 @@ search.form = searchForm
 
 /**
 * @see \App\Http\Controllers\BasicResourceController::refresh
-* @see app/Http/Controllers/BasicResourceController.php:37
+* @see app/Http/Controllers/BasicResourceController.php:39
 * @route '/api/basic-resources/refresh'
 */
 export const refresh = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ refresh.definition = {
 
 /**
 * @see \App\Http\Controllers\BasicResourceController::refresh
-* @see app/Http/Controllers/BasicResourceController.php:37
+* @see app/Http/Controllers/BasicResourceController.php:39
 * @route '/api/basic-resources/refresh'
 */
 refresh.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ refresh.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BasicResourceController::refresh
-* @see app/Http/Controllers/BasicResourceController.php:37
+* @see app/Http/Controllers/BasicResourceController.php:39
 * @route '/api/basic-resources/refresh'
 */
 refresh.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ refresh.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\BasicResourceController::refresh
-* @see app/Http/Controllers/BasicResourceController.php:37
+* @see app/Http/Controllers/BasicResourceController.php:39
 * @route '/api/basic-resources/refresh'
 */
 const refreshForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const refreshForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =
 
 /**
 * @see \App\Http\Controllers\BasicResourceController::refresh
-* @see app/Http/Controllers/BasicResourceController.php:37
+* @see app/Http/Controllers/BasicResourceController.php:39
 * @route '/api/basic-resources/refresh'
 */
 refreshForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

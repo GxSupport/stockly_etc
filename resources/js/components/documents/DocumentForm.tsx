@@ -1,7 +1,8 @@
+import OsCompositionModal from '@/components/documents/OsCompositionModal';
 import SmsConfirmationModal from '@/components/SmsConfirmationModal';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
-import { Calendar, LoaderCircle, Plus, RefreshCw, Save, Send, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
+import { Calendar, LoaderCircle, PackageSearch, Plus, RefreshCw, Save, Send, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { DynamicSearchableSelect, type DynamicSearchableSelectOption } from '@/components/dynamic-searchable-select';
@@ -89,6 +90,7 @@ export default function DocumentForm({
     const [osSelectKey, setOsSelectKey] = useState(0);
     const [refreshingOsList, setRefreshingOsList] = useState(false);
     const [osListMessage, setOsListMessage] = useState<string | null>(null);
+    const [showCompositionModal, setShowCompositionModal] = useState(false);
     const [composition, setComposition] = useState<any[]>([]);
     const [showSmsModal, setShowSmsModal] = useState(false);
     const [sendingToNext, setSendingToNext] = useState(false);
@@ -260,7 +262,10 @@ export default function DocumentForm({
     };
 
     const documentTypeOptions = documentTypes.map((docType) => ({ value: docType.id.toString(), label: docType.title }));
-    const userOptions = users.map((user) => ({ value: user.id.toString(), label: `${user.name} (${userRoles[user.type as keyof typeof userRoles] || user.type})` }));
+    const userOptions = users.map((user) => ({
+        value: user.id.toString(),
+        label: `${user.name} (${userRoles[user.type as keyof typeof userRoles] || user.type})`,
+    }));
     const productOptions = allProducts.map((product) => ({
         value: product.nomenclature,
         label: `${product.name.substring(0, 50)}... | ${product.measure} | ${formatAmount(product.price)} | Склад: ${product.count}`,
@@ -362,9 +367,7 @@ export default function DocumentForm({
                                     searchPlaceholder="Поиск сотрудника..."
                                 />
                                 <InputError message={errors.assigned_user_id} />
-                                <div className="text-xs text-muted-foreground">
-                                    Документ будет отправлен выбранному сотруднику для подтверждения
-                                </div>
+                                <div className="text-xs text-muted-foreground">Документ будет отправлен выбранному сотруднику для подтверждения</div>
                             </div>
                         )}
                         <div className="grid gap-2">
@@ -438,6 +441,7 @@ export default function DocumentForm({
                                         emptyText="Ничего не найдено. Нажмите кнопку обновления, чтобы загрузить свежий список из 1С."
                                         searchUrl="/api/basic-resources/search"
                                         selectedOption={mainToolOption}
+                                        paginated={true}
                                         className="flex-1"
                                     />
                                     <Button
@@ -452,6 +456,19 @@ export default function DocumentForm({
                                         <RefreshCw className={`h-4 w-4 ${refreshingOsList ? 'animate-spin' : ''}`} />
                                         {refreshingOsList ? 'Обновление...' : 'Обновить'}
                                     </Button>
+                                    {data.main_tool && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowCompositionModal(true)}
+                                            title="Показать товары в составе ОС"
+                                            className="gap-2 whitespace-nowrap"
+                                        >
+                                            <PackageSearch className="h-4 w-4" />
+                                            Товары
+                                        </Button>
+                                    )}
                                     {selectedDocumentType?.id === 1 && (
                                         <Button
                                             type="button"
@@ -739,6 +756,14 @@ export default function DocumentForm({
                     </Button>
                 )}
             </div>
+
+            {/* OS Composition Modal */}
+            <OsCompositionModal
+                isOpen={showCompositionModal}
+                onClose={() => setShowCompositionModal(false)}
+                osCode={data.main_tool}
+                osName={mainToolOption?.title}
+            />
 
             {/* SMS Confirmation Modal */}
             {isEditMode && data.id && (

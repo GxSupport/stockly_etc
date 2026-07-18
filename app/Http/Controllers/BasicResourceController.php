@@ -15,6 +15,7 @@ class BasicResourceController extends Controller
     {
         $search = (string) $request->input('search', '');
         $limit = min((int) $request->input('limit', 20), 50);
+        $page = max(0, (int) $request->input('page', 0));
 
         $resources = BasicResource::query()
             ->when($search !== '', function ($query) use ($search) {
@@ -24,6 +25,7 @@ class BasicResourceController extends Controller
                 });
             })
             ->orderBy('name')
+            ->skip($page * $limit)
             ->limit($limit)
             ->get(['code', 'name']);
 
