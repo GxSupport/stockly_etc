@@ -95,18 +95,35 @@ export default function ProductsReport({ date }: ProductsReportPageProps) {
         fetchProducts(selectedDate);
     };
 
-    const handleExport = () => {
-        // Convert to CSV
-        const headers = ['Номенклатура', 'Склад', 'Ед.Изм', 'Цена', 'Количество', 'Код'];
-        const rows = filteredProducts.map((p) => [p.name, p.warehouse, p.measure, p.price.toString(), p.count, p.nomenclature]);
+    const handleExport = async () => {
+        const XLSX = await import('xlsx');
 
-        const csvContent = [headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join('\n');
+        const rows = filteredProducts.map((p) => ({
+            Номенклатура: p.name,
+            Склад: p.warehouse,
+            'Ед.Изм': p.measure,
+            Цена: p.price,
+            Количество: parseFloat(p.count || '0'),
+            Сумма: Math.round(p.price * parseFloat(p.count || '0') * 100) / 100,
+            Код: p.nomenclature,
+        }));
 
-        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `products_report_${selectedDate.replace(/\./g, '_')}.csv`;
-        link.click();
+        rows.push({
+            Номенклатура: 'Итого:',
+            Склад: '',
+            'Ед.Изм': '',
+            Цена: '' as unknown as number,
+            Количество: Math.round(totalQuantity * 100) / 100,
+            Сумма: Math.round(totalAmount * 100) / 100,
+            Код: '',
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        worksheet['!cols'] = [{ wch: 50 }, { wch: 30 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 14 }];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Отчет');
+        XLSX.writeFile(workbook, `products_report_${selectedDate.replace(/\./g, '_')}.xlsx`);
     };
 
     // Filter products by search query
@@ -202,7 +219,7 @@ export default function ProductsReport({ date }: ProductsReportPageProps) {
                                 </div>
                                 <Button variant="outline" onClick={handleExport}>
                                     <Download className="mr-2 h-4 w-4" />
-                                    Экспорт CSV
+                                    Экспорт Excel
                                 </Button>
                             </div>
                         </CardHeader>
