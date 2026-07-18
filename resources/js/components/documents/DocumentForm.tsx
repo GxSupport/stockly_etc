@@ -96,8 +96,6 @@ export default function DocumentForm({
     const [osListMessage, setOsListMessage] = useState<string | null>(null);
     const [showCompositionModal, setShowCompositionModal] = useState(false);
     const [selectedWarehouse, setSelectedWarehouse] = useState<DynamicSearchableSelectOption | undefined>(undefined);
-    const [warehouseProducts, setWarehouseProducts] = useState<Product[] | null>(null);
-    const [loadingWarehouseProducts, setLoadingWarehouseProducts] = useState(false);
     const [showWarehouseProductsModal, setShowWarehouseProductsModal] = useState(false);
     const [composition, setComposition] = useState<any[]>([]);
     const [showSmsModal, setShowSmsModal] = useState(false);
@@ -146,7 +144,7 @@ export default function DocumentForm({
             if (p.id === id) {
                 const updated = { ...p, [field]: value };
                 if (field === 'selected_product' && value) {
-                    const selectedProduct = effectiveProducts.find((fp) => fp.nomenclature === value);
+                    const selectedProduct = allProducts.find((fp) => fp.nomenclature === value);
                     if (selectedProduct) {
                         updated.selected_product = selectedProduct;
                         updated.product_name = selectedProduct.name;
@@ -243,34 +241,6 @@ export default function DocumentForm({
         };
     }, [isInstallationDocument, data.main_tool]);
 
-    // Смонтаж: tanlangan skladning tovarlarini yuklash
-    useEffect(() => {
-        if (!isInstallationDocument || !selectedWarehouse?.id) {
-            setWarehouseProducts(null);
-
-            return;
-        }
-
-        let cancelled = false;
-        setLoadingWarehouseProducts(true);
-        fetch(`/api/warehouses/${selectedWarehouse.id}/products`, { headers: { Accept: 'application/json' } })
-            .then((response) => response.json())
-            .then((json) => {
-                if (cancelled) return;
-                setWarehouseProducts(json.success ? json.data : []);
-            })
-            .catch(() => {
-                if (!cancelled) setWarehouseProducts([]);
-            })
-            .finally(() => {
-                if (!cancelled) setLoadingWarehouseProducts(false);
-            });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [isInstallationDocument, selectedWarehouse?.id]);
-
     const refreshOsList = async () => {
         setRefreshingOsList(true);
         setOsListMessage(null);
@@ -321,9 +291,7 @@ export default function DocumentForm({
         value: user.id.toString(),
         label: `${user.name} (${userRoles[user.type as keyof typeof userRoles] || user.type})`,
     }));
-    // Смонтаж uchun — tanlangan sklad tovarlari, boshqa turlar uchun — o'z skladi tovarlari
-    const effectiveProducts = isInstallationDocument && warehouseProducts !== null ? warehouseProducts : allProducts;
-    const productOptions = effectiveProducts.map((product) => ({
+    const productOptions = allProducts.map((product) => ({
         value: product.nomenclature,
         label: `${product.name.substring(0, 50)}... | ${product.measure} | ${formatAmount(product.price)} | Склад: ${product.count}`,
     }));
@@ -519,19 +487,17 @@ export default function DocumentForm({
                                         paginated={true}
                                         className="flex-1"
                                     />
-                                    {selectedWarehouse && (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setShowWarehouseProductsModal(true)}
-                                            title="Показать товары выбранного склада"
-                                            className="gap-2 whitespace-nowrap"
-                                        >
-                                            <PackageSearch className="h-4 w-4" />
-                                            Товары
-                                        </Button>
-                                    )}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setShowWarehouseProductsModal(true)}
+                                        title="Показать товары вашего склада"
+                                        className="gap-2 whitespace-nowrap"
+                                    >
+                                        <PackageSearch className="h-4 w-4" />
+                                        Товары
+                                    </Button>
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -547,7 +513,6 @@ export default function DocumentForm({
                                         Вручную
                                     </Button>
                                 </div>
-                                {loadingWarehouseProducts && <div className="text-xs text-muted-foreground">Загрузка товаров склада...</div>}
                             </div>
                         )}
                         {showMainToolSelect && !isInstallationDocument && (
@@ -871,9 +836,9 @@ export default function DocumentForm({
             <WarehouseProductsModal
                 isOpen={showWarehouseProductsModal}
                 onClose={() => setShowWarehouseProductsModal(false)}
-                warehouseTitle={selectedWarehouse?.title ?? data.main_tool}
-                products={warehouseProducts ?? []}
-                loading={loadingWarehouseProducts}
+                warehouseTitle={allProducts[0]?.warehouse || 'Ваш склад'}
+                products={allProducts}
+                loading={false}
             />
 
             {/* OS Composition Modal */}
