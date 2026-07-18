@@ -164,11 +164,13 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
         return document.priority?.find((el) => el.user_role === 'frp')?.user_info?.name || '';
     };
 
+    const documentTypeId = Number(document.type);
+
     const getDocumentDescription = () => {
         const responsiblePerson = getResponsiblePerson();
         const typeCode = document.document_type?.code;
 
-        if (document.type === 1 || typeCode === 'mounted') {
+        if (documentTypeId === 1 || typeCode === 'mounted') {
             return (
                 <>
                     Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы были установлены{' '}
@@ -178,7 +180,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
             );
         }
 
-        if (document.type === 2 || typeCode === 'dismantling') {
+        if (documentTypeId === 2 || typeCode === 'dismantling') {
             return (
                 <>
                     Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы были демонтированы с объектов и
@@ -188,7 +190,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
             );
         }
 
-        if (document.type === 3 || typeCode === 'write_offs') {
+        if (documentTypeId === 3 || typeCode === 'write_offs') {
             return (
                 <>
                     Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы действительно пришли в непригодное
@@ -262,7 +264,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                                         <th className="border p-2 text-center dark:border-white">Наименование</th>
                                         <th className="border p-2 text-center dark:border-white">Ед.изм.</th>
                                         <th className="border p-2 text-center dark:border-white">Кол-во</th>
-                                        {document.type === 3 && <th className="border p-2 text-center dark:border-white">Причина списания</th>}
+                                        {documentTypeId === 3 && <th className="border p-2 text-center dark:border-white">Причина списания</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -272,7 +274,7 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                                             <td className="border p-2 text-center dark:border-white">{product.title}</td>
                                             <td className="border p-2 text-center dark:border-white">{product.measure}.</td>
                                             <td className="border p-2 text-center dark:border-white">{product.quantity}</td>
-                                            {document.type === 3 && <td className="border p-2 text-center dark:border-white">{product.note}</td>}
+                                            {documentTypeId === 3 && <td className="border p-2 text-center dark:border-white">{product.note}</td>}
                                         </tr>
                                     ))}
                                 </tbody>
