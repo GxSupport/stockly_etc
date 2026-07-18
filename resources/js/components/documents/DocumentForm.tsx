@@ -493,17 +493,19 @@ export default function DocumentForm({
                                         paginated={true}
                                         className="flex-1"
                                     />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setShowWarehouseProductsModal(true)}
-                                        title="Показать товары вашего склада"
-                                        className="gap-2 whitespace-nowrap"
-                                    >
-                                        <PackageSearch className="h-4 w-4" />
-                                        Товары
-                                    </Button>
+                                    {selectedWarehouse?.id && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowWarehouseProductsModal(true)}
+                                            title="Показать товары выбранного склада"
+                                            className="gap-2 whitespace-nowrap"
+                                        >
+                                            <PackageSearch className="h-4 w-4" />
+                                            Товары
+                                        </Button>
+                                    )}
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -871,9 +873,8 @@ export default function DocumentForm({
             <WarehouseProductsModal
                 isOpen={showWarehouseProductsModal}
                 onClose={() => setShowWarehouseProductsModal(false)}
-                warehouseTitle={allProducts[0]?.warehouse || 'Ваш склад'}
-                products={allProducts}
-                loading={false}
+                warehouseId={selectedWarehouse?.id}
+                warehouseTitle={selectedWarehouse?.title ?? data.main_tool}
             />
 
             {/* OS Composition Modal */}

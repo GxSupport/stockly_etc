@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface Product {
     name: string;
@@ -14,12 +15,45 @@ interface Product {
 interface WarehouseProductsModalProps {
     isOpen: boolean;
     onClose: () => void;
+    warehouseId?: string;
     warehouseTitle: string;
-    products: Product[];
-    loading: boolean;
 }
 
-export default function WarehouseProductsModal({ isOpen, onClose, warehouseTitle, products, loading }: WarehouseProductsModalProps) {
+export default function WarehouseProductsModal({ isOpen, onClose, warehouseId, warehouseTitle }: WarehouseProductsModalProps) {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!isOpen || !warehouseId) return;
+
+        let cancelled = false;
+        setLoading(true);
+        setError(null);
+        setProducts([]);
+
+        fetch(`/api/warehouses/${warehouseId}/products`, { headers: { Accept: 'application/json' } })
+            .then((response) => response.json())
+            .then((json) => {
+                if (cancelled) return;
+                if (json.success) {
+                    setProducts(json.data);
+                } else {
+                    setError(json.message || 'Ошибка при загрузке товаров');
+                }
+            })
+            .catch(() => {
+                if (!cancelled) setError('Ошибка при загрузке товаров склада');
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isOpen, warehouseId]);
+
     const formatPrice = (price: number) => new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(price);
 
     return (
@@ -37,9 +71,13 @@ export default function WarehouseProductsModal({ isOpen, onClose, warehouseTitle
                     </div>
                 )}
 
-                {!loading && products.length === 0 && <div className="py-10 text-center text-sm text-muted-foreground">На складе нет товаров</div>}
+                {error && !loading && <div className="py-4 text-sm font-medium text-destructive">{error}</div>}
 
-                {!loading && products.length > 0 && (
+                {!loading && !error && products.length === 0 && (
+                    <div className="py-10 text-center text-sm text-muted-foreground">На складе нет товаров</div>
+                )}
+
+                {!loading && !error && products.length > 0 && (
                     <div className="rounded-md border">
                         <Table>
                             <TableHeader>

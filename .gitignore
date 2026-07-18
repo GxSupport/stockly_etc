@@ -26,3 +26,4 @@ packge-lock.json
 yarn.lock
 .DS_Store
 /docs/*
+server-changes-backup.patch
