@@ -40,26 +40,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set the working directory inside the container
 WORKDIR /var/www
 
+# Composer paketlarini alohida layer'da o'rnatish (layer caching uchun):
+# composer.json/lock o'zgarmagunча bu qadam keshdan olinadi va har deploy'da
+# paketlar qayta yuklanmaydi. Skriptlar (package:discover) kod nusxalangandan
+# keyin dump-autoload bosqichida ishlaydi.
+COPY composer.json composer.lock /var/www/
+
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+    && composer install --no-dev --no-interaction --no-progress --prefer-dist --no-scripts --no-autoloader
+
 # Copy the entire Laravel application code into the container
-# -----------------------------------------------------------
-# In Laravel, the `composer install` command often triggers
-# scripts that need access to the entire application code.
-# For example, the `post-autoload-dump` event might execute
-# Artisan commands like `php artisan package:discover`. If the
-# application code (including the `artisan` file) is not
-# present, these commands will fail, leading to build errors.
-#
-# By copying the entire application code before running
-# `composer install`, we ensure that all necessary files are
-# available, allowing these scripts to run successfully.
-# In other cases, it would be possible to copy composer files
-# first, to leverage Docker's layer caching mechanism.
-# -----------------------------------------------------------
 COPY . /var/www
 
-# Install Composer and dependencies
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
+# Autoloader + post-autoload-dump skriptlari (package:discover) — endi kod to'liq mavjud
+RUN composer dump-autoload --optimize --no-dev
 
 
 # Stage 2: Frontend assets build
