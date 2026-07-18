@@ -192,6 +192,8 @@ export default function DocumentForm({
         selectedDocumentType &&
         (selectedDocumentType.id === 4 || (selectedDocumentType.id === 1 && isMainToolFromService) || selectedDocumentType.id === 2);
     const showProductNotes = selectedDocumentType && selectedDocumentType.id === 3;
+    // Приём-передача (to'g'ridan-to'g'ri workflow) — har bir tovarga ixtiyoriy komentariya
+    const showProductComment = selectedDocumentType?.workflow_type === 2;
     const isInstallationDocument = selectedDocumentType?.id === 1;
     const mainToolLabel = isInstallationDocument ? 'Место установки' : 'Наименование ОС';
     const showCompositionInterface = selectedDocumentType && selectedDocumentType.id === 2;
@@ -638,6 +640,19 @@ export default function DocumentForm({
                                                     value={product.note}
                                                     onChange={(e) => updateProduct(product.id, 'note', e.target.value)}
                                                     required={showProductNotes}
+                                                    className="mt-2"
+                                                />
+                                            </div>
+                                        )}
+                                        {showProductComment && (
+                                            <div className="mt-4">
+                                                <Label htmlFor={`comment_${product.id}`}>Комментарий</Label>
+                                                <Input
+                                                    id={`comment_${product.id}`}
+                                                    type="text"
+                                                    value={product.note}
+                                                    onChange={(e) => updateProduct(product.id, 'note', e.target.value)}
+                                                    placeholder="Комментарий к товару (необязательно)"
                                                     className="mt-2"
                                                 />
                                             </div>

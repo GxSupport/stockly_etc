@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\BasicResource;
 use App\Models\DocumentPriority;
 use App\Models\DocumentPriorityConfig;
 use App\Models\Documents;
@@ -135,7 +136,21 @@ test('main_tool (sklad) is saved on create and returned to the act view', functi
     $show->assertInertia(fn ($page) => $page
         ->component('documents/show')
         ->where('document.main_tool', 'Тестовый склад')
+        ->where('mainToolName', 'Тестовый склад')
     );
+
+    BasicResource::query()->where('code', 'TST-OS-01')->delete();
+    BasicResource::create(['code' => 'TST-OS-01', 'name' => 'Тестовое основное средство']);
+    $created->update(['main_tool' => 'TST-OS-01']);
+
+    $showWithOs = $this->get(route('documents.show', $created->id));
+
+    $showWithOs->assertInertia(fn ($page) => $page
+        ->where('document.main_tool', 'TST-OS-01')
+        ->where('mainToolName', 'Тестовое основное средство')
+    );
+
+    BasicResource::query()->where('code', 'TST-OS-01')->delete();
 });
 
 test('document flag overrides the type flag when creating priorities', function () {

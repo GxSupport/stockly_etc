@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDocumentRequest;
+use App\Models\BasicResource;
 use App\Models\DocumentPriority;
 use App\Models\Documents;
 use App\Models\DocumentType;
@@ -201,8 +202,14 @@ class DocumentController extends Controller
                 Log::error('Error getting staff list: '.$e->getMessage());
             }
 
+            $mainToolName = null;
+            if ($document->main_tool) {
+                $mainToolName = BasicResource::where('code', $document->main_tool)->value('name') ?? $document->main_tool;
+            }
+
             return Inertia::render('documents/show', [
                 'document' => $document->load(['products', 'document_type', 'user_info', 'notes', 'priority.user_info']),
+                'mainToolName' => $mainToolName,
                 'history' => $history,
                 'staff' => $staff,
                 'user' => auth()->user(),

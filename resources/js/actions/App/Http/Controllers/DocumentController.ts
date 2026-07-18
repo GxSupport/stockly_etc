@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults, validateParameters } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\DocumentController::index
-* @see app/Http/Controllers/DocumentController.php:31
+* @see app/Http/Controllers/DocumentController.php:32
 * @route '/documents/{status?}'
 */
 export const index = (args?: { status?: string | number } | [status: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\DocumentController::index
-* @see app/Http/Controllers/DocumentController.php:31
+* @see app/Http/Controllers/DocumentController.php:32
 * @route '/documents/{status?}'
 */
 index.url = (args?: { status?: string | number } | [status: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -47,7 +47,7 @@ index.url = (args?: { status?: string | number } | [status: string | number ] | 
 
 /**
 * @see \App\Http\Controllers\DocumentController::index
-* @see app/Http/Controllers/DocumentController.php:31
+* @see app/Http/Controllers/DocumentController.php:32
 * @route '/documents/{status?}'
 */
 index.get = (args?: { status?: string | number } | [status: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -57,7 +57,7 @@ index.get = (args?: { status?: string | number } | [status: string | number ] | 
 
 /**
 * @see \App\Http\Controllers\DocumentController::index
-* @see app/Http/Controllers/DocumentController.php:31
+* @see app/Http/Controllers/DocumentController.php:32
 * @route '/documents/{status?}'
 */
 index.head = (args?: { status?: string | number } | [status: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -67,7 +67,7 @@ index.head = (args?: { status?: string | number } | [status: string | number ] |
 
 /**
 * @see \App\Http\Controllers\DocumentController::index
-* @see app/Http/Controllers/DocumentController.php:31
+* @see app/Http/Controllers/DocumentController.php:32
 * @route '/documents/{status?}'
 */
 const indexForm = (args?: { status?: string | number } | [status: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -77,7 +77,7 @@ const indexForm = (args?: { status?: string | number } | [status: string | numbe
 
 /**
 * @see \App\Http\Controllers\DocumentController::index
-* @see app/Http/Controllers/DocumentController.php:31
+* @see app/Http/Controllers/DocumentController.php:32
 * @route '/documents/{status?}'
 */
 indexForm.get = (args?: { status?: string | number } | [status: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -87,7 +87,7 @@ indexForm.get = (args?: { status?: string | number } | [status: string | number 
 
 /**
 * @see \App\Http\Controllers\DocumentController::index
-* @see app/Http/Controllers/DocumentController.php:31
+* @see app/Http/Controllers/DocumentController.php:32
 * @route '/documents/{status?}'
 */
 indexForm.head = (args?: { status?: string | number } | [status: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -104,7 +104,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\DocumentController::create
-* @see app/Http/Controllers/DocumentController.php:74
+* @see app/Http/Controllers/DocumentController.php:75
 * @route '/documents/create'
 */
 export const create = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -119,7 +119,7 @@ create.definition = {
 
 /**
 * @see \App\Http\Controllers\DocumentController::create
-* @see app/Http/Controllers/DocumentController.php:74
+* @see app/Http/Controllers/DocumentController.php:75
 * @route '/documents/create'
 */
 create.url = (options?: RouteQueryOptions) => {
@@ -128,7 +128,7 @@ create.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\DocumentController::create
-* @see app/Http/Controllers/DocumentController.php:74
+* @see app/Http/Controllers/DocumentController.php:75
 * @route '/documents/create'
 */
 create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -138,7 +138,7 @@ create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\DocumentController::create
-* @see app/Http/Controllers/DocumentController.php:74
+* @see app/Http/Controllers/DocumentController.php:75
 * @route '/documents/create'
 */
 create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -148,7 +148,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\DocumentController::create
-* @see app/Http/Controllers/DocumentController.php:74
+* @see app/Http/Controllers/DocumentController.php:75
 * @route '/documents/create'
 */
 const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -158,7 +158,7 @@ const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\DocumentController::create
-* @see app/Http/Controllers/DocumentController.php:74
+* @see app/Http/Controllers/DocumentController.php:75
 * @route '/documents/create'
 */
 createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -168,7 +168,7 @@ createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\DocumentController::create
-* @see app/Http/Controllers/DocumentController.php:74
+* @see app/Http/Controllers/DocumentController.php:75
 * @route '/documents/create'
 */
 createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -185,7 +185,7 @@ create.form = createForm
 
 /**
 * @see \App\Http\Controllers\DocumentController::store
-* @see app/Http/Controllers/DocumentController.php:152
+* @see app/Http/Controllers/DocumentController.php:153
 * @route '/documents/create'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -200,7 +200,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\DocumentController::store
-* @see app/Http/Controllers/DocumentController.php:152
+* @see app/Http/Controllers/DocumentController.php:153
 * @route '/documents/create'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -209,7 +209,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\DocumentController::store
-* @see app/Http/Controllers/DocumentController.php:152
+* @see app/Http/Controllers/DocumentController.php:153
 * @route '/documents/create'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -219,7 +219,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\DocumentController::store
-* @see app/Http/Controllers/DocumentController.php:152
+* @see app/Http/Controllers/DocumentController.php:153
 * @route '/documents/create'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -229,7 +229,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\DocumentController::store
-* @see app/Http/Controllers/DocumentController.php:152
+* @see app/Http/Controllers/DocumentController.php:153
 * @route '/documents/create'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -241,7 +241,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\DocumentController::edit
-* @see app/Http/Controllers/DocumentController.php:216
+* @see app/Http/Controllers/DocumentController.php:223
 * @route '/documents/{id}/edit'
 */
 export const edit = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -256,7 +256,7 @@ edit.definition = {
 
 /**
 * @see \App\Http\Controllers\DocumentController::edit
-* @see app/Http/Controllers/DocumentController.php:216
+* @see app/Http/Controllers/DocumentController.php:223
 * @route '/documents/{id}/edit'
 */
 edit.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -283,7 +283,7 @@ edit.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\DocumentController::edit
-* @see app/Http/Controllers/DocumentController.php:216
+* @see app/Http/Controllers/DocumentController.php:223
 * @route '/documents/{id}/edit'
 */
 edit.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -293,7 +293,7 @@ edit.get = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\DocumentController::edit
-* @see app/Http/Controllers/DocumentController.php:216
+* @see app/Http/Controllers/DocumentController.php:223
 * @route '/documents/{id}/edit'
 */
 edit.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -303,7 +303,7 @@ edit.head = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\DocumentController::edit
-* @see app/Http/Controllers/DocumentController.php:216
+* @see app/Http/Controllers/DocumentController.php:223
 * @route '/documents/{id}/edit'
 */
 const editForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -313,7 +313,7 @@ const editForm = (args: { id: string | number } | [id: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\DocumentController::edit
-* @see app/Http/Controllers/DocumentController.php:216
+* @see app/Http/Controllers/DocumentController.php:223
 * @route '/documents/{id}/edit'
 */
 editForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -323,7 +323,7 @@ editForm.get = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\DocumentController::edit
-* @see app/Http/Controllers/DocumentController.php:216
+* @see app/Http/Controllers/DocumentController.php:223
 * @route '/documents/{id}/edit'
 */
 editForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -340,7 +340,7 @@ edit.form = editForm
 
 /**
 * @see \App\Http\Controllers\DocumentController::update
-* @see app/Http/Controllers/DocumentController.php:268
+* @see app/Http/Controllers/DocumentController.php:275
 * @route '/documents/{id}'
 */
 export const update = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -355,7 +355,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\DocumentController::update
-* @see app/Http/Controllers/DocumentController.php:268
+* @see app/Http/Controllers/DocumentController.php:275
 * @route '/documents/{id}'
 */
 update.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -382,7 +382,7 @@ update.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\DocumentController::update
-* @see app/Http/Controllers/DocumentController.php:268
+* @see app/Http/Controllers/DocumentController.php:275
 * @route '/documents/{id}'
 */
 update.put = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -392,7 +392,7 @@ update.put = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\DocumentController::update
-* @see app/Http/Controllers/DocumentController.php:268
+* @see app/Http/Controllers/DocumentController.php:275
 * @route '/documents/{id}'
 */
 const updateForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -407,7 +407,7 @@ const updateForm = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\DocumentController::update
-* @see app/Http/Controllers/DocumentController.php:268
+* @see app/Http/Controllers/DocumentController.php:275
 * @route '/documents/{id}'
 */
 updateForm.put = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -424,7 +424,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\DocumentController::show
-* @see app/Http/Controllers/DocumentController.php:175
+* @see app/Http/Controllers/DocumentController.php:176
 * @route '/documents/{id}'
 */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -439,7 +439,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\DocumentController::show
-* @see app/Http/Controllers/DocumentController.php:175
+* @see app/Http/Controllers/DocumentController.php:176
 * @route '/documents/{id}'
 */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -466,7 +466,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\DocumentController::show
-* @see app/Http/Controllers/DocumentController.php:175
+* @see app/Http/Controllers/DocumentController.php:176
 * @route '/documents/{id}'
 */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -476,7 +476,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\DocumentController::show
-* @see app/Http/Controllers/DocumentController.php:175
+* @see app/Http/Controllers/DocumentController.php:176
 * @route '/documents/{id}'
 */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -486,7 +486,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\DocumentController::show
-* @see app/Http/Controllers/DocumentController.php:175
+* @see app/Http/Controllers/DocumentController.php:176
 * @route '/documents/{id}'
 */
 const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -496,7 +496,7 @@ const showForm = (args: { id: string | number } | [id: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\DocumentController::show
-* @see app/Http/Controllers/DocumentController.php:175
+* @see app/Http/Controllers/DocumentController.php:176
 * @route '/documents/{id}'
 */
 showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -506,7 +506,7 @@ showForm.get = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\DocumentController::show
-* @see app/Http/Controllers/DocumentController.php:175
+* @see app/Http/Controllers/DocumentController.php:176
 * @route '/documents/{id}'
 */
 showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -523,7 +523,7 @@ show.form = showForm
 
 /**
 * @see \App\Http\Controllers\DocumentController::getComposition
-* @see app/Http/Controllers/DocumentController.php:129
+* @see app/Http/Controllers/DocumentController.php:130
 * @route '/documents/get-composition'
 */
 export const getComposition = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -538,7 +538,7 @@ getComposition.definition = {
 
 /**
 * @see \App\Http\Controllers\DocumentController::getComposition
-* @see app/Http/Controllers/DocumentController.php:129
+* @see app/Http/Controllers/DocumentController.php:130
 * @route '/documents/get-composition'
 */
 getComposition.url = (options?: RouteQueryOptions) => {
@@ -547,7 +547,7 @@ getComposition.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\DocumentController::getComposition
-* @see app/Http/Controllers/DocumentController.php:129
+* @see app/Http/Controllers/DocumentController.php:130
 * @route '/documents/get-composition'
 */
 getComposition.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -557,7 +557,7 @@ getComposition.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\DocumentController::getComposition
-* @see app/Http/Controllers/DocumentController.php:129
+* @see app/Http/Controllers/DocumentController.php:130
 * @route '/documents/get-composition'
 */
 const getCompositionForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -567,7 +567,7 @@ const getCompositionForm = (options?: RouteQueryOptions): RouteFormDefinition<'p
 
 /**
 * @see \App\Http\Controllers\DocumentController::getComposition
-* @see app/Http/Controllers/DocumentController.php:129
+* @see app/Http/Controllers/DocumentController.php:130
 * @route '/documents/get-composition'
 */
 getCompositionForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -579,7 +579,7 @@ getComposition.form = getCompositionForm
 
 /**
 * @see \App\Http\Controllers\DocumentController::checkSmsRequired
-* @see app/Http/Controllers/DocumentController.php:306
+* @see app/Http/Controllers/DocumentController.php:313
 * @route '/documents/{id}/check-sms'
 */
 export const checkSmsRequired = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -594,7 +594,7 @@ checkSmsRequired.definition = {
 
 /**
 * @see \App\Http\Controllers\DocumentController::checkSmsRequired
-* @see app/Http/Controllers/DocumentController.php:306
+* @see app/Http/Controllers/DocumentController.php:313
 * @route '/documents/{id}/check-sms'
 */
 checkSmsRequired.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -621,7 +621,7 @@ checkSmsRequired.url = (args: { id: string | number } | [id: string | number ] |
 
 /**
 * @see \App\Http\Controllers\DocumentController::checkSmsRequired
-* @see app/Http/Controllers/DocumentController.php:306
+* @see app/Http/Controllers/DocumentController.php:313
 * @route '/documents/{id}/check-sms'
 */
 checkSmsRequired.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -631,7 +631,7 @@ checkSmsRequired.get = (args: { id: string | number } | [id: string | number ] |
 
 /**
 * @see \App\Http\Controllers\DocumentController::checkSmsRequired
-* @see app/Http/Controllers/DocumentController.php:306
+* @see app/Http/Controllers/DocumentController.php:313
 * @route '/documents/{id}/check-sms'
 */
 checkSmsRequired.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -641,7 +641,7 @@ checkSmsRequired.head = (args: { id: string | number } | [id: string | number ] 
 
 /**
 * @see \App\Http\Controllers\DocumentController::checkSmsRequired
-* @see app/Http/Controllers/DocumentController.php:306
+* @see app/Http/Controllers/DocumentController.php:313
 * @route '/documents/{id}/check-sms'
 */
 const checkSmsRequiredForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -651,7 +651,7 @@ const checkSmsRequiredForm = (args: { id: string | number } | [id: string | numb
 
 /**
 * @see \App\Http\Controllers\DocumentController::checkSmsRequired
-* @see app/Http/Controllers/DocumentController.php:306
+* @see app/Http/Controllers/DocumentController.php:313
 * @route '/documents/{id}/check-sms'
 */
 checkSmsRequiredForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -661,7 +661,7 @@ checkSmsRequiredForm.get = (args: { id: string | number } | [id: string | number
 
 /**
 * @see \App\Http\Controllers\DocumentController::checkSmsRequired
-* @see app/Http/Controllers/DocumentController.php:306
+* @see app/Http/Controllers/DocumentController.php:313
 * @route '/documents/{id}/check-sms'
 */
 checkSmsRequiredForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -678,7 +678,7 @@ checkSmsRequired.form = checkSmsRequiredForm
 
 /**
 * @see \App\Http\Controllers\DocumentController::sendOtp
-* @see app/Http/Controllers/DocumentController.php:327
+* @see app/Http/Controllers/DocumentController.php:334
 * @route '/documents/send-otp'
 */
 export const sendOtp = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -693,7 +693,7 @@ sendOtp.definition = {
 
 /**
 * @see \App\Http\Controllers\DocumentController::sendOtp
-* @see app/Http/Controllers/DocumentController.php:327
+* @see app/Http/Controllers/DocumentController.php:334
 * @route '/documents/send-otp'
 */
 sendOtp.url = (options?: RouteQueryOptions) => {
@@ -702,7 +702,7 @@ sendOtp.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\DocumentController::sendOtp
-* @see app/Http/Controllers/DocumentController.php:327
+* @see app/Http/Controllers/DocumentController.php:334
 * @route '/documents/send-otp'
 */
 sendOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -712,7 +712,7 @@ sendOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\DocumentController::sendOtp
-* @see app/Http/Controllers/DocumentController.php:327
+* @see app/Http/Controllers/DocumentController.php:334
 * @route '/documents/send-otp'
 */
 const sendOtpForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -722,7 +722,7 @@ const sendOtpForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =
 
 /**
 * @see \App\Http\Controllers\DocumentController::sendOtp
-* @see app/Http/Controllers/DocumentController.php:327
+* @see app/Http/Controllers/DocumentController.php:334
 * @route '/documents/send-otp'
 */
 sendOtpForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -734,7 +734,7 @@ sendOtp.form = sendOtpForm
 
 /**
 * @see \App\Http\Controllers\DocumentController::confirmCode
-* @see app/Http/Controllers/DocumentController.php:387
+* @see app/Http/Controllers/DocumentController.php:394
 * @route '/documents/{id}/confirm-code'
 */
 export const confirmCode = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -749,7 +749,7 @@ confirmCode.definition = {
 
 /**
 * @see \App\Http\Controllers\DocumentController::confirmCode
-* @see app/Http/Controllers/DocumentController.php:387
+* @see app/Http/Controllers/DocumentController.php:394
 * @route '/documents/{id}/confirm-code'
 */
 confirmCode.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -776,7 +776,7 @@ confirmCode.url = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\DocumentController::confirmCode
-* @see app/Http/Controllers/DocumentController.php:387
+* @see app/Http/Controllers/DocumentController.php:394
 * @route '/documents/{id}/confirm-code'
 */
 confirmCode.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -786,7 +786,7 @@ confirmCode.post = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\DocumentController::confirmCode
-* @see app/Http/Controllers/DocumentController.php:387
+* @see app/Http/Controllers/DocumentController.php:394
 * @route '/documents/{id}/confirm-code'
 */
 const confirmCodeForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -796,7 +796,7 @@ const confirmCodeForm = (args: { id: string | number } | [id: string | number ] 
 
 /**
 * @see \App\Http\Controllers\DocumentController::confirmCode
-* @see app/Http/Controllers/DocumentController.php:387
+* @see app/Http/Controllers/DocumentController.php:394
 * @route '/documents/{id}/confirm-code'
 */
 confirmCodeForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -808,7 +808,7 @@ confirmCode.form = confirmCodeForm
 
 /**
 * @see \App\Http\Controllers\DocumentController::rejectCode
-* @see app/Http/Controllers/DocumentController.php:445
+* @see app/Http/Controllers/DocumentController.php:452
 * @route '/documents/{id}/reject-code'
 */
 export const rejectCode = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -823,7 +823,7 @@ rejectCode.definition = {
 
 /**
 * @see \App\Http\Controllers\DocumentController::rejectCode
-* @see app/Http/Controllers/DocumentController.php:445
+* @see app/Http/Controllers/DocumentController.php:452
 * @route '/documents/{id}/reject-code'
 */
 rejectCode.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -850,7 +850,7 @@ rejectCode.url = (args: { id: string | number } | [id: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\DocumentController::rejectCode
-* @see app/Http/Controllers/DocumentController.php:445
+* @see app/Http/Controllers/DocumentController.php:452
 * @route '/documents/{id}/reject-code'
 */
 rejectCode.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -860,7 +860,7 @@ rejectCode.post = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\DocumentController::rejectCode
-* @see app/Http/Controllers/DocumentController.php:445
+* @see app/Http/Controllers/DocumentController.php:452
 * @route '/documents/{id}/reject-code'
 */
 const rejectCodeForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -870,7 +870,7 @@ const rejectCodeForm = (args: { id: string | number } | [id: string | number ] |
 
 /**
 * @see \App\Http\Controllers\DocumentController::rejectCode
-* @see app/Http/Controllers/DocumentController.php:445
+* @see app/Http/Controllers/DocumentController.php:452
 * @route '/documents/{id}/reject-code'
 */
 rejectCodeForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -882,7 +882,7 @@ rejectCode.form = rejectCodeForm
 
 /**
 * @see \App\Http\Controllers\DocumentController::sendToNext
-* @see app/Http/Controllers/DocumentController.php:505
+* @see app/Http/Controllers/DocumentController.php:512
 * @route '/documents/{id}/send-to-next'
 */
 export const sendToNext = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -897,7 +897,7 @@ sendToNext.definition = {
 
 /**
 * @see \App\Http\Controllers\DocumentController::sendToNext
-* @see app/Http/Controllers/DocumentController.php:505
+* @see app/Http/Controllers/DocumentController.php:512
 * @route '/documents/{id}/send-to-next'
 */
 sendToNext.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -924,7 +924,7 @@ sendToNext.url = (args: { id: string | number } | [id: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\DocumentController::sendToNext
-* @see app/Http/Controllers/DocumentController.php:505
+* @see app/Http/Controllers/DocumentController.php:512
 * @route '/documents/{id}/send-to-next'
 */
 sendToNext.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -934,7 +934,7 @@ sendToNext.post = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\DocumentController::sendToNext
-* @see app/Http/Controllers/DocumentController.php:505
+* @see app/Http/Controllers/DocumentController.php:512
 * @route '/documents/{id}/send-to-next'
 */
 const sendToNextForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -944,7 +944,7 @@ const sendToNextForm = (args: { id: string | number } | [id: string | number ] |
 
 /**
 * @see \App\Http\Controllers\DocumentController::sendToNext
-* @see app/Http/Controllers/DocumentController.php:505
+* @see app/Http/Controllers/DocumentController.php:512
 * @route '/documents/{id}/send-to-next'
 */
 sendToNextForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

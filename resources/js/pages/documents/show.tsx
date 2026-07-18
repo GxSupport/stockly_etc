@@ -78,6 +78,7 @@ interface StaffList {
 
 interface ShowDocumentProps {
     document: Document;
+    mainToolName?: string | null;
     history?: HistoryItem[];
     staff?: StaffList;
     user: UserInfo;
@@ -94,7 +95,7 @@ const workerTypeLabels: Record<string, string> = {
     assigned: 'Назначенный сотрудник',
 };
 
-export default function ShowDocument({ document, history = [], staff, user }: ShowDocumentProps) {
+export default function ShowDocument({ document, mainToolName = null, history = [], staff, user }: ShowDocumentProps) {
     const [historyExpanded, setHistoryExpanded] = useState(false);
     const [showSmsModal, setShowSmsModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
@@ -166,9 +167,25 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
 
     const documentTypeId = Number(document.type);
 
+    // Приём-передача (to'g'ridan-to'g'ri workflow) — priority zanjirida 'assigned' bosqichi bor
+    const isTransferDocument = Boolean(document.priority?.some((el) => el.user_role === 'assigned'));
+    const senderPerson = document.priority?.find((el) => Number(el.ordering) === 1)?.user_info?.name || document.user_info?.name || '';
+    const receiverPerson = document.priority?.find((el) => el.user_role === 'assigned')?.user_info?.name || '';
+    const showTransferOsRow = isTransferDocument && Boolean(document.main_tool);
+
     const getDocumentDescription = () => {
         const responsiblePerson = getResponsiblePerson();
         const typeCode = document.document_type?.code;
+
+        if (isTransferDocument) {
+            return (
+                <>
+                    Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материальные ценности были переданы от{' '}
+                    <span className="font-semibold">{senderPerson}</span> Материально ответственному лицу{' '}
+                    <span className="font-semibold">{receiverPerson}</span>
+                </>
+            );
+        }
 
         if (documentTypeId === 1 || typeCode === 'mounted') {
             return (
@@ -265,16 +282,29 @@ export default function ShowDocument({ document, history = [], staff, user }: Sh
                                         <th className="border p-2 text-center dark:border-white">Ед.изм.</th>
                                         <th className="border p-2 text-center dark:border-white">Кол-во</th>
                                         {documentTypeId === 3 && <th className="border p-2 text-center dark:border-white">Причина списания</th>}
+                                        {isTransferDocument && <th className="border p-2 text-center dark:border-white">Комментарий</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {showTransferOsRow && (
+                                        <tr>
+                                            <td className="border p-2 text-center dark:border-white">1</td>
+                                            <td className="border p-2 text-center font-semibold dark:border-white">
+                                                {mainToolName || document.main_tool}
+                                            </td>
+                                            <td className="border p-2 text-center dark:border-white"></td>
+                                            <td className="border p-2 text-center dark:border-white">1</td>
+                                            {isTransferDocument && <td className="border p-2 text-center dark:border-white"></td>}
+                                        </tr>
+                                    )}
                                     {document.products.map((product, index) => (
                                         <tr key={`product-${index}`}>
-                                            <td className="border p-2 text-center dark:border-white">{index + 1}</td>
+                                            <td className="border p-2 text-center dark:border-white">{index + (showTransferOsRow ? 2 : 1)}</td>
                                             <td className="border p-2 text-center dark:border-white">{product.title}</td>
                                             <td className="border p-2 text-center dark:border-white">{product.measure}.</td>
                                             <td className="border p-2 text-center dark:border-white">{product.quantity}</td>
                                             {documentTypeId === 3 && <td className="border p-2 text-center dark:border-white">{product.note}</td>}
+                                            {isTransferDocument && <td className="border p-2 text-center dark:border-white">{product.note}</td>}
                                         </tr>
                                     ))}
                                 </tbody>
