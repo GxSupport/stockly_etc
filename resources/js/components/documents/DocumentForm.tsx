@@ -186,7 +186,8 @@ export default function DocumentForm({
         selectedDocumentType &&
         (selectedDocumentType.id === 4 || (selectedDocumentType.id === 1 && isMainToolFromService) || selectedDocumentType.id === 2);
     const showProductNotes = selectedDocumentType && selectedDocumentType.id === 3;
-    const showPlaceInstallation = selectedDocumentType && selectedDocumentType.id === 1;
+    const isInstallationDocument = selectedDocumentType?.id === 1;
+    const mainToolLabel = isInstallationDocument ? 'Место установки' : 'Наименование ОС';
     const showCompositionInterface = selectedDocumentType && selectedDocumentType.id === 2;
     const showRegularProducts = selectedDocumentType && selectedDocumentType.id !== 2;
 
@@ -230,7 +231,6 @@ export default function DocumentForm({
         value: product.nomenclature,
         label: `${product.name.substring(0, 50)}... | ${product.measure} | ${formatAmount(product.price)} | Склад: ${product.count}`,
     }));
-    const locationOptions = [...new Set(services.map((s) => s.warehouse_name).filter(Boolean))].map((name) => ({ value: name, label: name }));
 
     const handleSendToNext = async () => {
         if (!data.id) return;
@@ -367,14 +367,14 @@ export default function DocumentForm({
                         </div>
                         {showMainToolInput && (
                             <div className="grid gap-2 md:col-span-2">
-                                <Label htmlFor="main_tool_input">Наименование ОС *</Label>
+                                <Label htmlFor="main_tool_input">{mainToolLabel} *</Label>
                                 <div className="flex gap-2">
                                     <Input
                                         id="main_tool_input"
                                         type="text"
                                         value={data.main_tool}
                                         onChange={(e) => setData('main_tool', e.target.value)}
-                                        placeholder="Введите наименование ОС"
+                                        placeholder={`Введите ${isInstallationDocument ? 'место установки' : 'наименование ОС'}`}
                                         className="flex-1"
                                         required
                                     />
@@ -393,14 +393,14 @@ export default function DocumentForm({
                         )}
                         {showMainToolSelect && (
                             <div className="grid gap-2 md:col-span-2">
-                                <Label>Наименование ОС *</Label>
+                                <Label>{mainToolLabel} *</Label>
                                 <div className="flex gap-2">
                                     <SearchableSelect
                                         options={serviceOptions}
                                         value={data.main_tool}
                                         onValueChange={(value) => setData('main_tool', value)}
-                                        placeholder="Выберите основное средство"
-                                        searchPlaceholder="Поиск основного средства..."
+                                        placeholder={isInstallationDocument ? 'Выберите место установки' : 'Выберите основное средство'}
+                                        searchPlaceholder={isInstallationDocument ? 'Поиск места установки...' : 'Поиск основного средства...'}
                                         className="flex-1"
                                     />
                                     {selectedDocumentType?.id === 1 && (
@@ -499,20 +499,6 @@ export default function DocumentForm({
                                                     value={product.note}
                                                     onChange={(e) => updateProduct(product.id, 'note', e.target.value)}
                                                     required={showProductNotes}
-                                                    className="mt-2"
-                                                />
-                                            </div>
-                                        )}
-                                        {showPlaceInstallation && (
-                                            <div className="mt-4">
-                                                <Label>Место установки *</Label>
-                                                <SearchableSelect
-                                                    options={locationOptions}
-                                                    value={product.note}
-                                                    onValueChange={(val) => updateProduct(product.id, 'note', val)}
-                                                    placeholder="Выберите или введите место установки"
-                                                    searchPlaceholder="Поиск по адресу..."
-                                                    allowCustomValue={true}
                                                     className="mt-2"
                                                 />
                                             </div>
