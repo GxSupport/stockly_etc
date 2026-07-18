@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BasicResourceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DocumentController;
@@ -87,6 +88,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('api/product')->group(function () {
         Route::get('/list', [ProductController::class, 'list'])->name('api.product.list');
+    });
+
+    Route::prefix('api/basic-resources')->group(function () {
+        Route::get('/search', [BasicResourceController::class, 'search'])->name('api.basic-resources.search');
+        Route::post('/refresh', [BasicResourceController::class, 'refresh'])->name('api.basic-resources.refresh');
     });
 
     Route::prefix('reports')->group(function () {

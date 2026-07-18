@@ -23,10 +23,6 @@ interface Product {
     count: string;
     nomenclature: string;
 }
-interface Service {
-    name: string;
-    basic_resource_code: string;
-}
 interface DocumentProduct {
     id: number;
     title: string;
@@ -55,11 +51,10 @@ interface EditDocumentProps {
     document: Document;
     documentTypes: DocumentType[];
     products: Product[];
-    services: Service[];
     users: User[];
 }
 
-export default function EditDocument({ document, documentTypes, products, services, users }: EditDocumentProps) {
+export default function EditDocument({ document, documentTypes, products, users }: EditDocumentProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'АКТ', href: '/documents' },
         { title: `Редактировать АКТ №${document.number}`, href: '#' },
@@ -119,7 +114,6 @@ export default function EditDocument({ document, documentTypes, products, servic
                     processing={processing}
                     documentTypes={documentTypes}
                     allProducts={products}
-                    services={services}
                     users={users}
                     isEditMode={true}
                     documentNotes={document.notes || []}

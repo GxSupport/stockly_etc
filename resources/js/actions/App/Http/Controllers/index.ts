@@ -8,6 +8,7 @@ import DocumentTypeController from './DocumentTypeController'
 import DocumentController from './DocumentController'
 import GuideController from './GuideController'
 import ProductController from './ProductController'
+import BasicResourceController from './BasicResourceController'
 import ReportController from './ReportController'
 import Settings from './Settings'
 import Auth from './Auth'
@@ -23,6 +24,7 @@ const Controllers = {
     DocumentController: Object.assign(DocumentController, DocumentController),
     GuideController: Object.assign(GuideController, GuideController),
     ProductController: Object.assign(ProductController, ProductController),
+    BasicResourceController: Object.assign(BasicResourceController, BasicResourceController),
     ReportController: Object.assign(ReportController, ReportController),
     Settings: Object.assign(Settings, Settings),
     Auth: Object.assign(Auth, Auth),

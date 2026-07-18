@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Data\CompositionData;
+use App\Data\ProductData;
 use App\Data\ProductServiceData;
+use App\Models\BasicResource;
 use App\Models\UserWarehouse;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
@@ -305,7 +307,7 @@ class ProductService
 
                 if (is_array($items)) {
                     foreach ($items as $value) {
-                        $products[] = new \App\Data\ProductData(
+                        $products[] = new ProductData(
                             name: $value['Номенклатура'],
                             warehouse: $value['Склад'],
                             measure: $value['ЕдИзм'],
@@ -339,7 +341,98 @@ class ProductService
         }
     }
 
-    public function numberFromStringForProduct(string|null $number): float
+    public function syncBasicResources(): int
+    {
+        $items = $this->fetchAllBasicResourcesFromApi();
+
+        return $this->storeBasicResources($items);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function fetchAllBasicResourcesFromApi(): array
+    {
+        $client = new Client([
+            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
+            'timeout' => 180,
+            'connect_timeout' => 10,
+            'verify' => false,
+        ]);
+
+        $baseUrl = 'http://89.236.216.12:8083';
+        $endpoint = '/base2/hs/CarData/goods/goodsget_stock_leftover_os';
+        $queryParams = ['date' => date('d.m.Y')];
+
+        Log::info('1C Basic Resources Sync Request', ['endpoint' => $endpoint, 'query_params' => $queryParams]);
+
+        try {
+            $response = $client->get($endpoint, [
+                'base_uri' => $baseUrl,
+                'query' => $queryParams,
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Accept' => '*/*',
+                    'Authorization' => 'Basic aHR0cGJvdDpodHRwYm90',
+                ],
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $body = $response->getBody()->getContents();
+
+            if ($statusCode < 200 || $statusCode >= 300) {
+                Log::error('1C Basic Resources Sync Failed', ['status' => $statusCode]);
+                throw new \Exception('Ошибка подключения к серверу, ошибка: '.$statusCode);
+            }
+
+            $clean = str_replace('﻿', '', $body);
+            $items = json_decode($clean, true);
+
+            if (! is_array($items)) {
+                Log::warning('1C Basic Resources Sync: items is not array');
+                throw new \Exception('Некорректный ответ от сервера 1С');
+            }
+
+            Log::info('1C Basic Resources Sync Response', ['items_count' => count($items)]);
+
+            return $items;
+        } catch (\Exception $e) {
+            Log::error('1C Basic Resources Sync Exception', ['message' => $e->getMessage()]);
+            throw new \Exception('Ошибка подключения к серверу: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     */
+    public function storeBasicResources(array $items): int
+    {
+        $syncStartedAt = now();
+
+        $rows = collect($items)
+            ->filter(fn ($item) => ! empty($item['ОсновноеСредствоКод']) && ! empty($item['ОсновноеСредство']))
+            ->map(fn ($item) => [
+                'code' => trim((string) $item['ОсновноеСредствоКод']),
+                'name' => mb_substr((string) $item['ОсновноеСредство'], 0, 500),
+                'warehouse_name' => isset($item['Склад']) ? mb_substr((string) $item['Склад'], 0, 500) : null,
+                'created_at' => $syncStartedAt,
+                'updated_at' => $syncStartedAt,
+            ])
+            ->keyBy('code')
+            ->values();
+
+        $rows->chunk(500)->each(function ($chunk) {
+            BasicResource::upsert($chunk->all(), ['code'], ['name', 'warehouse_name', 'updated_at']);
+        });
+
+        if ($rows->isNotEmpty()) {
+            BasicResource::where('updated_at', '<', $syncStartedAt)->delete();
+        }
+
+        return $rows->count();
+    }
+
+    public function numberFromStringForProduct(?string $number): float
     {
         // если значение пустое или null
         if (empty($number)) {
@@ -350,7 +443,7 @@ class ProductService
         $number = str_replace([',', ' '], '', $number);
 
         // проверяем что значение числовое
-        if (!is_numeric($number)) {
+        if (! is_numeric($number)) {
             return 0.0;
         }
 

@@ -1,9 +1,10 @@
 import SmsConfirmationModal from '@/components/SmsConfirmationModal';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
-import { Calendar, LoaderCircle, Plus, Save, Send, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
+import { Calendar, LoaderCircle, Plus, RefreshCw, Save, Send, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { DynamicSearchableSelect, type DynamicSearchableSelectOption } from '@/components/dynamic-searchable-select';
 import InputError from '@/components/input-error';
 import { SearchableSelect } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -30,11 +31,6 @@ interface Product {
     price: number;
     count: string;
     nomenclature: string;
-}
-interface Service {
-    name: string;
-    basic_resource_code: string;
-    warehouse_name: string;
 }
 export interface ProductItem {
     id: string | number;
@@ -70,7 +66,6 @@ interface DocumentFormProps {
     onSubmit: (e: React.FormEvent) => void;
     documentTypes: DocumentType[];
     allProducts: Product[];
-    services: Service[];
     users?: User[];
     isEditMode?: boolean;
     documentNotes?: any[];
@@ -84,13 +79,16 @@ export default function DocumentForm({
     onSubmit,
     documentTypes,
     allProducts,
-    services,
     users = [],
     isEditMode = false,
     documentNotes = [],
 }: DocumentFormProps) {
     const currentYear = new Date().getFullYear();
     const [isMainToolFromService, setIsMainToolFromService] = useState(!!data.main_tool);
+    const [mainToolOption, setMainToolOption] = useState<DynamicSearchableSelectOption | undefined>(undefined);
+    const [osSelectKey, setOsSelectKey] = useState(0);
+    const [refreshingOsList, setRefreshingOsList] = useState(false);
+    const [osListMessage, setOsListMessage] = useState<string | null>(null);
     const [composition, setComposition] = useState<any[]>([]);
     const [showSmsModal, setShowSmsModal] = useState(false);
     const [sendingToNext, setSendingToNext] = useState(false);
@@ -197,6 +195,43 @@ export default function DocumentForm({
         }
     }, [data.main_tool, showCompositionInterface]);
 
+    // Tanlangan ОС kodining nomini bazadan yuklash (edit rejimida va tanlashda yorliq ko'rinishi uchun)
+    useEffect(() => {
+        if (!data.main_tool || mainToolOption?.id === data.main_tool) return;
+
+        let cancelled = false;
+        fetch(`/api/basic-resources/search?search=${encodeURIComponent(data.main_tool)}&limit=5`, { headers: { Accept: 'application/json' } })
+            .then((response) => (response.ok ? response.json() : []))
+            .then((items: DynamicSearchableSelectOption[]) => {
+                if (cancelled) return;
+                const found = items.find((item) => item.id === data.main_tool);
+                if (found) setMainToolOption(found);
+            })
+            .catch(() => {});
+
+        return () => {
+            cancelled = true;
+        };
+    }, [data.main_tool]);
+
+    const refreshOsList = async () => {
+        setRefreshingOsList(true);
+        setOsListMessage(null);
+        try {
+            const response = await axios.post('/api/basic-resources/refresh', {}, { timeout: 300000 });
+            if (response.data.success) {
+                setOsSelectKey((key) => key + 1);
+                setOsListMessage(`Список обновлен: ${response.data.count} записей`);
+            } else {
+                setOsListMessage(response.data.message || 'Ошибка при обновлении списка');
+            }
+        } catch {
+            setOsListMessage('Ошибка при обновлении списка из 1С');
+        } finally {
+            setRefreshingOsList(false);
+        }
+    };
+
     const loadComposition = async (osCode: string) => {
         try {
             const response = await axios.post('/documents/get-composition', { os_code: osCode });
@@ -225,7 +260,6 @@ export default function DocumentForm({
     };
 
     const documentTypeOptions = documentTypes.map((docType) => ({ value: docType.id.toString(), label: docType.title }));
-    const serviceOptions = services.map((service) => ({ value: service.basic_resource_code, label: service.name }));
     const userOptions = users.map((user) => ({ value: user.id.toString(), label: `${user.name} (${userRoles[user.type as keyof typeof userRoles] || user.type})` }));
     const productOptions = allProducts.map((product) => ({
         value: product.nomenclature,
@@ -395,14 +429,29 @@ export default function DocumentForm({
                             <div className="grid gap-2 md:col-span-2">
                                 <Label>{mainToolLabel} *</Label>
                                 <div className="flex gap-2">
-                                    <SearchableSelect
-                                        options={serviceOptions}
+                                    <DynamicSearchableSelect
+                                        key={osSelectKey}
                                         value={data.main_tool}
                                         onValueChange={(value) => setData('main_tool', value)}
                                         placeholder={isInstallationDocument ? 'Выберите место установки' : 'Выберите основное средство'}
                                         searchPlaceholder={isInstallationDocument ? 'Поиск места установки...' : 'Поиск основного средства...'}
+                                        emptyText="Ничего не найдено. Нажмите кнопку обновления, чтобы загрузить свежий список из 1С."
+                                        searchUrl="/api/basic-resources/search"
+                                        selectedOption={mainToolOption}
                                         className="flex-1"
                                     />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={refreshOsList}
+                                        disabled={refreshingOsList}
+                                        title="Обновить список ОС из 1С"
+                                        className="gap-2 whitespace-nowrap"
+                                    >
+                                        <RefreshCw className={`h-4 w-4 ${refreshingOsList ? 'animate-spin' : ''}`} />
+                                        {refreshingOsList ? 'Обновление...' : 'Обновить'}
+                                    </Button>
                                     {selectedDocumentType?.id === 1 && (
                                         <Button
                                             type="button"
@@ -419,6 +468,7 @@ export default function DocumentForm({
                                         </Button>
                                     )}
                                 </div>
+                                {osListMessage && <div className="text-xs text-muted-foreground">{osListMessage}</div>}
                             </div>
                         )}
                     </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDocumentRequest;
 use App\Models\DocumentPriority;
+use App\Models\Documents;
 use App\Models\DocumentType;
 use App\Models\User;
 use App\Services\DocumentService;
@@ -91,16 +92,9 @@ class DocumentController extends Controller
             Log::error($e->getMessage());
         }
 
-        try {
-            $services = $this->productService->listServiceFromDepCode();
-        } catch (\Exception $e) {
-            $services = [];
-            Log::error('Ошибка при получении услуг: '.$e->getMessage());
-        }
-
         // Calculate next document number
         $currentYear = date('Y');
-        $lastDocument = \App\Models\Documents::where('number', 'like', $currentYear.'/%')
+        $lastDocument = Documents::where('number', 'like', $currentYear.'/%')
             ->get()
             ->sortByDesc(function ($doc) {
                 $parts = explode('/', $doc->number);
@@ -127,7 +121,6 @@ class DocumentController extends Controller
         return Inertia::render('documents/create', [
             'documentTypes' => $documentTypes,
             'products' => $products,
-            'services' => $services,
             'nextNumber' => $nextNumber,
             'users' => $users,
         ]);
@@ -253,13 +246,6 @@ class DocumentController extends Controller
                 Log::error($e->getMessage());
             }
 
-            try {
-                $services = $this->productService->listServiceFromDepCode();
-            } catch (\Exception $e) {
-                $services = [];
-                Log::error('Ошибка при получении услуг: '.$e->getMessage());
-            }
-
             // Xodimlar ro'yxati (to'g'ridan-to'g'ri workflow uchun)
             $users = User::where('is_active', 1)
                 ->where('id', '!=', $user->id)
@@ -271,7 +257,6 @@ class DocumentController extends Controller
                 'document' => $document->load(['products', 'document_type', 'user_info', 'notes']),
                 'documentTypes' => $documentTypes,
                 'products' => $products,
-                'services' => $services,
                 'users' => $users,
             ]);
         } catch (\Exception $e) {
