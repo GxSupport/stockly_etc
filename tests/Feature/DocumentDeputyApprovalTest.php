@@ -33,6 +33,7 @@ function cleanupDeputyApprovalFixtures(): void
         $type->delete();
     }
     User::where('phone', 998900000099)->delete();
+    User::where('phone', 998900000098)->delete();
 }
 
 function createDeputyApprovalFixtures(bool $requiresDeputy): Documents
@@ -99,6 +100,42 @@ test('deputy director stage is skipped when the document flag is unchecked', fun
     expect($priorities->pluck('user_role')->contains('deputy_director'))->toBeFalse();
     expect($priorities->pluck('user_role')->values()->all())->toBe(['frp', 'header_frp', 'director', 'buxgalter']);
     expect($priorities->pluck('ordering')->values()->all())->toBe([1, 2, 3, 4]);
+});
+
+test('main_tool (sklad) is saved on create and returned to the act view', function () {
+    $document = createDeputyApprovalFixtures(requiresDeputy: false);
+    $type = $document->type;
+
+    $frp = User::firstOrCreate(
+        ['phone' => 998900000098],
+        ['name' => 'Frp DocTest', 'type' => 'frp', 'password' => bcrypt('password'), 'is_active' => 1]
+    );
+
+    $this->actingAs($frp);
+
+    $response = $this->post(route('documents.store'), [
+        'number' => '2026/9998',
+        'document_type_id' => $type,
+        'main_tool' => 'Тестовый склад',
+        'products' => [
+            ['product_name' => 'Кабель UTP', 'measure' => 'м', 'quantity' => 2, 'amount' => 100],
+        ],
+    ]);
+
+    $response->assertRedirect();
+
+    $created = Documents::where('number', '2026/9998')->where('type', $type)->first();
+
+    expect($created)->not->toBeNull();
+    expect($created->main_tool)->toBe('Тестовый склад');
+
+    $show = $this->get(route('documents.show', $created->id));
+
+    $show->assertOk();
+    $show->assertInertia(fn ($page) => $page
+        ->component('documents/show')
+        ->where('document.main_tool', 'Тестовый склад')
+    );
 });
 
 test('document flag overrides the type flag when creating priorities', function () {

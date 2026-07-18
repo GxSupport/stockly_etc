@@ -88,7 +88,7 @@ export default function DocumentForm({
     documentNotes = [],
 }: DocumentFormProps) {
     const currentYear = new Date().getFullYear();
-    const [isMainToolFromService, setIsMainToolFromService] = useState(!!data.main_tool);
+    const [isMainToolFromService, setIsMainToolFromService] = useState(true);
     const [mainToolOption, setMainToolOption] = useState<DynamicSearchableSelectOption | undefined>(undefined);
     const [osSelectKey, setOsSelectKey] = useState(0);
     const [refreshingOsList, setRefreshingOsList] = useState(false);
@@ -829,7 +829,10 @@ export default function DocumentForm({
 
                 {/* Save button - show if can edit */}
                 {canEdit && (
-                    <Button type="submit" disabled={processing || data.products.length === 0 || !data.document_type_id}>
+                    <Button
+                        type="submit"
+                        disabled={processing || data.products.length === 0 || !data.document_type_id || (isInstallationDocument && !data.main_tool)}
+                    >
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         <Save className="mr-2 h-4 w-4" />
                         Сохранить
