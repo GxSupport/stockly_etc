@@ -6,7 +6,6 @@ use App\Models\DocumentPriority;
 use App\Models\DocumentPriorityConfig;
 use App\Models\Documents;
 use App\Models\DocumentType;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -85,36 +84,25 @@ class DocumentPriorityService
                 continue;
             }
 
-            // deputy_director uchun - requires_deputy_approval tekshiruvi
-            if ($item->user_role === 'deputy_director') {
-                // Agar requires_deputy_approval = false bo'lsa, deputy_director ni skip qilish
-                if ($skipDeputy) {
-                    $orderingAdjustment = 1; // Keyingi bosqichlar ordering ni 1 ga kamaytirish
+            // deputy_director - agar requires_deputy_approval = false bo'lsa, bosqichni skip qilish
+            // (keyingi bosqichlar ordering ni 1 ga kamaytiradi)
+            if ($item->user_role === 'deputy_director' && $skipDeputy) {
+                $orderingAdjustment = 1;
 
-                    continue;
-                }
-
-                // Har bir deputy_director foydalanuvchi uchun alohida priority
-                $deputyDirectors = User::where('type', 'deputy_director')->get();
-                foreach ($deputyDirectors as $deputy) {
-                    $this->addPriority([
-                        'document_id' => $document_id,
-                        'ordering' => $item->ordering,
-                        'user_id' => $deputy->id,
-                        'user_role' => 'deputy_director',
-                        'is_success' => false,
-                        'is_active' => true,
-                    ]);
-                }
-            } else {
-                // Boshqa rollar uchun oddiy priority
-                $data['document_id'] = $document_id;
-                $data['ordering'] = $item->ordering - $orderingAdjustment;
-                $data['user_role'] = $item->user_role;
-                $data['is_success'] = false;
-                $data['is_active'] = true;
-                $this->addPriority($data);
+                continue;
             }
+
+            // Barcha rollar (deputy_director ham) uchun rol asosidagi bitta priority.
+            // Deputy_director endi boshqa rollar kabi ishlaydi: istalgan bitta zam direktor
+            // tasdiqlasa yetarli (avval har bir zam direktor uchun alohida bosqich yaratilar,
+            // shu sabab bir nechta zam direktor bo'lganda hujjat bir necha marta tasdiqlanardi).
+            $this->addPriority([
+                'document_id' => $document_id,
+                'ordering' => $item->ordering - $orderingAdjustment,
+                'user_role' => $item->user_role,
+                'is_success' => false,
+                'is_active' => true,
+            ]);
         }
     }
 
