@@ -6,6 +6,7 @@ use App\Models\DocumentPriority;
 use App\Models\DocumentPriorityConfig;
 use App\Models\Documents;
 use App\Models\DocumentType;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -58,7 +59,7 @@ class DocumentPriorityService
     /**
      * Ketma-ket workflow uchun priority yaratish
      * Tartib: FRP(1) → Header FRP(2) → Deputy Director(3) → Director(4) → Buxgalter(5)
-     * - deputy_director uchun - har bir deputy_director foydalanuvchi uchun alohida priority yaratiladi
+     * - deputy_director - rol asosidagi bitta bosqich (istalgan bitta zam direktor tasdiqlaydi)
      * - header_frp yaratganda - frp bosqichi skip qilinadi (FRP tasdiqlashi kerak emas)
      * - hujjatning requires_deputy_approval = false bo'lsa, deputy_director bosqichi skip qilinadi
      *   (flag hujjat yaratilayotganda foydalanuvchi tomonidan belgilanadi)
