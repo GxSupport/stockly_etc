@@ -119,8 +119,12 @@ class DocumentPriorityService
     }
 
     /**
-     * To'g'ridan-to'g'ri workflow uchun priority yaratish
-     * Yaratuvchi (frp/header_frp) → Tayinlangan xodim → Buxgalter
+     * To'g'ridan-to'g'ri workflow (Приём-передача) uchun priority yaratish
+     * Yaratuvchi (frp) → Boshliq (senior_id) → Tayinlangan xodim → Buxgalter
+     * - Boshliq bosqichi faqat yaratuvchi frp bo'lganda va senior_id mavjud bo'lganda qo'shiladi.
+     * - header_frp o'zi boshliq bo'lgani uchun boshliq bosqichi tashlab ketiladi.
+     * - Boshliq tasdiqlamaguncha hujjat status'i tayinlangan xodim bosqichiga yetmaydi,
+     *   shuning uchun qabul qiluvchi aktni boshliq tasdig'idan oldin ko'rmaydi.
      */
     private function createDirectWorkflowPriority(int $document_id, ?string $creator_type = null): void
     {
@@ -131,22 +135,37 @@ class DocumentPriorityService
 
         // Yaratuvchi rolini aniqlash (frp yoki header_frp)
         $creatorRole = $creator_type ?? 'frp';
+        $ordering = 1;
 
         // 1-bosqich: Yaratuvchi (frp yoki header_frp)
         $this->addPriority([
             'document_id' => $document_id,
-            'ordering' => 1,
+            'ordering' => $ordering++,
             'user_id' => $document->user_id,
             'user_role' => $creatorRole,
             'is_success' => false,
             'is_active' => true,
         ]);
 
-        // 2-bosqich: Tayinlangan xodim
+        // 2-bosqich: Yaratuvchining boshlig'i (senior_id)
+        // header_frp o'zi boshliq bo'lgani uchun bu bosqich tashlab ketiladi.
+        $creator = User::find($document->user_id);
+        if ($creatorRole !== 'header_frp' && $creator && $creator->senior_id) {
+            $this->addPriority([
+                'document_id' => $document_id,
+                'ordering' => $ordering++,
+                'user_id' => $creator->senior_id,
+                'user_role' => 'header_frp',
+                'is_success' => false,
+                'is_active' => true,
+            ]);
+        }
+
+        // Keyingi bosqich: Tayinlangan xodim (qabul qiluvchi)
         if ($document->assigned_user_id) {
             $this->addPriority([
                 'document_id' => $document_id,
-                'ordering' => 2,
+                'ordering' => $ordering++,
                 'user_id' => $document->assigned_user_id,
                 'user_role' => 'assigned',  // Maxsus rol - tayinlangan xodim
                 'is_success' => false,
@@ -154,10 +173,10 @@ class DocumentPriorityService
             ]);
         }
 
-        // 3-bosqich: Buxgalter
+        // Oxirgi bosqich: Buxgalter (jarayonni yakunlaydi, tasdiq/rad qila oladi)
         $this->addPriority([
             'document_id' => $document_id,
-            'ordering' => $document->assigned_user_id ? 3 : 2,
+            'ordering' => $ordering,
             'user_role' => 'buxgalter',
             'is_success' => false,
             'is_active' => true,
