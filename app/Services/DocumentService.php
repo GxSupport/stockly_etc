@@ -159,7 +159,14 @@ class DocumentService
                                         $priorityQ->where('ordering', 2)
                                             ->where('user_role', 'header_frp')
                                             ->where('is_success', false)
-                                            ->where('is_active', 1);
+                                            ->where('is_active', 1)
+                                            // Приём-передача (direct) da boshliq user_id bilan belgilanadi —
+                                            // faqat o'ziga bo'ysunuvchi ishchining aktini ko'radi.
+                                            // Ketma-ket workflow'da user_id null — barcha header_frp ko'radi.
+                                            ->where(function ($userQ) {
+                                                $userQ->whereNull('user_id')
+                                                    ->orWhere('user_id', $this->user->id);
+                                            });
                                     });
                             });
                     });
@@ -248,7 +255,10 @@ class DocumentService
                 ->where('user_id', $this->user->id)
                 ->whereHas('document', function ($query) use ($search, $startDate, $endDate, $documentType, $documentStatus) {
                     $query->where('is_draft', 0)
-                        ->where('is_returned', 0);
+                        ->where('is_returned', 0)
+                        // Qabul qiluvchi aktni faqat o'z bosqichiga yetganda ko'radi
+                        // (boshliq tasdiqlagandan keyin). status < ordering bo'lsa ko'rinmaydi.
+                        ->whereColumn('documents.status', 'document_priority.ordering');
 
                     if ($search) {
                         $query->where('number', 'like', "%{$search}%");

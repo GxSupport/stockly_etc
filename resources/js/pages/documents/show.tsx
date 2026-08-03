@@ -140,6 +140,13 @@ export default function ShowDocument({ document, mainToolName = null, history = 
             return userPriority && userPriority.is_success === 0;
         }
 
+        // header_frp — Приём-передача (direct) da boshliq bosqichi user_id bilan belgilanadi:
+        // faqat o'sha bevosita boshliq (senior) tasdiqlay oladi.
+        // Ketma-ket workflow'da user_id bo'lmaydi — rol bo'yicha tekshiriladi (quyida).
+        if (priority.user_role === 'header_frp' && priority.user_info?.id) {
+            return priority.user_info.id === user?.id && priority.is_success === 0;
+        }
+
         // Boshqa rollar (director, buxgalter, header_frp, frp) uchun
         // user_role mos kelishi VA is_success = 0 bo'lishi kerak
         return priority.user_role === user?.type && priority.is_success === 0;
