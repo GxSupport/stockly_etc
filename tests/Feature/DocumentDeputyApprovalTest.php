@@ -35,6 +35,7 @@ function cleanupDeputyApprovalFixtures(): void
     }
     User::where('phone', 998900000099)->delete();
     User::where('phone', 998900000098)->delete();
+    User::where('phone', 998900000097)->delete();
 }
 
 function createDeputyApprovalFixtures(bool $requiresDeputy): Documents
@@ -151,6 +152,27 @@ test('main_tool (sklad) is saved on create and returned to the act view', functi
     );
 
     BasicResource::query()->where('code', 'TST-OS-01')->delete();
+});
+
+test('only one deputy_director stage is created even with multiple deputy users', function () {
+    // Ikkinchi zam direktor foydalanuvchi
+    User::firstOrCreate(
+        ['phone' => 998900000097],
+        ['name' => 'Deputy Test 2', 'type' => 'deputy_director', 'password' => bcrypt('password'), 'is_active' => 1]
+    );
+
+    $document = createDeputyApprovalFixtures(requiresDeputy: true);
+
+    (new DocumentPriorityService)->createPriority($document->id, $document->type, 'frp');
+
+    $deputyRows = DocumentPriority::where('document_id', $document->id)
+        ->where('user_role', 'deputy_director')
+        ->get();
+
+    // Tizimda bir nechta zam direktor bo'lsa ham, faqat BITTA deputy_director bosqichi yaratiladi
+    expect($deputyRows)->toHaveCount(1);
+    // Rol asosida — muayyan foydalanuvchiga bog'lanmaydi
+    expect($deputyRows->first()->user_id)->toBeNull();
 });
 
 test('document flag overrides the type flag when creating priorities', function () {

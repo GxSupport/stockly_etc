@@ -65,6 +65,7 @@ interface Document {
     priority?: Priority[];
     document_type: DocumentType;
     user_info: UserInfo;
+    note?: string | null;
     notes?: any[];
     created_at: string;
     updated_at: string;
@@ -123,14 +124,6 @@ export default function ShowDocument({ document, mainToolName = null, history = 
     const checkOrder = () => {
         const priority = document.priority?.find((el) => el?.ordering === document.status);
         if (!priority) return false;
-
-        // deputy_director uchun - user_id tekshirish va is_success = 0 bo'lishi kerak
-        if (priority.user_role === 'deputy_director') {
-            const userPriority = document.priority?.find(
-                (el) => el?.ordering === document.status && el?.user_role === 'deputy_director' && el?.user_info?.id === user?.id,
-            );
-            return userPriority && userPriority.is_success === 0;
-        }
 
         // assigned (tayinlangan xodim) uchun - user_id tekshirish
         if (priority.user_role === 'assigned') {
@@ -207,8 +200,16 @@ export default function ShowDocument({ document, mainToolName = null, history = 
         if (documentTypeId === 2 || typeCode === 'dismantling') {
             return (
                 <>
-                    Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы были демонтированы с объектов и
-                    возвращены на склад. Материалы сняты с ответственности Материально ответственного лица{' '}
+                    Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы были демонтированы
+                    {document.main_tool ? (
+                        <>
+                            {' '}
+                            с <span className="font-semibold">{document.main_tool}</span>
+                        </>
+                    ) : (
+                        ' с объектов'
+                    )}{' '}
+                    и возвращены на склад. Материалы сняты с ответственности Материально ответственного лица{' '}
                     <span className="font-semibold">{responsiblePerson}</span>
                 </>
             );
@@ -317,6 +318,14 @@ export default function ShowDocument({ document, mainToolName = null, history = 
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* Qo'shimcha ma'lumot (Дополнительная информация) — Списания uchun ixtiyoriy izoh */}
+                        {document.note && document.note.trim() !== '' && (
+                            <div className="mb-8 text-justify">
+                                <span className="font-semibold">Дополнительная информация: </span>
+                                {document.note}
+                            </div>
+                        )}
 
                         {/* History Section */}
                         <div className="print:hidden mb-8">
