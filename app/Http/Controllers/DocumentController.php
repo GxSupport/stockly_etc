@@ -49,7 +49,10 @@ class DocumentController extends Controller
             ->where('user_role', 'assigned')
             ->where('user_id', $user->id)
             ->whereHas('document', function ($query) {
-                $query->where('is_draft', 0)->where('is_returned', 0);
+                $query->where('is_draft', 0)
+                    ->where('is_returned', 0)
+                    // Faqat qabul qiluvchi bosqichiga yetgan (boshliq tasdiqlagan) aktlar
+                    ->whereColumn('documents.status', 'document_priority.ordering');
             })
             ->count();
 

@@ -59,7 +59,7 @@ class DocumentPriorityService
     /**
      * Ketma-ket workflow uchun priority yaratish
      * Tartib: FRP(1) → Header FRP(2) → Deputy Director(3) → Director(4) → Buxgalter(5)
-     * - deputy_director uchun - har bir deputy_director foydalanuvchi uchun alohida priority yaratiladi
+     * - deputy_director - rol asosidagi bitta bosqich (istalgan bitta zam direktor tasdiqlaydi)
      * - header_frp yaratganda - frp bosqichi skip qilinadi (FRP tasdiqlashi kerak emas)
      * - hujjatning requires_deputy_approval = false bo'lsa, deputy_director bosqichi skip qilinadi
      *   (flag hujjat yaratilayotganda foydalanuvchi tomonidan belgilanadi)
@@ -85,42 +85,35 @@ class DocumentPriorityService
                 continue;
             }
 
-            // deputy_director uchun - requires_deputy_approval tekshiruvi
-            if ($item->user_role === 'deputy_director') {
-                // Agar requires_deputy_approval = false bo'lsa, deputy_director ni skip qilish
-                if ($skipDeputy) {
-                    $orderingAdjustment = 1; // Keyingi bosqichlar ordering ni 1 ga kamaytirish
+            // deputy_director - agar requires_deputy_approval = false bo'lsa, bosqichni skip qilish
+            // (keyingi bosqichlar ordering ni 1 ga kamaytiradi)
+            if ($item->user_role === 'deputy_director' && $skipDeputy) {
+                $orderingAdjustment = 1;
 
-                    continue;
-                }
-
-                // Har bir deputy_director foydalanuvchi uchun alohida priority
-                $deputyDirectors = User::where('type', 'deputy_director')->get();
-                foreach ($deputyDirectors as $deputy) {
-                    $this->addPriority([
-                        'document_id' => $document_id,
-                        'ordering' => $item->ordering,
-                        'user_id' => $deputy->id,
-                        'user_role' => 'deputy_director',
-                        'is_success' => false,
-                        'is_active' => true,
-                    ]);
-                }
-            } else {
-                // Boshqa rollar uchun oddiy priority
-                $data['document_id'] = $document_id;
-                $data['ordering'] = $item->ordering - $orderingAdjustment;
-                $data['user_role'] = $item->user_role;
-                $data['is_success'] = false;
-                $data['is_active'] = true;
-                $this->addPriority($data);
+                continue;
             }
+
+            // Barcha rollar (deputy_director ham) uchun rol asosidagi bitta priority.
+            // Deputy_director endi boshqa rollar kabi ishlaydi: istalgan bitta zam direktor
+            // tasdiqlasa yetarli (avval har bir zam direktor uchun alohida bosqich yaratilar,
+            // shu sabab bir nechta zam direktor bo'lganda hujjat bir necha marta tasdiqlanardi).
+            $this->addPriority([
+                'document_id' => $document_id,
+                'ordering' => $item->ordering - $orderingAdjustment,
+                'user_role' => $item->user_role,
+                'is_success' => false,
+                'is_active' => true,
+            ]);
         }
     }
 
     /**
-     * To'g'ridan-to'g'ri workflow uchun priority yaratish
-     * Yaratuvchi (frp/header_frp) → Tayinlangan xodim → Buxgalter
+     * To'g'ridan-to'g'ri workflow (Приём-передача) uchun priority yaratish
+     * Yaratuvchi (frp) → Boshliq (senior_id) → Tayinlangan xodim → Buxgalter
+     * - Boshliq bosqichi faqat yaratuvchi frp bo'lganda va senior_id mavjud bo'lganda qo'shiladi.
+     * - header_frp o'zi boshliq bo'lgani uchun boshliq bosqichi tashlab ketiladi.
+     * - Boshliq tasdiqlamaguncha hujjat status'i tayinlangan xodim bosqichiga yetmaydi,
+     *   shuning uchun qabul qiluvchi aktni boshliq tasdig'idan oldin ko'rmaydi.
      */
     private function createDirectWorkflowPriority(int $document_id, ?string $creator_type = null): void
     {
@@ -131,22 +124,37 @@ class DocumentPriorityService
 
         // Yaratuvchi rolini aniqlash (frp yoki header_frp)
         $creatorRole = $creator_type ?? 'frp';
+        $ordering = 1;
 
         // 1-bosqich: Yaratuvchi (frp yoki header_frp)
         $this->addPriority([
             'document_id' => $document_id,
-            'ordering' => 1,
+            'ordering' => $ordering++,
             'user_id' => $document->user_id,
             'user_role' => $creatorRole,
             'is_success' => false,
             'is_active' => true,
         ]);
 
-        // 2-bosqich: Tayinlangan xodim
+        // 2-bosqich: Yaratuvchining boshlig'i (senior_id)
+        // header_frp o'zi boshliq bo'lgani uchun bu bosqich tashlab ketiladi.
+        $creator = User::find($document->user_id);
+        if ($creatorRole !== 'header_frp' && $creator && $creator->senior_id) {
+            $this->addPriority([
+                'document_id' => $document_id,
+                'ordering' => $ordering++,
+                'user_id' => $creator->senior_id,
+                'user_role' => 'header_frp',
+                'is_success' => false,
+                'is_active' => true,
+            ]);
+        }
+
+        // Keyingi bosqich: Tayinlangan xodim (qabul qiluvchi)
         if ($document->assigned_user_id) {
             $this->addPriority([
                 'document_id' => $document_id,
-                'ordering' => 2,
+                'ordering' => $ordering++,
                 'user_id' => $document->assigned_user_id,
                 'user_role' => 'assigned',  // Maxsus rol - tayinlangan xodim
                 'is_success' => false,
@@ -154,10 +162,10 @@ class DocumentPriorityService
             ]);
         }
 
-        // 3-bosqich: Buxgalter
+        // Oxirgi bosqich: Buxgalter (jarayonni yakunlaydi, tasdiq/rad qila oladi)
         $this->addPriority([
             'document_id' => $document_id,
-            'ordering' => $document->assigned_user_id ? 3 : 2,
+            'ordering' => $ordering,
             'user_role' => 'buxgalter',
             'is_success' => false,
             'is_active' => true,

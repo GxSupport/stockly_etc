@@ -199,9 +199,11 @@ export default function DocumentForm({
     // Приём-передача (to'g'ridan-to'g'ri workflow) — har bir tovarga ixtiyoriy komentariya
     const showProductComment = selectedDocumentType?.workflow_type === 2;
     const isInstallationDocument = selectedDocumentType?.id === 1;
-    const mainToolLabel = isInstallationDocument ? 'Место установки' : 'Наименование ОС';
-    const showCompositionInterface = selectedDocumentType && selectedDocumentType.id === 2;
-    const showRegularProducts = selectedDocumentType && selectedDocumentType.id !== 2;
+    const isDismantlingDocument = selectedDocumentType?.id === 2;
+    const mainToolLabel = isInstallationDocument ? 'Место установки' : isDismantlingDocument ? 'Место демонтажа' : 'Наименование ОС';
+    // Демонтажа (id 2) endi ОС kompozitsiyasi o'rniga sklad tanlash + oddiy tovar kartasidan foydalanadi (Смонтаж kabi)
+    const showCompositionInterface = false;
+    const showRegularProducts = !!selectedDocumentType;
 
     useEffect(() => {
         if (data.main_tool && showCompositionInterface) {
@@ -210,8 +212,9 @@ export default function DocumentForm({
     }, [data.main_tool, showCompositionInterface]);
 
     // Tanlangan ОС kodining nomini bazadan yuklash (edit rejimida va tanlashda yorliq ko'rinishi uchun)
+    // Демонтажа (id 2) endi ОС emas, sklad ishlatadi — bu yerdan chiqarib tashlanadi
     useEffect(() => {
-        if (isInstallationDocument || !data.main_tool || mainToolOption?.id === data.main_tool) return;
+        if (isInstallationDocument || isDismantlingDocument || !data.main_tool || mainToolOption?.id === data.main_tool) return;
 
         let cancelled = false;
         fetch(`/api/basic-resources/search?search=${encodeURIComponent(data.main_tool)}&limit=5`, { headers: { Accept: 'application/json' } })
@@ -226,11 +229,11 @@ export default function DocumentForm({
         return () => {
             cancelled = true;
         };
-    }, [data.main_tool, isInstallationDocument]);
+    }, [data.main_tool, isInstallationDocument, isDismantlingDocument]);
 
-    // Смонтаж: main_tool sklad nomini saqlaydi — edit rejimida sklad id sini nomi orqali topish
+    // Смонтаж/Демонтажа: main_tool sklad nomini saqlaydi — edit rejimida sklad id sini nomi orqali topish
     useEffect(() => {
-        if (!isInstallationDocument || !data.main_tool || selectedWarehouse) return;
+        if ((!isInstallationDocument && !isDismantlingDocument) || !data.main_tool || selectedWarehouse) return;
 
         let cancelled = false;
         fetch(`/api/warehouses/search?search=${encodeURIComponent(data.main_tool)}&limit=5`, { headers: { Accept: 'application/json' } })
@@ -245,7 +248,7 @@ export default function DocumentForm({
         return () => {
             cancelled = true;
         };
-    }, [isInstallationDocument, data.main_tool]);
+    }, [isInstallationDocument, isDismantlingDocument, data.main_tool]);
 
     const refreshOsList = async () => {
         setRefreshingOsList(true);
@@ -473,7 +476,7 @@ export default function DocumentForm({
                                 </div>
                             </div>
                         )}
-                        {showMainToolSelect && isInstallationDocument && (
+                        {showMainToolSelect && (isInstallationDocument || isDismantlingDocument) && (
                             <div className="grid gap-2 md:col-span-2">
                                 <Label>{mainToolLabel} *</Label>
                                 <div className="flex gap-2">
@@ -506,24 +509,26 @@ export default function DocumentForm({
                                             Товары
                                         </Button>
                                     )}
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                            setIsMainToolFromService(!isMainToolFromService);
-                                            setSelectedWarehouse(undefined);
-                                            setData('main_tool', '');
-                                        }}
-                                        className="gap-2 whitespace-nowrap"
-                                    >
-                                        {isMainToolFromService ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
-                                        Вручную
-                                    </Button>
+                                    {isInstallationDocument && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                setIsMainToolFromService(!isMainToolFromService);
+                                                setSelectedWarehouse(undefined);
+                                                setData('main_tool', '');
+                                            }}
+                                            className="gap-2 whitespace-nowrap"
+                                        >
+                                            {isMainToolFromService ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                                            Вручную
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         )}
-                        {showMainToolSelect && !isInstallationDocument && (
+                        {showMainToolSelect && !isInstallationDocument && !isDismantlingDocument && (
                             <div className="grid gap-2 md:col-span-2">
                                 <Label>{mainToolLabel} *</Label>
                                 <div className="flex gap-2">
@@ -592,7 +597,7 @@ export default function DocumentForm({
                 <Card className="max-w-6xl">
                     <CardHeader>
                         <div className="flex items-center justify-between">
-                            <CardTitle>Товары</CardTitle>
+                            <CardTitle>{isDismantlingDocument ? 'Товар Демонтажа' : 'Товары'}</CardTitle>
                             <Button type="button" onClick={addProduct} className="gap-2">
                                 <Plus className="h-4 w-4" />
                                 Добавить товар
@@ -842,7 +847,12 @@ export default function DocumentForm({
                 {canEdit && (
                     <Button
                         type="submit"
-                        disabled={processing || data.products.length === 0 || !data.document_type_id || (isInstallationDocument && !data.main_tool)}
+                        disabled={
+                            processing ||
+                            data.products.length === 0 ||
+                            !data.document_type_id ||
+                            ((isInstallationDocument || isDismantlingDocument) && !data.main_tool)
+                        }
                     >
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         <Save className="mr-2 h-4 w-4" />

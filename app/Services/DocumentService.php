@@ -55,32 +55,23 @@ class DocumentService
     {
         $priorityService = new DocumentPriorityService;
 
-        // deputy_director uchun - o'zining maxsus priority yozuvini olish
-        if ($this->user && $this->user->type === 'deputy_director') {
-            $this->priority = $priorityService->getPriorityByOrderingAndUser(
+        // Odatiy priority olish (deputy_director endi rol asosida ishlaydi — maxsus holat kerak emas)
+        $this->priority = $priorityService->getPriorityByOrdering(
+            $this->document->id,
+            $this->document->status
+        );
+
+        // Agar priority 'assigned' bo'lsa va user_id bilan bog'langan bo'lsa,
+        // faqat shu foydalanuvchi uchun priority olish
+        if ($this->priority && $this->priority->user_role === 'assigned' && $this->user) {
+            $assignedPriority = $priorityService->getPriorityByOrderingAndUser(
                 $this->document->id,
                 $this->document->status,
                 $this->user->id
             );
-        } else {
-            // Avval odatiy priority olish
-            $this->priority = $priorityService->getPriorityByOrdering(
-                $this->document->id,
-                $this->document->status
-            );
-
-            // Agar priority 'assigned' bo'lsa va user_id bilan bog'langan bo'lsa,
-            // faqat shu foydalanuvchi uchun priority olish
-            if ($this->priority && $this->priority->user_role === 'assigned' && $this->user) {
-                $assignedPriority = $priorityService->getPriorityByOrderingAndUser(
-                    $this->document->id,
-                    $this->document->status,
-                    $this->user->id
-                );
-                // Agar foydalanuvchi uchun maxsus priority topilsa, uni ishlatish
-                if ($assignedPriority && $assignedPriority->user_role === 'assigned') {
-                    $this->priority = $assignedPriority;
-                }
+            // Agar foydalanuvchi uchun maxsus priority topilsa, uni ishlatish
+            if ($assignedPriority && $assignedPriority->user_role === 'assigned') {
+                $this->priority = $assignedPriority;
             }
         }
     }
@@ -159,7 +150,14 @@ class DocumentService
                                         $priorityQ->where('ordering', 2)
                                             ->where('user_role', 'header_frp')
                                             ->where('is_success', false)
-                                            ->where('is_active', 1);
+                                            ->where('is_active', 1)
+                                            // Приём-передача (direct) da boshliq user_id bilan belgilanadi —
+                                            // faqat o'ziga bo'ysunuvchi ishchining aktini ko'radi.
+                                            // Ketma-ket workflow'da user_id null — barcha header_frp ko'radi.
+                                            ->where(function ($userQ) {
+                                                $userQ->whereNull('user_id')
+                                                    ->orWhere('user_id', $this->user->id);
+                                            });
                                     });
                             });
                     });
@@ -179,18 +177,13 @@ class DocumentService
                 ->where('is_success', false) // Faqat tasdiqlanmagan hujjatlarni ko'rsatish
                 ->where('user_role', '!=', 'assigned') // assigned hujjatlar faqat 'incoming' da ko'rinadi
                 ->where(function ($query) {
-                    // deputy_director uchun - faqat o'zining priority yozuvini ko'radi
-                    if ($this->user->type === 'deputy_director') {
-                        $query->where('user_role', 'deputy_director')
-                            ->where('user_id', $this->user->id);
-                    } else {
-                        // Odatiy workflow - rol bo'yicha (assigned emas)
-                        $query->where('user_role', $this->user->type)
-                            ->where(function ($q2) {
-                                $q2->whereNull('user_id')
-                                    ->orWhere('user_id', $this->user->id);
-                            });
-                    }
+                    // Rol bo'yicha (assigned emas). deputy_director ham endi rol asosida ishlaydi —
+                    // istalgan zam direktor o'z rolidagi hujjatni ko'radi.
+                    $query->where('user_role', $this->user->type)
+                        ->where(function ($q2) {
+                            $q2->whereNull('user_id')
+                                ->orWhere('user_id', $this->user->id);
+                        });
                 })
                 // Faqat hujjat shu bosqichga kelgan bo'lsa ko'rsatish
                 // document.status = priority.ordering
@@ -248,7 +241,10 @@ class DocumentService
                 ->where('user_id', $this->user->id)
                 ->whereHas('document', function ($query) use ($search, $startDate, $endDate, $documentType, $documentStatus) {
                     $query->where('is_draft', 0)
-                        ->where('is_returned', 0);
+                        ->where('is_returned', 0)
+                        // Qabul qiluvchi aktni faqat o'z bosqichiga yetganda ko'radi
+                        // (boshliq tasdiqlagandan keyin). status < ordering bo'lsa ko'rinmaydi.
+                        ->whereColumn('documents.status', 'document_priority.ordering');
 
                     if ($search) {
                         $query->where('number', 'like', "%{$search}%");
@@ -1041,15 +1037,7 @@ class DocumentService
             'current_user_id' => $this->user->id,
         ]);
 
-        // deputy_director uchun maxsus tekshiruv
-        if ($this->priority->user_role === 'deputy_director') {
-            if ($this->priority->user_id !== $this->user->id) {
-                throw new \Exception($message);
-            }
-
-            return;
-        }
-
+        // deputy_director endi rol asosida ishlaydi — rol bo'yicha tekshiriladi
         if ($this->priority->user_role != $this->user->type) {
             throw new \Exception($message);
         }
