@@ -94,6 +94,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::prefix('api/warehouses')->group(function () {
         Route::get('/search', [WarehouseController::class, 'search'])->name('api.warehouses.search');
+        Route::post('/refresh', [WarehouseController::class, 'refresh'])->name('api.warehouses.refresh');
         Route::get('/{warehouse}/products', [WarehouseController::class, 'products'])->name('warehouses.products');
     });
 
