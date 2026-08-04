@@ -384,8 +384,9 @@ export default function DocumentForm({
                                     setData('document_type_id', value);
                                     // Reset assigned_user_id when document type changes
                                     setData('assigned_user_id', undefined);
-                                    const docType = documentTypes.find((d) => d.id.toString() === value);
-                                    setData('requires_deputy_approval', docType?.workflow_type === 1 ? !!docType.requires_deputy_approval : false);
+                                    // Zam direktor tasdig'i har doim default o'chiq —
+                                    // document-type sozlamasidan avtomatik yoqilmaydi, foydalanuvchi qo'lda belgilaydi
+                                    setData('requires_deputy_approval', false);
                                 }}
                                 placeholder="Выберите тип документа"
                                 searchPlaceholder="Поиск типа документа..."

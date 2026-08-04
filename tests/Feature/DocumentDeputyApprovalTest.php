@@ -185,3 +185,16 @@ test('document flag overrides the type flag when creating priorities', function 
 
     expect($roles->contains('deputy_director'))->toBeTrue();
 });
+
+test('deputy stage is skipped when document flag is false even if the type flag is true', function () {
+    // Checkbox olib tashlangan (document flag false), lekin document type default true
+    $document = createDeputyApprovalFixtures(requiresDeputy: false);
+    DocumentType::where('id', $document->type)->update(['requires_deputy_approval' => true]);
+
+    (new DocumentPriorityService)->createPriority($document->id, $document->type, 'frp');
+
+    $roles = DocumentPriority::where('document_id', $document->id)->pluck('user_role');
+
+    // Hujjat flagi false bo'lgani uchun zam direktor bosqichi qo'shilmasligi kerak
+    expect($roles->contains('deputy_director'))->toBeFalse();
+});
