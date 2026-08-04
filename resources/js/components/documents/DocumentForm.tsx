@@ -97,6 +97,9 @@ export default function DocumentForm({
     const [showCompositionModal, setShowCompositionModal] = useState(false);
     const [selectedWarehouse, setSelectedWarehouse] = useState<DynamicSearchableSelectOption | undefined>(undefined);
     const [showWarehouseProductsModal, setShowWarehouseProductsModal] = useState(false);
+    const [warehouseSelectKey, setWarehouseSelectKey] = useState(0);
+    const [refreshingWarehouseList, setRefreshingWarehouseList] = useState(false);
+    const [warehouseListMessage, setWarehouseListMessage] = useState<string | null>(null);
     const [composition, setComposition] = useState<any[]>([]);
     const [showSmsModal, setShowSmsModal] = useState(false);
     const [sendingToNext, setSendingToNext] = useState(false);
@@ -268,6 +271,25 @@ export default function DocumentForm({
         }
     };
 
+    // Skladlar spravochnigini 1С dan qayta olish (foydalanuvchi "Обновить" bosganda)
+    const refreshWarehouseList = async () => {
+        setRefreshingWarehouseList(true);
+        setWarehouseListMessage(null);
+        try {
+            const response = await axios.post('/api/warehouses/refresh', {}, { timeout: 300000 });
+            if (response.data.success) {
+                setWarehouseSelectKey((key) => key + 1);
+                setWarehouseListMessage(`Список складов обновлен: ${response.data.count} записей`);
+            } else {
+                setWarehouseListMessage(response.data.message || 'Ошибка при обновлении списка складов');
+            }
+        } catch {
+            setWarehouseListMessage('Ошибка при обновлении списка складов из 1С');
+        } finally {
+            setRefreshingWarehouseList(false);
+        }
+    };
+
     const loadComposition = async (osCode: string) => {
         try {
             const response = await axios.post('/documents/get-composition', { os_code: osCode });
@@ -384,8 +406,9 @@ export default function DocumentForm({
                                     setData('document_type_id', value);
                                     // Reset assigned_user_id when document type changes
                                     setData('assigned_user_id', undefined);
-                                    const docType = documentTypes.find((d) => d.id.toString() === value);
-                                    setData('requires_deputy_approval', docType?.workflow_type === 1 ? !!docType.requires_deputy_approval : false);
+                                    // Zam direktor tasdig'i har doim default o'chiq —
+                                    // document-type sozlamasidan avtomatik yoqilmaydi, foydalanuvchi qo'lda belgilaydi
+                                    setData('requires_deputy_approval', false);
                                 }}
                                 placeholder="Выберите тип документа"
                                 searchPlaceholder="Поиск типа документа..."
@@ -481,6 +504,7 @@ export default function DocumentForm({
                                 <Label>{mainToolLabel} *</Label>
                                 <div className="flex gap-2">
                                     <DynamicSearchableSelect
+                                        key={warehouseSelectKey}
                                         value={selectedWarehouse?.id ?? ''}
                                         onValueChange={(value, option) => {
                                             setSelectedWarehouse(option);
@@ -525,7 +549,20 @@ export default function DocumentForm({
                                             Вручную
                                         </Button>
                                     )}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={refreshWarehouseList}
+                                        disabled={refreshingWarehouseList}
+                                        title="Обновить список складов из 1С"
+                                        className="gap-2 whitespace-nowrap"
+                                    >
+                                        <RefreshCw className={`h-4 w-4 ${refreshingWarehouseList ? 'animate-spin' : ''}`} />
+                                        {refreshingWarehouseList ? 'Обновление...' : 'Обновить'}
+                                    </Button>
                                 </div>
+                                {warehouseListMessage && <div className="text-xs text-muted-foreground">{warehouseListMessage}</div>}
                             </div>
                         )}
                         {showMainToolSelect && !isInstallationDocument && !isDismantlingDocument && (

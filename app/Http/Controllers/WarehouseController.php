@@ -49,6 +49,25 @@ class WarehouseController extends Controller
         ]));
     }
 
+    public function refresh(): JsonResponse
+    {
+        set_time_limit(300);
+
+        try {
+            $count = $this->warehouseService->syncWarehouses();
+
+            return response()->json([
+                'success' => true,
+                'count' => $count,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function show(Warehouse $warehouse)
     {
         $warehouse->load('type_info');
