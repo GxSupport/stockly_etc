@@ -7,6 +7,7 @@ use App\Models\Warehouse;
 use App\Models\WarehouseType;
 use GuzzleHttp\Client;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class WarehouseService
@@ -150,58 +151,60 @@ class WarehouseService
     }
 
     /**
-     * Kelgan skladlarni code bo'yicha upsert qiladi, type matnini warehouse_type ga bog'laydi,
-     * API'da bo'lmagan skladlarni faolsizlantiradi (o'chirmaydi — FK bog'lanishlar saqlanadi).
+     * Kelgan skladlarni code bo'yicha batch upsert qiladi, ВидСклада matnini warehouse_type ga
+     * bog'laydi, API'da bo'lmagan skladlarni faolsizlantiradi (o'chirmaydi — FK saqlanadi).
+     *
+     * 1С javobidagi kalitlar: Код (code), Наименование (title), ВидСклада (type).
+     * is_active javobda yo'q — sinxronlangan barcha sklad faol deb belgilanadi.
      *
      * @param  array<int, array<string, mixed>>  $items
      */
     public function storeWarehouses(array $items): int
     {
-        // Sklad turi (matn) -> warehouse_type.id kesh
+        $now = now();
+
+        // ВидСклада (matn) -> warehouse_type.id kesh (bo'sh -> null)
         $typeCache = WarehouseType::pluck('id', 'title')->all();
-
-        $syncedCodes = [];
-
-        foreach ($items as $item) {
-            $code = trim((string) ($item['code'] ?? ''));
-            $title = trim((string) ($item['name'] ?? ''));
-
-            if ($code === '' || $title === '') {
-                continue;
+        $resolveType = function (mixed $rawType) use (&$typeCache): ?int {
+            $title = trim((string) $rawType);
+            if ($title === '') {
+                return null;
+            }
+            if (! array_key_exists($title, $typeCache)) {
+                $typeCache[$title] = WarehouseType::create(['title' => $title, 'is_active' => true])->id;
             }
 
-            // type matnini warehouse_type ga bog'lash (bo'lmasa yaratish)
-            $typeId = null;
-            $typeTitle = trim((string) ($item['type'] ?? ''));
-            if ($typeTitle !== '') {
-                if (! array_key_exists($typeTitle, $typeCache)) {
-                    $typeCache[$typeTitle] = WarehouseType::create([
-                        'title' => $typeTitle,
-                        'is_active' => true,
-                    ])->id;
-                }
-                $typeId = $typeCache[$typeTitle];
-            }
+            return $typeCache[$title];
+        };
 
-            Warehouse::updateOrCreate(
-                ['code' => $code],
-                [
-                    'title' => mb_substr($title, 0, 255),
-                    'type' => $typeId,
-                    'is_active' => filter_var($item['is_active'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                ]
-            );
+        $rows = collect($items)
+            ->map(fn ($item) => [
+                'code' => trim((string) ($item['Код'] ?? '')),
+                'title' => mb_substr(trim((string) ($item['Наименование'] ?? '')), 0, 255),
+                'type' => $resolveType($item['ВидСклада'] ?? null),
+                'is_active' => true,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ])
+            ->filter(fn ($row) => $row['code'] !== '' && $row['title'] !== '')
+            ->keyBy('code') // dublikat kodlarni birlashtirish (oxirgi yozuv qoladi)
+            ->values();
 
-            $syncedCodes[] = $code;
+        if ($rows->isEmpty()) {
+            return 0;
         }
 
-        // 1C dan kelmagan skladlarni faolsizlantirish (faqat javob bo'sh bo'lmasa)
-        if (! empty($syncedCodes)) {
-            Warehouse::whereNotIn('code', $syncedCodes)
-                ->where('is_active', true)
-                ->update(['is_active' => false]);
-        }
+        // Avval hammasini faolsizlantirib, keyin sinxronlanganlarni upsert bilan faollashtirish.
+        // Shu tariqa 1С da yo'q skladlar faolsiz qoladi (o'chirilmaydi — FK saqlanadi), va bu
+        // timestamp aniqligiga bog'liq emas. Atomarlik uchun transaction.
+        DB::transaction(function () use ($rows) {
+            Warehouse::query()->update(['is_active' => false]);
 
-        return count($syncedCodes);
+            $rows->chunk(500)->each(function ($chunk) {
+                Warehouse::upsert($chunk->all(), ['code'], ['title', 'type', 'is_active', 'updated_at']);
+            });
+        });
+
+        return $rows->count();
     }
 }
