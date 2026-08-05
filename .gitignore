@@ -27,3 +27,6 @@ yarn.lock
 .DS_Store
 /docs/*
 server-changes-backup.patch
+
+# Tasodifan yaratilgan sqlite fayllari
+/stockly
