@@ -341,6 +341,75 @@ class ProductService
         }
     }
 
+    /**
+     * Tanlangan sklad bo'yicha ОС (asosiy vositalar) qoldig'ini 1С dan olish.
+     * 'Товары' modal (demontaj Место демонтажа) shu ro'yxatni ko'rsatadi.
+     * Endpoint: goodsget_stock_leftover_os?whCode=<sklad kodi> (os/empl emas — u nomenklatura uchun).
+     *
+     * @return array<int, ProductData>
+     */
+    public function getWarehouseOsList(string $warehouseCode, ?string $date = null): array
+    {
+        $date = date('d.m.Y', strtotime($date ?? date('d.m.Y')));
+
+        $client = new Client([
+            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
+            'timeout' => 60,
+            'connect_timeout' => 10,
+            'verify' => false,
+        ]);
+
+        $baseUrl = 'http://89.236.216.12:8083';
+        $endpoint = '/base2/hs/CarData/goods/goodsget_stock_leftover_os';
+        $queryParams = ['whCode' => $warehouseCode, 'date' => $date];
+
+        Log::info('1C Warehouse OS Request', ['endpoint' => $endpoint, 'query_params' => $queryParams]);
+
+        try {
+            $response = $client->get($endpoint, [
+                'base_uri' => $baseUrl,
+                'query' => $queryParams,
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Accept' => '*/*',
+                    'Authorization' => 'Basic aHR0cGJvdDpodHRwYm90',
+                ],
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $body = $response->getBody()->getContents();
+
+            if ($statusCode < 200 || $statusCode >= 300) {
+                Log::error('1C Warehouse OS Failed', ['status' => $statusCode]);
+                throw new \Exception('Ошибка подключения к серверу, ошибка: '.$statusCode);
+            }
+
+            $items = json_decode(str_replace('﻿', '', $body), true);
+            if (! is_array($items)) {
+                return [];
+            }
+
+            $products = [];
+            foreach ($items as $value) {
+                $products[] = new ProductData(
+                    name: (string) ($value['ОсновноеСредство'] ?? ''),
+                    warehouse: (string) ($value['Склад'] ?? ''),
+                    measure: 'шт.',
+                    price: $this->numberFromStringForProduct($value['СтоимостьОстаток'] ?? null),
+                    count: (string) ($value['КоличествоОстаток'] ?? ''),
+                    nomenclature: (string) ($value['ОсновноеСредствоКод'] ?? ''),
+                );
+            }
+
+            Log::info('1C Warehouse OS Result', ['products_count' => count($products)]);
+
+            return $products;
+        } catch (\Exception $e) {
+            Log::error('1C Warehouse OS Exception', ['message' => $e->getMessage()]);
+            throw new \Exception('Ошибка подключения к серверу: '.$e->getMessage());
+        }
+    }
+
     public function syncBasicResources(): int
     {
         $items = $this->fetchAllBasicResourcesFromApi();

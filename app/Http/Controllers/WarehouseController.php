@@ -80,9 +80,9 @@ class WarehouseController extends Controller
     public function products(Warehouse $warehouse, ProductListRequest $request, ProductService $productService): JsonResponse
     {
         try {
-            $products = $productService->getProductsList(
+            // Sklad ОС (asosiy vositalar) qoldig'i — goodsget_stock_leftover_os?whCode
+            $products = $productService->getWarehouseOsList(
                 warehouseCode: $warehouse->code,
-                warehouseTitle: $warehouse->title,
                 date: $request->input('date')
             );
 
