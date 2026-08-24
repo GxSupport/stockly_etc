@@ -775,16 +775,34 @@ export default function DocumentForm({
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <CardTitle>{isDismantlingDocument ? 'Товар Демонтажа' : 'Товары'}</CardTitle>
-                            <Button
-                                type="button"
-                                onClick={addProduct}
-                                className="gap-2"
-                                disabled={(isInstallationDocument || isDismantlingDocument) && isMainToolFromService && !selectedWarehouse}
-                            >
-                                <Plus className="h-4 w-4" />
-                                Добавить товар
-                            </Button>
+                            <div className="flex gap-2">
+                                {isDirectWorkflowType && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={refreshWarehouseList}
+                                        disabled={refreshingWarehouseList}
+                                        title="Обновить список складов из 1С"
+                                        className="gap-2"
+                                    >
+                                        <RefreshCw className={`h-4 w-4 ${refreshingWarehouseList ? 'animate-spin' : ''}`} />
+                                        {refreshingWarehouseList ? 'Обновление...' : 'Обновить'}
+                                    </Button>
+                                )}
+                                <Button
+                                    type="button"
+                                    onClick={addProduct}
+                                    className="gap-2"
+                                    disabled={(isInstallationDocument || isDismantlingDocument) && isMainToolFromService && !selectedWarehouse}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    Добавить товар
+                                </Button>
+                            </div>
                         </div>
+                        {isDirectWorkflowType && warehouseListMessage && (
+                            <div className="text-xs text-muted-foreground">{warehouseListMessage}</div>
+                        )}
                     </CardHeader>
                     <CardContent>
                         {data.products.length === 0 ? (
