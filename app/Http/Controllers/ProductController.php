@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Product\ProductListRequest;
 use App\Models\UserWarehouse;
+use App\Models\Warehouse;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -14,23 +15,42 @@ class ProductController extends Controller
 
     public function list(ProductListRequest $request): JsonResponse
     {
-        $userWarehouse = UserWarehouse::where('user_id', Auth::id())
-            ->with('warehouse')
-            ->first();
+        $warehouseCode = $request->input('warehouse_code');
 
-        if (! $userWarehouse || ! $userWarehouse->warehouse) {
-            return response()->json([
-                'success' => false,
-                'message' => 'У вас нет склада!',
-            ], 400);
+        if ($warehouseCode) {
+            $warehouse = Warehouse::query()->where('code', $warehouseCode)->first();
+
+            if (! $warehouse) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Склад не найден',
+                ], 404);
+            }
+
+            $code = $warehouse->code;
+            $title = $warehouse->title;
+        } else {
+            $userWarehouse = UserWarehouse::where('user_id', Auth::id())
+                ->with('warehouse')
+                ->first();
+
+            if (! $userWarehouse || ! $userWarehouse->warehouse) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'У вас нет склада!',
+                ], 400);
+            }
+
+            $code = $userWarehouse->warehouse->code;
+            $title = $userWarehouse->warehouse->title;
         }
 
         $date = $request->input('date');
 
         try {
             $products = $this->productService->getProductsList(
-                warehouseCode: $userWarehouse->warehouse->code,
-                warehouseTitle: $userWarehouse->warehouse->title,
+                warehouseCode: $code,
+                warehouseTitle: $title,
                 date: $date
             );
 

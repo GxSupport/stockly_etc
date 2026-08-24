@@ -8,6 +8,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * App\Models\DocumentProducts Hujjat mahsulotlari modeli
+ *
  * @property int $id ID raqami
  * @property int $document_id Hujjat ID
  * @property string $title Mahsulot nomi
@@ -21,7 +22,9 @@ use Illuminate\Support\Carbon;
 class DocumentProducts extends Model
 {
     use HasFactory;
+
     protected $table = 'document_products';
+
     protected $fillable = [
         'document_id',
         'user_id',
@@ -30,6 +33,8 @@ class DocumentProducts extends Model
         'quantity',
         'amount',
         'nomenclature',
-        'note'
+        'warehouse_code',
+        'warehouse_name',
+        'note',
     ];
 }

@@ -39,6 +39,8 @@ interface DocumentProduct {
     quantity: number;
     amount: number;
     nomenclature: string;
+    warehouse_code: string | null;
+    warehouse_name: string | null;
     note: string;
 }
 
@@ -172,6 +174,8 @@ export default function ShowDocument({ document, mainToolName = null, history = 
     const senderPerson = document.priority?.find((el) => Number(el.ordering) === 1)?.user_info?.name || document.user_info?.name || '';
     const receiverPerson = document.priority?.find((el) => el.user_role === 'assigned')?.user_info?.name || '';
     const showTransferOsRow = isTransferDocument && Boolean(document.main_tool);
+    // «Склад» ustuni faqat qatorlarda sklad saqlangan hujjatlarda ko'rsatiladi (eski hujjatlar buzilmaydi)
+    const hasWarehouseColumn = document.products.some((p) => !!p.warehouse_name);
 
     const getDocumentDescription = () => {
         const responsiblePerson = getResponsiblePerson();
@@ -287,6 +291,7 @@ export default function ShowDocument({ document, mainToolName = null, history = 
                                     <tr>
                                         <th className="border p-2 text-center dark:border-white">№</th>
                                         <th className="border p-2 text-center dark:border-white">Наименование</th>
+                                        {hasWarehouseColumn && <th className="border p-2 text-center dark:border-white">Склад</th>}
                                         <th className="border p-2 text-center dark:border-white">Ед.изм.</th>
                                         <th className="border p-2 text-center dark:border-white">Кол-во</th>
                                         {documentTypeId === 3 && <th className="border p-2 text-center dark:border-white">Причина списания</th>}
@@ -300,6 +305,7 @@ export default function ShowDocument({ document, mainToolName = null, history = 
                                             <td className="border p-2 text-center font-semibold dark:border-white">
                                                 {mainToolName || document.main_tool}
                                             </td>
+                                            {hasWarehouseColumn && <td className="border p-2 text-center dark:border-white"></td>}
                                             <td className="border p-2 text-center dark:border-white"></td>
                                             <td className="border p-2 text-center dark:border-white">1</td>
                                             {isTransferDocument && <td className="border p-2 text-center dark:border-white"></td>}
@@ -309,6 +315,9 @@ export default function ShowDocument({ document, mainToolName = null, history = 
                                         <tr key={`product-${index}`}>
                                             <td className="border p-2 text-center dark:border-white">{index + (showTransferOsRow ? 2 : 1)}</td>
                                             <td className="border p-2 text-center dark:border-white">{product.title}</td>
+                                            {hasWarehouseColumn && (
+                                                <td className="border p-2 text-center dark:border-white">{product.warehouse_name ?? ''}</td>
+                                            )}
                                             <td className="border p-2 text-center dark:border-white">{product.measure}.</td>
                                             <td className="border p-2 text-center dark:border-white">{product.quantity}</td>
                                             {documentTypeId === 3 && <td className="border p-2 text-center dark:border-white">{product.note}</td>}

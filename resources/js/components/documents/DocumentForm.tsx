@@ -4,7 +4,7 @@ import SmsConfirmationModal from '@/components/SmsConfirmationModal';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
 import { Calendar, LoaderCircle, PackageSearch, Plus, RefreshCw, Save, Send, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { DynamicSearchableSelect, type DynamicSearchableSelectOption } from '@/components/dynamic-searchable-select';
 import InputError from '@/components/input-error';
@@ -44,6 +44,8 @@ export interface ProductItem {
     quantity: number;
     amount: number;
     nomenclature: string;
+    warehouse_code?: string;
+    warehouse_name?: string;
     max_quantity: number;
     note: string;
 }
@@ -103,6 +105,12 @@ export default function DocumentForm({
     const [composition, setComposition] = useState<any[]>([]);
     const [showSmsModal, setShowSmsModal] = useState(false);
     const [sendingToNext, setSendingToNext] = useState(false);
+    // Tovar ro'yxatlari sklad kodi bo'yicha keshlanadi ('' — foydalanuvchining o'z skladi)
+    const [productsByWarehouse, setProductsByWarehouse] = useState<Record<string, Product[]>>({});
+    const [productsLoading, setProductsLoading] = useState<Record<string, boolean>>({});
+    const [productsError, setProductsError] = useState<Record<string, string | null>>({});
+    const [productsResetMessage, setProductsResetMessage] = useState<string | null>(null);
+    const inFlightProducts = useRef<Set<string>>(new Set());
     const today = new Date(data.date_order).toLocaleDateString('ru-RU');
 
     // Document status logic
@@ -147,7 +155,7 @@ export default function DocumentForm({
             if (p.id === id) {
                 const updated = { ...p, [field]: value };
                 if (field === 'selected_product' && value) {
-                    const selectedProduct = allProducts.find((fp) => fp.nomenclature === value);
+                    const selectedProduct = getProductsForRow(p).find((fp) => fp.nomenclature === value);
                     if (selectedProduct) {
                         updated.selected_product = selectedProduct;
                         updated.product_name = selectedProduct.name;
@@ -156,6 +164,11 @@ export default function DocumentForm({
                         updated.amount = parseNumericValue(selectedProduct.price) * updated.quantity;
                         updated.nomenclature = selectedProduct.nomenclature;
                         updated.max_quantity = parseInt(selectedProduct.count);
+                        // Смонтаж/Демонтажа: qator yuqorida tanlangan sklad bilan muhrlanadi
+                        if (isInstallationDocument || isDismantlingDocument) {
+                            updated.warehouse_code = selectedWarehouse?.code ?? '';
+                            updated.warehouse_name = selectedWarehouse?.title ?? '';
+                        }
                     }
                 }
                 if (field === 'quantity' && p.selected_product) {
@@ -169,6 +182,79 @@ export default function DocumentForm({
             return p;
         });
         setData('products', updatedProducts);
+    };
+
+    // Tanlangan skladdan (yoki '' — o'z skladidan) tovar ro'yxatini 1С orqali yuklash
+    const fetchWarehouseProducts = async (code: string, force = false) => {
+        if (!force && (productsByWarehouse[code] || inFlightProducts.current.has(code))) return;
+        inFlightProducts.current.add(code);
+        setProductsLoading((prev) => ({ ...prev, [code]: true }));
+        setProductsError((prev) => ({ ...prev, [code]: null }));
+        try {
+            const response = await axios.get('/api/product/list', {
+                params: code ? { warehouse_code: code } : {},
+                timeout: 120000,
+            });
+            if (response.data.success) {
+                setProductsByWarehouse((prev) => ({ ...prev, [code]: response.data.data }));
+            } else {
+                setProductsError((prev) => ({ ...prev, [code]: response.data.message || 'Ошибка при загрузке товаров из 1С' }));
+            }
+        } catch {
+            setProductsError((prev) => ({ ...prev, [code]: 'Ошибка при загрузке товаров из 1С' }));
+        } finally {
+            inFlightProducts.current.delete(code);
+            setProductsLoading((prev) => ({ ...prev, [code]: false }));
+        }
+    };
+
+    // Qator qaysi sklad ro'yxatidan tovar tanlashini aniqlaydi
+    const getWarehouseKeyForRow = (p: ProductItem): string => {
+        if (isDirectWorkflowType) return p.warehouse_code ?? '';
+        if (isInstallationDocument || isDismantlingDocument) {
+            return isMainToolFromService ? (selectedWarehouse?.code ?? '') : '';
+        }
+        return '';
+    };
+
+    const getProductsForRow = (p: ProductItem): Product[] => {
+        const key = getWarehouseKeyForRow(p);
+        const list = productsByWarehouse[key];
+        if (list) return list;
+        return key === '' ? allProducts : [];
+    };
+
+    // Qatorda avval sklad tanlanishi shartmi
+    const rowNeedsWarehouse = (p: ProductItem): boolean => {
+        if (isDirectWorkflowType) return !p.warehouse_code;
+        if (isInstallationDocument || isDismantlingDocument) return isMainToolFromService && !selectedWarehouse;
+        return false;
+    };
+
+    // Приём-передача: qatordagi sklad o'zgarganda faqat shu qator tozalanadi
+    const handleRowWarehouseChange = (id: string | number, option?: DynamicSearchableSelectOption) => {
+        const code = option?.code ?? '';
+        const title = option?.title ?? '';
+        setData(
+            'products',
+            data.products.map((p) =>
+                p.id === id
+                    ? {
+                          ...p,
+                          warehouse_code: code,
+                          warehouse_name: title,
+                          selected_product: null,
+                          product_name: '',
+                          measure: '',
+                          quantity: 1,
+                          amount: 0,
+                          nomenclature: '',
+                          max_quantity: 0,
+                      }
+                    : p,
+            ),
+        );
+        if (code) fetchWarehouseProducts(code);
     };
 
     const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -207,6 +293,50 @@ export default function DocumentForm({
     // Демонтажа (id 2) endi ОС kompozitsiyasi o'rniga sklad tanlash + oddiy tovar kartasidan foydalanadi (Смонтаж kabi)
     const showCompositionInterface = false;
     const showRegularProducts = !!selectedDocumentType;
+
+    // Tovar ro'yxatini kerakli skladdan oldindan yuklash:
+    // Списания va qo'lda kiritish rejimida — o'z skladidan (fresh),
+    // Смонтаж/Демонтажа da — yuqorida tanlangan skladdan
+    useEffect(() => {
+        if (!selectedDocumentType) return;
+        if (showProductNotes) {
+            fetchWarehouseProducts('');
+            return;
+        }
+        if (isInstallationDocument || isDismantlingDocument) {
+            if (!isMainToolFromService) {
+                fetchWarehouseProducts('');
+            } else if (selectedWarehouse?.code) {
+                fetchWarehouseProducts(selectedWarehouse.code);
+            }
+        }
+    }, [selectedDocumentType?.id, showProductNotes, isInstallationDocument, isDismantlingDocument, isMainToolFromService, selectedWarehouse?.code]);
+
+    // Приём-передача: qatorlarda tanlangan skladlar ro'yxatlarini yuklash (edit rejimida ham)
+    useEffect(() => {
+        if (!isDirectWorkflowType) return;
+        const codes = [...new Set(data.products.map((p) => p.warehouse_code).filter(Boolean))] as string[];
+        codes.forEach((code) => fetchWarehouseProducts(code));
+    }, [isDirectWorkflowType, data.products]);
+
+    // Edit rejimida fresh 1С ro'yxati kelgach qatorlarni nomenclature bo'yicha qayta bog'lash
+    useEffect(() => {
+        if (!isEditMode) return;
+        let changed = false;
+        const updatedProducts = data.products.map((p) => {
+            if (!p.nomenclature) return p;
+            const list = productsByWarehouse[getWarehouseKeyForRow(p)];
+            if (!list) return p;
+            const fresh = list.find((fp) => fp.nomenclature === p.nomenclature);
+            if (!fresh) return p;
+            const maxQty = parseInt(fresh.count);
+            if (p.selected_product?.nomenclature === fresh.nomenclature && p.max_quantity === maxQty) return p;
+            changed = true;
+            return { ...p, selected_product: fresh, measure: fresh.measure, max_quantity: maxQty };
+        });
+        if (changed) setData('products', updatedProducts);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [productsByWarehouse]);
 
     useEffect(() => {
         if (data.main_tool && showCompositionInterface) {
@@ -322,10 +452,11 @@ export default function DocumentForm({
         value: user.id.toString(),
         label: `${user.name} (${userRoles[user.type as keyof typeof userRoles] || user.type})`,
     }));
-    const productOptions = allProducts.map((product) => ({
-        value: product.nomenclature,
-        label: `${product.name.substring(0, 50)}... | ${product.measure} | ${formatAmount(product.price)} | Склад: ${product.count}`,
-    }));
+    const buildProductOptions = (list: Product[]) =>
+        list.map((product) => ({
+            value: product.nomenclature,
+            label: `${product.name.substring(0, 50)}... | ${product.measure} | ${formatAmount(product.price)} | Склад: ${product.count}`,
+        }));
 
     const handleSendToNext = async () => {
         if (!data.id) return;
@@ -507,8 +638,16 @@ export default function DocumentForm({
                                         key={warehouseSelectKey}
                                         value={selectedWarehouse?.id ?? ''}
                                         onValueChange={(value, option) => {
+                                            const previousCode = selectedWarehouse?.code;
                                             setSelectedWarehouse(option);
                                             setData('main_tool', option?.title ?? '');
+                                            // Sklad o'zgarsa, eski sklad tovarlari bilan to'ldirilgan qatorlar tozalanadi
+                                            if (previousCode && previousCode !== option?.code && data.products.some((p) => p.selected_product)) {
+                                                setData('products', []);
+                                                setProductsResetMessage('Склад изменён — список товаров очищен');
+                                            } else {
+                                                setProductsResetMessage(null);
+                                            }
                                         }}
                                         placeholder="Выберите склад"
                                         searchPlaceholder="Поиск склада..."
@@ -563,6 +702,7 @@ export default function DocumentForm({
                                     </Button>
                                 </div>
                                 {warehouseListMessage && <div className="text-xs text-muted-foreground">{warehouseListMessage}</div>}
+                                {productsResetMessage && <div className="text-xs text-amber-600">{productsResetMessage}</div>}
                             </div>
                         )}
                         {showMainToolSelect && !isInstallationDocument && !isDismantlingDocument && (
@@ -635,7 +775,12 @@ export default function DocumentForm({
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <CardTitle>{isDismantlingDocument ? 'Товар Демонтажа' : 'Товары'}</CardTitle>
-                            <Button type="button" onClick={addProduct} className="gap-2">
+                            <Button
+                                type="button"
+                                onClick={addProduct}
+                                className="gap-2"
+                                disabled={(isInstallationDocument || isDismantlingDocument) && isMainToolFromService && !selectedWarehouse}
+                            >
                                 <Plus className="h-4 w-4" />
                                 Добавить товар
                             </Button>
@@ -643,10 +788,20 @@ export default function DocumentForm({
                     </CardHeader>
                     <CardContent>
                         {data.products.length === 0 ? (
-                            <div className="py-8 text-center text-muted-foreground">Нажмите "Добавить товар" чтобы начать</div>
+                            <div className="py-8 text-center text-muted-foreground">
+                                {(isInstallationDocument || isDismantlingDocument) && isMainToolFromService && !selectedWarehouse
+                                    ? `Сначала выберите склад в поле «${mainToolLabel}»`
+                                    : 'Нажмите "Добавить товар" чтобы начать'}
+                            </div>
                         ) : (
                             <div className="space-y-4">
-                                {data.products.map((product, index) => (
+                                {data.products.map((product, index) => {
+                                    const rowKey = getWarehouseKeyForRow(product);
+                                    const needsWarehouse = rowNeedsWarehouse(product);
+                                    const rowLoading = !!productsLoading[rowKey] && !needsWarehouse;
+                                    const rowError = needsWarehouse ? null : productsError[rowKey];
+
+                                    return (
                                     <div key={product.id} className="rounded-lg border p-4">
                                         <div className="mb-4 flex items-center justify-between">
                                             <h4 className="font-medium">Товар #{index + 1}</h4>
@@ -661,16 +816,65 @@ export default function DocumentForm({
                                                 Удалить
                                             </Button>
                                         </div>
+                                        {isDirectWorkflowType && (
+                                            <div className="mb-4">
+                                                <Label className="mb-2 block">Склад *</Label>
+                                                <DynamicSearchableSelect
+                                                    key={`row-wh-${warehouseSelectKey}-${product.id}`}
+                                                    value={product.warehouse_code ?? ''}
+                                                    onValueChange={(value, option) => handleRowWarehouseChange(product.id, option)}
+                                                    placeholder="Выберите склад"
+                                                    searchPlaceholder="Поиск склада..."
+                                                    emptyText="Склады не найдены"
+                                                    searchUrl="/api/warehouses/search"
+                                                    selectedOption={
+                                                        product.warehouse_code
+                                                            ? {
+                                                                  id: product.warehouse_code,
+                                                                  code: product.warehouse_code,
+                                                                  title: product.warehouse_name ?? '',
+                                                              }
+                                                            : undefined
+                                                    }
+                                                    paginated={true}
+                                                    className="w-full md:w-96"
+                                                />
+                                            </div>
+                                        )}
                                         <div className="flex items-start gap-4">
                                             <div className="min-w-0 flex-1">
                                                 <Label className="mb-2 block">Товар *</Label>
                                                 <SearchableSelect
-                                                    options={productOptions}
+                                                    options={buildProductOptions(getProductsForRow(product))}
                                                     value={product.selected_product?.nomenclature}
                                                     onValueChange={(value) => updateProduct(product.id, 'selected_product', value)}
-                                                    placeholder="Выберите товар"
+                                                    placeholder={
+                                                        needsWarehouse
+                                                            ? 'Сначала выберите склад'
+                                                            : rowLoading
+                                                              ? 'Загрузка товаров из 1С...'
+                                                              : 'Выберите товар'
+                                                    }
                                                     searchPlaceholder="Поиск товара..."
+                                                    disabled={needsWarehouse || rowLoading}
                                                 />
+                                                {needsWarehouse && (
+                                                    <div className="mt-1 text-xs text-muted-foreground">Сначала выберите склад</div>
+                                                )}
+                                                {rowError && !rowLoading && (
+                                                    <div className="mt-1 flex items-center gap-2 text-xs text-red-600">
+                                                        <span>{rowError}</span>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-6 px-2 text-xs"
+                                                            onClick={() => fetchWarehouseProducts(rowKey, true)}
+                                                        >
+                                                            Повторить
+                                                        </Button>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="w-24">
                                                 <Label className="mb-2 block">Ед.изм.</Label>
@@ -722,7 +926,8 @@ export default function DocumentForm({
                                             </div>
                                         )}
                                     </div>
-                                ))}
+                                    );
+                                })}
                                 {data.products.length > 0 && (
                                     <div className="border-t pt-4">
                                         <div className="flex justify-end">

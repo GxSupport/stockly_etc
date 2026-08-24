@@ -33,6 +33,8 @@ class StoreDocumentRequest extends FormRequest
             'products.*.quantity' => 'required|numeric|min:1',
             'products.*.amount' => 'required|numeric|min:0',
             'products.*.nomenclature' => 'nullable|string|max:255',
+            'products.*.warehouse_code' => 'nullable|string|max:50',
+            'products.*.warehouse_name' => 'nullable|string|max:255',
             'products.*.max_quantity' => 'nullable|numeric',
             'products.*.note' => 'nullable|string|max:500',
         ];

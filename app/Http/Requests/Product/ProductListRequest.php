@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Product;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ProductListRequest extends FormRequest
@@ -17,12 +18,13 @@ class ProductListRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
             'date' => ['nullable', 'date_format:d.m.Y'],
+            'warehouse_code' => ['nullable', 'string', 'exists:warehouse,code'],
         ];
     }
 
@@ -35,6 +37,7 @@ class ProductListRequest extends FormRequest
     {
         return [
             'date.date_format' => 'Сана формати нотўғри. Тўғри формат: дд.мм.ЙЙЙЙ',
+            'warehouse_code.exists' => 'Склад не найден',
         ];
     }
 }
