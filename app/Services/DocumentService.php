@@ -330,7 +330,7 @@ class DocumentService
             $total_amount = 0;
             foreach ($request->input('products', []) as $product) {
                 $this->addProduct($product, $document->id);
-                $total_amount += $product['amount'] * $product['quantity'];
+                $total_amount += $product['amount'];
             }
             $document->total_amount = $total_amount;
             $document->save();
@@ -416,7 +416,7 @@ class DocumentService
             $total_amount = 0;
             foreach ($request->input('products', []) as $product) {
                 $this->addProduct($product, $document->id);
-                $total_amount += $product['amount'] * $product['quantity'];
+                $total_amount += $product['amount'];
             }
             $document->total_amount = $total_amount;
             $document->save();
@@ -472,16 +472,18 @@ class DocumentService
         if (isset($data['selected_product']) && is_array($data['selected_product'])) {
             $product->title = $data['selected_product']['name'] ?? $data['product_name'] ?? '';
             $product->measure = $data['selected_product']['measure'] ?? $data['measure'] ?? '';
-            $product->amount = $data['selected_product']['price'] ?? $data['amount'] ?? 0;
             $product->nomenclature = $data['selected_product']['nomenclature'] ?? $data['nomenclature'] ?? '';
         } else {
             // selected_product bo'lmaganda to'g'ridan-to'g'ri maydonlardan olish
             $product->title = $data['product_name'] ?? '';
             $product->measure = $data['measure'] ?? '';
-            $product->amount = $data['amount'] ?? 0;
             $product->nomenclature = $data['nomenclature'] ?? '';
         }
 
+        // amount — klient yuborgan qator summasi (narx × miqdor)
+        $product->amount = $data['amount'] ?? 0;
+        $product->warehouse_code = $data['warehouse_code'] ?? null;
+        $product->warehouse_name = $data['warehouse_name'] ?? null;
         $product->quantity = $data['quantity'] ?? 1;
         $product->note = $data['note'] ?? '';
 

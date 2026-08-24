@@ -53,7 +53,6 @@ export default function CreateDocument({ documentTypes, products, nextNumber, us
         const submissionData = {
             ...data,
             total_amount: totalAmount,
-            products: data.document_type_id === '2' ? data.products.map((p) => ({ ...p, measure: '' })) : data.products,
         };
         post('/documents/create', { data: submissionData } as any);
     };

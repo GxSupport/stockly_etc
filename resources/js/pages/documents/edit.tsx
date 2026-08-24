@@ -31,6 +31,8 @@ interface DocumentProduct {
     quantity: number;
     amount: number;
     nomenclature: string;
+    warehouse_code: string | null;
+    warehouse_name: string | null;
     note: string;
 }
 interface Document {
@@ -82,6 +84,8 @@ export default function EditDocument({ document, documentTypes, products, users 
                 quantity: p.quantity,
                 amount: p.amount,
                 nomenclature: p.nomenclature,
+                warehouse_code: p.warehouse_code ?? undefined,
+                warehouse_name: p.warehouse_name ?? undefined,
                 note: p.note,
                 selected_product: products.find((ap) => ap.nomenclature === p.nomenclature) || null,
                 max_quantity: products.find((ap) => ap.nomenclature === p.nomenclature)
@@ -97,7 +101,6 @@ export default function EditDocument({ document, documentTypes, products, users 
         const submissionData = {
             ...data,
             total_amount: totalAmount,
-            products: data.document_type_id === '2' ? data.products.map((p) => ({ ...p, measure: '' })) : data.products,
         };
         put(`/documents/${document.id}`, { data: submissionData } as never);
     };
