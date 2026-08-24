@@ -251,7 +251,7 @@ class ProductService
 
         $client = new Client([
             'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
-            'timeout' => 30,
+            'timeout' => 120,
             'connect_timeout' => 10,
             'verify' => false,
         ]);
