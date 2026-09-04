@@ -1,4 +1,4 @@
-import DocumentForm, { type DocumentData } from '@/components/documents/DocumentForm';
+import DocumentForm, { type DocumentData, type OwnWarehouse } from '@/components/documents/DocumentForm';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
@@ -29,6 +29,7 @@ interface CreateDocumentProps {
     products: Product[];
     nextNumber: string;
     users: User[];
+    ownWarehouse?: OwnWarehouse;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -36,7 +37,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Добавить АКТ', href: '/documents/create' },
 ];
 
-export default function CreateDocument({ documentTypes, products, nextNumber, users }: CreateDocumentProps) {
+export default function CreateDocument({ documentTypes, products, nextNumber, users, ownWarehouse }: CreateDocumentProps) {
     const { data, setData, post, processing, errors } = useForm<DocumentData>({
         document_type_id: '',
         assigned_user_id: undefined,
@@ -73,6 +74,7 @@ export default function CreateDocument({ documentTypes, products, nextNumber, us
                     documentTypes={documentTypes}
                     allProducts={products}
                     users={users}
+                    ownWarehouse={ownWarehouse}
                 />
             </div>
         </AppLayout>

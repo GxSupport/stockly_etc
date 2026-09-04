@@ -313,7 +313,8 @@ class ProductService
                             measure: $value['ЕдИзм'],
                             price: $this->numberFromStringForProduct($value['СуммаОстаток']),
                             count: $value['КоличествоОстаток'],
-                            nomenclature: $value['КодНоменклатуры']
+                            nomenclature: $value['КодНоменклатуры'],
+                            warehouse_code: $warehouseCode,
                         );
                     }
                 } else {
