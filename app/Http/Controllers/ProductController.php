@@ -13,6 +13,10 @@ class ProductController extends Controller
 {
     public function __construct(public ProductService $productService) {}
 
+    /**
+     * Tovar qoldiqlari ro'yxati: warehouse_code berilsa — o'sha sklad,
+     * berilmasa — foydalanuvchiga biriktirilgan barcha skladlar birlashtirilib qaytariladi.
+     */
     public function list(ProductListRequest $request): JsonResponse
     {
         $warehouseCode = $request->input('warehouse_code');
@@ -27,32 +31,36 @@ class ProductController extends Controller
                 ], 404);
             }
 
-            $code = $warehouse->code;
-            $title = $warehouse->title;
+            $warehouses = collect([$warehouse]);
         } else {
-            $userWarehouse = UserWarehouse::where('user_id', Auth::id())
+            $warehouses = UserWarehouse::query()
+                ->where('user_id', Auth::id())
                 ->with('warehouse')
-                ->first();
+                ->get()
+                ->pluck('warehouse')
+                ->filter()
+                ->values();
 
-            if (! $userWarehouse || ! $userWarehouse->warehouse) {
+            if ($warehouses->isEmpty()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'У вас нет склада!',
+                    'message' => 'Вам не назначен склад, обратитесь к администратору',
                 ], 400);
             }
-
-            $code = $userWarehouse->warehouse->code;
-            $title = $userWarehouse->warehouse->title;
         }
 
         $date = $request->input('date');
 
         try {
-            $products = $this->productService->getProductsList(
-                warehouseCode: $code,
-                warehouseTitle: $title,
-                date: $date
-            );
+            $products = [];
+
+            foreach ($warehouses as $warehouse) {
+                $products = array_merge($products, $this->productService->getProductsList(
+                    warehouseCode: $warehouse->code,
+                    warehouseTitle: $warehouse->title,
+                    date: $date
+                ));
+            }
 
             return response()->json([
                 'success' => true,

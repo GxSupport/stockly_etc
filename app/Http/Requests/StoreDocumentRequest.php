@@ -2,16 +2,21 @@
 
 namespace App\Http\Requests;
 
+use App\Models\DocumentType;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreDocumentRequest extends FormRequest
 {
-    public function authorize()
+    public function authorize(): bool
     {
         return true;
     }
 
-    public function rules()
+    /**
+     * @return array<string, string>
+     */
+    public function rules(): array
     {
         return [
             'number' => 'required|string|max:255',
@@ -40,7 +45,10 @@ class StoreDocumentRequest extends FormRequest
         ];
     }
 
-    public function messages()
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
     {
         return [
             'number.required' => 'Номер документа обязателен',
@@ -54,5 +62,30 @@ class StoreDocumentRequest extends FormRequest
             'products.*.amount.required' => 'Сумма обязательна',
             'products.*.amount.min' => 'Сумма не может быть отрицательной',
         ];
+    }
+
+    /**
+     * Демонтажа aktida sklad (место демонтажа) majburiy — aks holda PDF matnida bo'sh qo'shtirnoq qoladi.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            if ($this->isDismantlingDocument() && trim((string) $this->input('main_tool')) === '') {
+                $validator->errors()->add('main_tool', 'Выберите склад в поле «Место демонтажа»');
+            }
+        });
+    }
+
+    protected function isDismantlingDocument(): bool
+    {
+        $typeId = (int) $this->input('document_type_id');
+
+        if ($typeId === 0) {
+            return false;
+        }
+
+        $documentType = DocumentType::query()->find($typeId, ['id', 'code']);
+
+        return $documentType !== null && ($documentType->code === 'dismantling' || (int) $documentType->id === 2);
     }
 }

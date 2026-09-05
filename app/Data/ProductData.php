@@ -12,6 +12,7 @@ class ProductData extends Data
         public string $measure,
         public float $price,
         public string $count,
-        public string $nomenclature
-    ){}
+        public string $nomenclature,
+        public ?string $warehouse_code = null,
+    ) {}
 }

@@ -202,19 +202,12 @@ export default function ShowDocument({ document, mainToolName = null, history = 
         }
 
         if (documentTypeId === 2 || typeCode === 'dismantling') {
+            // Issue #19: sklad nomi qo'shtirnoq ichida, matn shabloni so'zma-so'z
             return (
                 <>
-                    Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы были демонтированы
-                    {document.main_tool ? (
-                        <>
-                            {' '}
-                            с <span className="font-semibold">{document.main_tool}</span>
-                        </>
-                    ) : (
-                        ' с объектов'
-                    )}{' '}
-                    и возвращены на склад. Материалы сняты с ответственности Материально ответственного лица{' '}
-                    <span className="font-semibold">{responsiblePerson}</span>
+                    Мы нижеподписавшиеся составили настоящий акт о том, что нижеуказанные материалы были демонтированы с &quot;
+                    <span className="font-semibold break-words">{document.main_tool}</span>&quot; на баланс Материально ответственного
+                    лица <span className="font-semibold">{responsiblePerson}</span>
                 </>
             );
         }

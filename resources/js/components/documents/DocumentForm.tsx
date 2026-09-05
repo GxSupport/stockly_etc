@@ -35,6 +35,7 @@ interface Product {
     price: number;
     count: string;
     nomenclature: string;
+    warehouse_code?: string | null;
 }
 export interface ProductItem {
     id: string | number;
@@ -48,6 +49,10 @@ export interface ProductItem {
     warehouse_name?: string;
     max_quantity: number;
     note: string;
+}
+export interface OwnWarehouse {
+    code: string;
+    title: string;
 }
 export interface DocumentData {
     id?: number;
@@ -74,6 +79,7 @@ interface DocumentFormProps {
     documentTypes: DocumentType[];
     allProducts: Product[];
     users?: User[];
+    ownWarehouse?: OwnWarehouse;
     isEditMode?: boolean;
     documentNotes?: any[];
 }
@@ -87,6 +93,7 @@ export default function DocumentForm({
     documentTypes,
     allProducts,
     users = [],
+    ownWarehouse,
     isEditMode = false,
     documentNotes = [],
 }: DocumentFormProps) {
@@ -110,6 +117,8 @@ export default function DocumentForm({
     const [productsLoading, setProductsLoading] = useState<Record<string, boolean>>({});
     const [productsError, setProductsError] = useState<Record<string, string | null>>({});
     const [productsResetMessage, setProductsResetMessage] = useState<string | null>(null);
+    // Qator bo'yicha «miqdor qoldiqdan oshdi» ogohlantirishi (issue #18)
+    const [quantityWarnings, setQuantityWarnings] = useState<Record<string, string | null>>({});
     const inFlightProducts = useRef<Set<string>>(new Set());
     const today = new Date(data.date_order).toLocaleDateString('ru-RU');
 
@@ -164,10 +173,16 @@ export default function DocumentForm({
                         updated.amount = parseNumericValue(selectedProduct.price) * updated.quantity;
                         updated.nomenclature = selectedProduct.nomenclature;
                         updated.max_quantity = parseInt(selectedProduct.count);
-                        // Смонтаж/Демонтажа: qator yuqorida tanlangan sklad bilan muhrlanadi
-                        if (isInstallationDocument || isDismantlingDocument) {
+                        // Демонтажа: qator yuqorida tanlangan sklad bilan muhrlanadi
+                        if (isDismantlingDocument) {
                             updated.warehouse_code = selectedWarehouse?.code ?? '';
                             updated.warehouse_name = selectedWarehouse?.title ?? '';
+                        }
+                        // Смонтаж (issue #18): tovar foydalanuvchining o'z skladidan olinadi —
+                        // qatorga o'sha manba sklad yoziladi (Место установки emas)
+                        if (isInstallationDocument) {
+                            updated.warehouse_code = selectedProduct.warehouse_code ?? ownWarehouse?.code ?? '';
+                            updated.warehouse_name = selectedProduct.warehouse || ownWarehouse?.title || '';
                         }
                     }
                 }
@@ -176,6 +191,10 @@ export default function DocumentForm({
                     const validatedQuantity = Math.max(1, Math.min(value, maxQty));
                     updated.quantity = validatedQuantity;
                     updated.amount = parseNumericValue(p.selected_product.price) * validatedQuantity;
+                    setQuantityWarnings((prev) => ({
+                        ...prev,
+                        [String(p.id)]: value > maxQty ? `Превышает остаток на складе — доступно ${maxQty}` : null,
+                    }));
                 }
                 return updated;
             }
@@ -208,12 +227,11 @@ export default function DocumentForm({
         }
     };
 
-    // Qator qaysi sklad ro'yxatidan tovar tanlashini aniqlaydi
+    // Qator qaysi sklad ro'yxatidan tovar tanlashini aniqlaydi.
+    // Смонтаж (issue #18): har doim o'z skladi ('') — «Место установки» ga bog'lanmaydi.
     const getWarehouseKeyForRow = (p: ProductItem): string => {
         if (isDirectWorkflowType) return p.warehouse_code ?? '';
-        if (isInstallationDocument || isDismantlingDocument) {
-            return isMainToolFromService ? (selectedWarehouse?.code ?? '') : '';
-        }
+        if (isDismantlingDocument) return selectedWarehouse?.code ?? '';
         return '';
     };
 
@@ -224,10 +242,10 @@ export default function DocumentForm({
         return key === '' ? allProducts : [];
     };
 
-    // Qatorda avval sklad tanlanishi shartmi
+    // Qatorda avval sklad tanlanishi shartmi (faqat Приём-передача va Демонтажа)
     const rowNeedsWarehouse = (p: ProductItem): boolean => {
         if (isDirectWorkflowType) return !p.warehouse_code;
-        if (isInstallationDocument || isDismantlingDocument) return isMainToolFromService && !selectedWarehouse;
+        if (isDismantlingDocument) return !selectedWarehouse;
         return false;
     };
 
@@ -295,22 +313,17 @@ export default function DocumentForm({
     const showRegularProducts = !!selectedDocumentType;
 
     // Tovar ro'yxatini kerakli skladdan oldindan yuklash:
-    // Списания va qo'lda kiritish rejimida — o'z skladidan (fresh),
-    // Смонтаж/Демонтажа da — yuqorida tanlangan skladdan
+    // Списания va Смонтаж — o'z skladidan (fresh), Демонтажа — yuqorida tanlangan skladdan
     useEffect(() => {
         if (!selectedDocumentType) return;
-        if (showProductNotes) {
+        if (showProductNotes || isInstallationDocument) {
             fetchWarehouseProducts('');
             return;
         }
-        if (isInstallationDocument || isDismantlingDocument) {
-            if (!isMainToolFromService) {
-                fetchWarehouseProducts('');
-            } else if (selectedWarehouse?.code) {
-                fetchWarehouseProducts(selectedWarehouse.code);
-            }
+        if (isDismantlingDocument && selectedWarehouse?.code) {
+            fetchWarehouseProducts(selectedWarehouse.code);
         }
-    }, [selectedDocumentType?.id, showProductNotes, isInstallationDocument, isDismantlingDocument, isMainToolFromService, selectedWarehouse?.code]);
+    }, [selectedDocumentType?.id, showProductNotes, isInstallationDocument, isDismantlingDocument, selectedWarehouse?.code]);
 
     // Приём-передача: qatorlarda tanlangan skladlar ro'yxatlarini yuklash (edit rejimida ham)
     useEffect(() => {
@@ -452,11 +465,16 @@ export default function DocumentForm({
         value: user.id.toString(),
         label: `${user.name} (${userRoles[user.type as keyof typeof userRoles] || user.type})`,
     }));
-    const buildProductOptions = (list: Product[]) =>
-        list.map((product) => ({
+    // Ro'yxatda bir nechta sklad bo'lsa (foydalanuvchiga bir nechta sklad biriktirilgan) — qaysi skladdan ekani ko'rsatiladi
+    const buildProductOptions = (list: Product[]) => {
+        const showWarehouse = new Set(list.map((product) => product.warehouse)).size > 1;
+        return list.map((product) => ({
             value: product.nomenclature,
-            label: `${product.name.substring(0, 50)}... | ${product.measure} | ${formatAmount(product.price)} | Склад: ${product.count}`,
+            label:
+                `${product.name.substring(0, 50)}... | ${product.measure} | ${formatAmount(product.price)} | Остаток: ${product.count}` +
+                (showWarehouse && product.warehouse ? ` | ${product.warehouse}` : ''),
         }));
+    };
 
     const handleSendToNext = async () => {
         if (!data.id) return;
@@ -641,8 +659,14 @@ export default function DocumentForm({
                                             const previousCode = selectedWarehouse?.code;
                                             setSelectedWarehouse(option);
                                             setData('main_tool', option?.title ?? '');
-                                            // Sklad o'zgarsa, eski sklad tovarlari bilan to'ldirilgan qatorlar tozalanadi
-                                            if (previousCode && previousCode !== option?.code && data.products.some((p) => p.selected_product)) {
+                                            // Демонтажа: sklad o'zgarsa, eski sklad tovarlari bilan to'ldirilgan qatorlar tozalanadi
+                                            // (Смонтаж da tovarlar o'z skladidan — Место установки o'zgarishi ularga ta'sir qilmaydi)
+                                            if (
+                                                isDismantlingDocument &&
+                                                previousCode &&
+                                                previousCode !== option?.code &&
+                                                data.products.some((p) => p.selected_product)
+                                            ) {
                                                 setData('products', []);
                                                 setProductsResetMessage('Склад изменён — список товаров очищен');
                                             } else {
@@ -793,7 +817,7 @@ export default function DocumentForm({
                                     type="button"
                                     onClick={addProduct}
                                     className="gap-2"
-                                    disabled={(isInstallationDocument || isDismantlingDocument) && isMainToolFromService && !selectedWarehouse}
+                                    disabled={isDismantlingDocument && !selectedWarehouse}
                                 >
                                     <Plus className="h-4 w-4" />
                                     Добавить товар
@@ -807,7 +831,7 @@ export default function DocumentForm({
                     <CardContent>
                         {data.products.length === 0 ? (
                             <div className="py-8 text-center text-muted-foreground">
-                                {(isInstallationDocument || isDismantlingDocument) && isMainToolFromService && !selectedWarehouse
+                                {isDismantlingDocument && !selectedWarehouse
                                     ? `Сначала выберите склад в поле «${mainToolLabel}»`
                                     : 'Нажмите "Добавить товар" чтобы начать'}
                             </div>
@@ -910,6 +934,9 @@ export default function DocumentForm({
                                                 />
                                                 {product.max_quantity > 0 && (
                                                     <div className="text-xs whitespace-nowrap text-green-600">Макс: {product.max_quantity}</div>
+                                                )}
+                                                {quantityWarnings[String(product.id)] && (
+                                                    <div className="text-xs text-amber-600">{quantityWarnings[String(product.id)]}</div>
                                                 )}
                                             </div>
                                             <div className="w-40">

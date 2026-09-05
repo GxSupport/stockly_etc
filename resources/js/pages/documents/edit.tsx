@@ -1,4 +1,4 @@
-import DocumentForm, { type DocumentData, type ProductItem } from '@/components/documents/DocumentForm';
+import DocumentForm, { type DocumentData, type OwnWarehouse, type ProductItem } from '@/components/documents/DocumentForm';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
@@ -56,9 +56,10 @@ interface EditDocumentProps {
     documentTypes: DocumentType[];
     products: Product[];
     users: User[];
+    ownWarehouse?: OwnWarehouse;
 }
 
-export default function EditDocument({ document, documentTypes, products, users }: EditDocumentProps) {
+export default function EditDocument({ document, documentTypes, products, users, ownWarehouse }: EditDocumentProps) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'АКТ', href: '/documents' },
         { title: `Редактировать АКТ №${document.number}`, href: '#' },
@@ -121,6 +122,7 @@ export default function EditDocument({ document, documentTypes, products, users 
                     documentTypes={documentTypes}
                     allProducts={products}
                     users={users}
+                    ownWarehouse={ownWarehouse}
                     isEditMode={true}
                     documentNotes={document.notes || []}
                 />

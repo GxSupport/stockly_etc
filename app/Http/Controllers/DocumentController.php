@@ -127,6 +127,7 @@ class DocumentController extends Controller
             'products' => $products,
             'nextNumber' => $nextNumber,
             'users' => $users,
+            'ownWarehouse' => ['code' => $code, 'title' => $title],
         ]);
     }
 
@@ -268,6 +269,7 @@ class DocumentController extends Controller
                 'documentTypes' => $documentTypes,
                 'products' => $products,
                 'users' => $users,
+                'ownWarehouse' => ['code' => $code, 'title' => $title],
             ]);
         } catch (\Exception $e) {
             return redirect()->route('documents.index')
