@@ -57,19 +57,23 @@ class DocumentController extends Controller
             ->count();
 
         $documents = $this->documentService->list($request, $status);
-        $documentTypes = DocumentType::all(['id', 'title']);
+        $documentTypes = DocumentType::query()->active()->get(['id', 'title']);
 
         return Inertia::render('documents', [
             'documents' => $documents,
             'status' => $status,
             'documentTypes' => $documentTypes,
             'incomingCount' => $incomingCount,
+            'availableScopes' => $this->documentService->availableScopes(),
+            'scope' => $this->documentService->resolveScope($request->input('scope')),
+            'awaitingApprovalCount' => $this->documentService->incomingCount(),
             'filters' => [
                 'search' => $request->input('search'),
                 'start_date' => $request->input('start_date'),
                 'end_date' => $request->input('end_date'),
                 'document_type' => $request->input('document_type'),
                 'is_finished' => $request->input('is_finished'),
+                'author' => $request->input('author'),
                 'per_page' => $request->input('per_page', 20),
             ],
         ]);
@@ -87,7 +91,7 @@ class DocumentController extends Controller
         $date = date('d.m.Y', strtotime($date));
         $code = $warehouse->warehouse->code;
         $title = $warehouse->warehouse->title;
-        $documentTypes = DocumentType::all();
+        $documentTypes = DocumentType::query()->active()->get();
 
         try {
             $products = $this->documentService->getGoods($code, $title, $date);
@@ -248,7 +252,9 @@ class DocumentController extends Controller
             $date = date('d.m.Y', strtotime($date));
             $code = $warehouse->warehouse->code;
             $title = $warehouse->warehouse->title;
-            $documentTypes = DocumentType::all();
+            // O'chirilgan tur bu yerda ham ko'rsatilmaydi: shu turdagi eski qoralamani
+            // saqlash uchun foydalanuvchi amaldagi turlardan birini tanlashi kerak.
+            $documentTypes = DocumentType::query()->active()->get();
 
             try {
                 $products = $this->documentService->getGoods($code, $title, $date);
@@ -312,7 +318,7 @@ class DocumentController extends Controller
 
     public function typeList()
     {
-        return DocumentType::all();
+        return DocumentType::query()->active()->get();
     }
 
     public function checkSmsRequired($id)

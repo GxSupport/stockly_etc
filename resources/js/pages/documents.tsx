@@ -22,6 +22,11 @@ interface Priority {
     role_info: RoleInfo | null;
 }
 
+interface Author {
+    id: number;
+    name: string;
+}
+
 interface Document {
     id: number;
     number: string;
@@ -33,6 +38,7 @@ interface Document {
     is_finished: boolean;
     is_returned: boolean;
     status: number;
+    author: Author | null;
     priority: Priority[];
 }
 
@@ -57,14 +63,26 @@ interface Filters {
     end_date?: string;
     document_type?: string;
     is_finished?: string;
+    author?: string;
     per_page?: number;
 }
+
+type Scope = 'mine' | 'incoming' | 'all';
+
+const SCOPE_LABELS: Record<Scope, string> = {
+    mine: 'Мои',
+    incoming: 'Входящие',
+    all: 'Все',
+};
 
 interface DocumentsPageProps {
     documents: PaginatedData;
     status: 'draft' | 'sent' | 'return' | 'incoming';
     documentTypes: DocumentType[];
     incomingCount: number;
+    scope: Scope;
+    availableScopes: Scope[];
+    awaitingApprovalCount: number;
     filters: Filters;
 }
 
@@ -75,9 +93,7 @@ const DocumentStatus = ({ document }: { document: Document }) => {
     if (document.is_finished) {
         return (
             <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                    Завершен
-                </span>
+                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">Завершен</span>
             </div>
         );
     }
@@ -86,9 +102,7 @@ const DocumentStatus = ({ document }: { document: Document }) => {
     if (document.is_returned) {
         return (
             <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                    Возвращено
-                </span>
+                <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">Возвращено</span>
             </div>
         );
     }
@@ -112,7 +126,16 @@ const DocumentStatus = ({ document }: { document: Document }) => {
     );
 };
 
-export default function Documents({ documents, status: currentTab, documentTypes, incomingCount, filters }: DocumentsPageProps) {
+export default function Documents({
+    documents,
+    status: currentTab,
+    documentTypes,
+    incomingCount,
+    scope,
+    availableScopes,
+    awaitingApprovalCount,
+    filters,
+}: DocumentsPageProps) {
     const { auth } = usePage().props as unknown as { auth: { user: { type: string } } };
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [startDate, setStartDate] = useState(filters.start_date || '');
@@ -122,17 +145,35 @@ export default function Documents({ documents, status: currentTab, documentTypes
     const [perPage, setPerPage] = useState(filters.per_page || 20);
     const [showFilters, setShowFilters] = useState(false);
 
-    const applyFilters = () => {
+    const showScopeFilter = currentTab === 'sent' && availableScopes.length > 1;
+    // Muallif ustuni faqat begona hujjatlar ko'rinadigan rejimlarda ma'noga ega
+    const showAuthorColumn = (currentTab === 'sent' && scope !== 'mine') || currentTab === 'incoming';
+    // Dashboard'dan «Члены команды» orqali kelinganda qaysi muallif bo'yicha filtrlanayotgani ko'rinsin
+    const activeAuthorName = filters.author
+        ? (documents.data.find((doc) => doc.author?.id.toString() === filters.author)?.author?.name ?? `#${filters.author}`)
+        : null;
+
+    // Har bir navigatsiyada joriy filtrlar URL da saqlanadi, shunda sahifa
+    // yangilanganda yoki havola ulashilganda holat yo'qolmaydi.
+    const buildParams = (overrides: Record<string, string | number> = {}) => {
         const params: Record<string, string | number> = { page: 1 };
         if (searchQuery) params.search = searchQuery;
         if (startDate) params.start_date = startDate;
         if (endDate) params.end_date = endDate;
         if (documentType) params.document_type = documentType;
         if (documentStatus) params.is_finished = documentStatus;
+        if (filters.author) params.author = filters.author;
+        if (showScopeFilter) params.scope = scope;
         if (perPage !== 20) params.per_page = perPage;
 
-        router.get(`/documents/${currentTab}`, params, { preserveState: true, replace: true });
+        return { ...params, ...overrides };
     };
+
+    const navigate = (params: Record<string, string | number>, tab: string = currentTab) => {
+        router.get(`/documents/${tab}`, params, { preserveState: true, replace: true });
+    };
+
+    const applyFilters = () => navigate(buildParams());
 
     const clearFilters = () => {
         setSearchQuery('');
@@ -141,32 +182,17 @@ export default function Documents({ documents, status: currentTab, documentTypes
         setDocumentType('');
         setDocumentStatus('');
         setPerPage(20);
-        router.get(`/documents/${currentTab}`, { per_page: 20 }, { preserveState: true, replace: true });
+        navigate(showScopeFilter ? { per_page: 20, scope } : { per_page: 20 });
     };
 
     const handleSearch = (value: string) => {
         setSearchQuery(value);
-        const params: Record<string, string | number> = { page: 1, search: value };
-        if (startDate) params.start_date = startDate;
-        if (endDate) params.end_date = endDate;
-        if (documentType) params.document_type = documentType;
-        if (documentStatus) params.is_finished = documentStatus;
-        if (perPage !== 20) params.per_page = perPage;
-
-        router.get(`/documents/${currentTab}`, params, { preserveState: true, replace: true });
+        navigate(buildParams({ search: value }));
     };
 
-    const handlePageChange = (newPage: number) => {
-        const params: Record<string, string | number> = { page: newPage };
-        if (searchQuery) params.search = searchQuery;
-        if (startDate) params.start_date = startDate;
-        if (endDate) params.end_date = endDate;
-        if (documentType) params.document_type = documentType;
-        if (documentStatus) params.is_finished = documentStatus;
-        if (perPage !== 20) params.per_page = perPage;
+    const handlePageChange = (newPage: number) => navigate(buildParams({ page: newPage }));
 
-        router.get(`/documents/${currentTab}`, params, { preserveState: true, replace: true });
-    };
+    const handleScopeChange = (value: Scope) => navigate(buildParams({ scope: value, page: 1 }));
 
     const handleRowClick = (doc: Document) => {
         if (currentTab === 'sent' || currentTab === 'incoming') {
@@ -190,7 +216,11 @@ export default function Documents({ documents, status: currentTab, documentTypes
     if (isAdmin || isFrp) {
         availableTabs.push({ value: 'draft', label: 'Черновик' });
     }
-    availableTabs.push({ value: 'sent', label: isFrp ? 'Отправленные' : 'Полученные' });
+    availableTabs.push({
+        value: 'sent',
+        label: isFrp ? 'Отправленные' : 'Полученные',
+        badge: showScopeFilter ? undefined : awaitingApprovalCount,
+    });
     // Kelgan hujjatlar - tayinlangan hujjatlar bor bo'lsa ko'rsatish
     if (incomingCount > 0 || currentTab === 'incoming') {
         availableTabs.push({ value: 'incoming', label: 'Келган', badge: incomingCount });
@@ -227,13 +257,7 @@ export default function Documents({ documents, status: currentTab, documentTypes
                                 value={perPage.toString()}
                                 onValueChange={(value) => {
                                     setPerPage(Number(value));
-                                    const params: Record<string, string | number> = { page: 1, per_page: value };
-                                    if (searchQuery) params.search = searchQuery;
-                                    if (startDate) params.start_date = startDate;
-                                    if (endDate) params.end_date = endDate;
-                                    if (documentType) params.document_type = documentType;
-                                    if (documentStatus) params.is_finished = documentStatus;
-                                    router.get(`/documents/${currentTab}`, params, { preserveState: true, replace: true });
+                                    navigate(buildParams({ per_page: value }));
                                 }}
                             >
                                 <SelectTrigger className="w-20">
@@ -331,13 +355,51 @@ export default function Documents({ documents, status: currentTab, documentTypes
                             </TabsTrigger>
                         ))}
                     </TabsList>
-                    <TabsContent value={currentTab} className="mt-4">
+                    <TabsContent value={currentTab} className="mt-4 space-y-4">
+                        <div className="flex flex-wrap items-center gap-3">
+                            {showScopeFilter && (
+                                <div className="inline-flex rounded-md border p-1">
+                                    {availableScopes.map((value) => (
+                                        <button
+                                            key={value}
+                                            type="button"
+                                            onClick={() => handleScopeChange(value)}
+                                            className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                                                scope === value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
+                                            }`}
+                                        >
+                                            {SCOPE_LABELS[value]}
+                                            {value === 'incoming' && awaitingApprovalCount > 0 && (
+                                                <span
+                                                    className={`ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium ${
+                                                        scope === value ? 'bg-primary-foreground text-primary' : 'bg-red-500 text-white'
+                                                    }`}
+                                                >
+                                                    {awaitingApprovalCount}
+                                                </span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                            {activeAuthorName && (
+                                <button
+                                    type="button"
+                                    onClick={() => navigate(buildParams({ author: '' }))}
+                                    className="inline-flex items-center gap-1.5 rounded-full border bg-muted/50 px-3 py-1 text-sm hover:bg-muted"
+                                >
+                                    Автор: {activeAuthorName}
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            )}
+                        </div>
                         <div className="rounded-md border">
                             <div className="overflow-x-auto">
-                                <table className="w-full min-w-[800px] table-fixed">
+                                <table className={`w-full table-fixed ${showAuthorColumn ? 'min-w-[960px]' : 'min-w-[800px]'}`}>
                                     <colgroup>
                                         <col className="w-[140px]" />
                                         <col className="w-[200px]" />
+                                        {showAuthorColumn && <col className="w-[160px]" />}
                                         <col className="w-[150px]" />
                                         <col className="w-[160px]" />
                                         <col className="w-[150px]" />
@@ -348,6 +410,9 @@ export default function Documents({ documents, status: currentTab, documentTypes
                                             <th className="h-12 px-4 text-left align-middle text-sm font-medium text-muted-foreground">
                                                 Тип документа
                                             </th>
+                                            {showAuthorColumn && (
+                                                <th className="h-12 px-4 text-left align-middle text-sm font-medium text-muted-foreground">Автор</th>
+                                            )}
                                             <th className="h-12 px-4 text-left align-middle text-sm font-medium text-muted-foreground">Сумма</th>
                                             <th className="h-12 px-4 text-left align-middle text-sm font-medium text-muted-foreground">
                                                 Дата заказа
@@ -371,6 +436,13 @@ export default function Documents({ documents, status: currentTab, documentTypes
                                                             {document.document_type.title}
                                                         </div>
                                                     </td>
+                                                    {showAuthorColumn && (
+                                                        <td className="h-12 px-4 align-middle">
+                                                            <div className="truncate text-sm" title={document.author?.name ?? ''}>
+                                                                {document.author?.name ?? '—'}
+                                                            </div>
+                                                        </td>
+                                                    )}
                                                     <td className="h-12 px-4 align-middle">
                                                         <div className="text-sm font-medium">{formatAmount(document.total_amount)}</div>
                                                     </td>
@@ -387,7 +459,7 @@ export default function Documents({ documents, status: currentTab, documentTypes
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan={5} className="h-24 text-center">
+                                                <td colSpan={showAuthorColumn ? 6 : 5} className="h-24 text-center">
                                                     <div className="text-muted-foreground">Документы не найдены</div>
                                                 </td>
                                             </tr>
