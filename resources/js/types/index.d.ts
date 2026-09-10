@@ -164,6 +164,10 @@ export interface HeaderFrpStats {
 }
 
 export interface FrpStats {
+    awaiting_approval: {
+        count: number;
+        documents: DashboardDocument[];
+    };
     own_documents: {
         total: number;
         draft: number;
