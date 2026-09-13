@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -14,6 +15,7 @@ use Illuminate\Support\Carbon;
  * @property string $title Hujjat nomi
  * @property int $workflow_type Workflow turi (1=ketma-ket, 2=to'g'ridan-to'g'ri)
  * @property bool $requires_deputy_approval Zam director tasdiqlashi kerakmi
+ * @property bool $is_active Yangi akt yaratishda tanlash mumkinmi
  * @property Carbon|null $created_at Yaratilgan vaqt
  * @property Carbon|null $updated_at Yangilangan vaqt
  */
@@ -33,6 +35,7 @@ class DocumentType extends Model
         'title',
         'workflow_type',
         'requires_deputy_approval',
+        'is_active',
     ];
 
     protected function casts(): array
@@ -40,7 +43,17 @@ class DocumentType extends Model
         return [
             'workflow_type' => 'integer',
             'requires_deputy_approval' => 'boolean',
+            'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Yangi akt yaratishda va filtrlarda tanlash mumkin bo'lgan turlar.
+     * O'chirilgan turdagi mavjud aktlar ochilaveradi, faqat yangisini yaratib bo'lmaydi.
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
     }
 
     public function isDirectWorkflow(): bool

@@ -12,7 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * App\Models\Documents Hujjatlar modeli
  *
  * @property int $id ID raqami
- * @property int $user_id Foydalanuvchi ID
+ * @property int $user_id Joriy bosqich egasi (workflow davomida o'zgaradi)
+ * @property int|null $author_id Hujjat muallifi (yaratilgandan keyin o'zgarmaydi)
  * @property int|null $assigned_user_id Tayinlangan xodim ID (workflow_type=2 uchun)
  * @property string $number Hujjat raqami
  * @property int $type Hujjat turi
@@ -27,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property Carbon|null $created_at Yaratilgan vaqt
  * @property Carbon|null $updated_at Yangilangan vaqt
  * @property-read User $user_info Foydalanuvchi haqida ma'lumot
+ * @property-read User|null $author Hujjat muallifi
  * @property-read User|null $assigned_user Tayinlangan xodim
  * @property-read DocumentProducts[]|null $products Hujjat mahsulotlari
  * @property-read DocumentType $document_type Hujjat turi haqida ma'lumot
@@ -42,6 +44,7 @@ class Documents extends Model
 
     protected $fillable = [
         'user_id',
+        'author_id',
         'assigned_user_id',
         'number',
         'type',
@@ -76,6 +79,11 @@ class Documents extends Model
     public function user_info(): HasOne
     {
         return $this->hasOne(User::class, 'id', 'user_id');
+    }
+
+    public function author(): HasOne
+    {
+        return $this->hasOne(User::class, 'id', 'author_id');
     }
 
     public function assigned_user(): HasOne

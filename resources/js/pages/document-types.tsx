@@ -12,6 +12,7 @@ interface DocumentType {
     code: string;
     title: string;
     workflow_type: number;
+    is_active: boolean;
     requires_deputy_approval: boolean;
 }
 
@@ -85,6 +86,7 @@ export default function DocumentTypes({ document_types, total, page = 1, perPage
                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Название</th>
                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Тип согласования</th>
                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Зам. директор</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Доступен</th>
                                     <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Действия</th>
                                 </tr>
                             </thead>
@@ -116,7 +118,16 @@ export default function DocumentTypes({ document_types, total, page = 1, perPage
                                                     <span className="text-muted-foreground">—</span>
                                                 )}
                                             </td>
-                                            <td className="h-12 px-4 align-middle text-right">
+                                            <td className="h-12 px-4 align-middle">
+                                                {documentType.is_active ? (
+                                                    <Badge variant="secondary">Да</Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-muted-foreground">
+                                                        Не используется
+                                                    </Badge>
+                                                )}
+                                            </td>
+                                            <td className="h-12 px-4 text-right align-middle">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -131,7 +142,7 @@ export default function DocumentTypes({ document_types, total, page = 1, perPage
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={5} className="h-24 text-center">
+                                        <td colSpan={6} className="h-24 text-center">
                                             <div className="text-muted-foreground">Типы документов не найдены</div>
                                         </td>
                                     </tr>

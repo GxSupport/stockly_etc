@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\DocumentType;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreDocumentRequest extends FormRequest
 {
@@ -20,7 +21,7 @@ class StoreDocumentRequest extends FormRequest
     {
         return [
             'number' => 'required|string|max:255',
-            'document_type_id' => 'required|integer',
+            'document_type_id' => ['required', 'integer', Rule::exists('document_type', 'id')->where('is_active', true)],
             'subscriber_title' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
             'date_order' => 'nullable|date',
@@ -53,6 +54,7 @@ class StoreDocumentRequest extends FormRequest
         return [
             'number.required' => 'Номер документа обязателен',
             'document_type_id.required' => 'Тип документа обязателен',
+            'document_type_id.exists' => 'Этот тип документа больше не используется',
             'products.required' => 'Необходимо добавить хотя бы один товар',
             'products.min' => 'Необходимо добавить хотя бы один товар',
             'products.*.product_name.required' => 'Название товара обязательно',

@@ -20,9 +20,9 @@ class DashboardService
     {
         return match ($user->type) {
             'admin' => $this->getAdminStats(),
-            'director' => $this->getDirectorStats(),
+            'director' => $this->getDirectorStats($user),
             'deputy_director' => $this->getDeputyDirectorStats($user),
-            'buxgalter' => $this->getBuxgalterStats(),
+            'buxgalter' => $this->getBuxgalterStats($user),
             'header_frp' => $this->getHeaderFrpStats($user),
             'frp' => $this->getFrpStats($user),
             default => [],
@@ -91,16 +91,9 @@ class DashboardService
     /**
      * @return array<string, mixed>
      */
-    private function getDirectorStats(): array
+    private function getDirectorStats(User $user): array
     {
-        $awaitingQuery = DocumentPriority::query()
-            ->where('user_role', 'director')
-            ->where('is_success', false)
-            ->where('is_active', 1)
-            ->whereHas('document', function ($q) {
-                $q->where('is_draft', 0)->where('is_returned', 0);
-            })
-            ->whereRaw('ordering = (SELECT status FROM documents WHERE documents.id = document_priority.document_id)');
+        $awaitingQuery = DocumentPriority::query()->awaitingApprovalFor($user);
 
         $awaitingCount = $awaitingQuery->count();
         $awaitingDocuments = (clone $awaitingQuery)
@@ -159,15 +152,7 @@ class DashboardService
      */
     private function getDeputyDirectorStats(User $user): array
     {
-        $awaitingQuery = DocumentPriority::query()
-            ->where('user_role', 'deputy_director')
-            ->where('user_id', $user->id)
-            ->where('is_success', false)
-            ->where('is_active', 1)
-            ->whereHas('document', function ($q) {
-                $q->where('is_draft', 0)->where('is_returned', 0);
-            })
-            ->whereRaw('ordering = (SELECT status FROM documents WHERE documents.id = document_priority.document_id)');
+        $awaitingQuery = DocumentPriority::query()->awaitingApprovalFor($user);
 
         $awaitingCount = $awaitingQuery->count();
         $awaitingDocuments = (clone $awaitingQuery)
@@ -211,16 +196,9 @@ class DashboardService
     /**
      * @return array<string, mixed>
      */
-    private function getBuxgalterStats(): array
+    private function getBuxgalterStats(User $user): array
     {
-        $awaitingQuery = DocumentPriority::query()
-            ->where('user_role', 'buxgalter')
-            ->where('is_success', false)
-            ->where('is_active', 1)
-            ->whereHas('document', function ($q) {
-                $q->where('is_draft', 0)->where('is_returned', 0);
-            })
-            ->whereRaw('ordering = (SELECT status FROM documents WHERE documents.id = document_priority.document_id)');
+        $awaitingQuery = DocumentPriority::query()->awaitingApprovalFor($user);
 
         $awaitingCount = $awaitingQuery->count();
         $awaitingDocuments = (clone $awaitingQuery)
@@ -296,15 +274,7 @@ class DashboardService
         $teamReturned = Documents::query()->whereIn('user_id', $subordinateIds)->where('is_returned', 1)->count();
         $teamFinished = Documents::query()->whereIn('user_id', $subordinateIds)->where('is_finished', 1)->count();
 
-        $awaitingQuery = DocumentPriority::query()
-            ->where('user_role', 'header_frp')
-            ->where('user_id', $user->id)
-            ->where('is_success', false)
-            ->where('is_active', 1)
-            ->whereHas('document', function ($q) {
-                $q->where('is_draft', 0)->where('is_returned', 0);
-            })
-            ->whereRaw('ordering = (SELECT status FROM documents WHERE documents.id = document_priority.document_id)');
+        $awaitingQuery = DocumentPriority::query()->awaitingApprovalFor($user);
 
         $awaitingCount = $awaitingQuery->count();
         $awaitingDocuments = (clone $awaitingQuery)
@@ -373,6 +343,8 @@ class DashboardService
             ->get()
             ->map(fn ($d) => $this->formatDocument($d));
 
+        $awaitingQuery = DocumentPriority::query()->awaitingApprovalFor($user);
+
         return [
             'own_documents' => [
                 'total' => $ownTotal,
@@ -380,6 +352,15 @@ class DashboardService
                 'sent' => $ownSent,
                 'returned' => $ownReturned,
                 'finished' => $ownFinished,
+            ],
+            'awaiting_approval' => [
+                'count' => $awaitingQuery->count(),
+                'documents' => (clone $awaitingQuery)
+                    ->with(['document.document_type', 'document.user_info'])
+                    ->latest()
+                    ->limit(10)
+                    ->get()
+                    ->map(fn ($p) => $this->formatPriorityDocument($p)),
             ],
             'warehouse' => $warehouse,
             'recent_documents' => $recentDocuments,

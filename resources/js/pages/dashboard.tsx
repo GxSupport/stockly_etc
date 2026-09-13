@@ -19,7 +19,7 @@ import type {
     HeaderFrpStats,
     SharedData,
 } from '@/types';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import type { LucideIcon } from 'lucide-react';
 import { Building2, CheckCircle2, Clock, FileText, Package, RotateCcw, Send, Users, Warehouse, XCircle } from 'lucide-react';
 
@@ -28,6 +28,9 @@ const TelegramIcon = ({ className }: { className?: string }) => (
         <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
     </svg>
 );
+
+/** АКТ ro'yxatining «Входящие» qamrovi — dashboard kartochkalari shu ro'yxatga olib boradi */
+const INCOMING_URL = '/documents/sent?scope=incoming';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -52,15 +55,17 @@ function StatCard({
     description,
     icon: Icon,
     className,
+    href,
 }: {
     title: string;
     value: string | number;
     description?: string;
     icon: LucideIcon;
     className?: string;
+    href?: string;
 }) {
-    return (
-        <Card className={className}>
+    const card = (
+        <Card className={`${className ?? ''} ${href ? 'h-full transition-colors hover:border-primary/50 hover:bg-muted/50' : ''}`}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">{title}</CardTitle>
                 <Icon className="h-4 w-4 text-muted-foreground" />
@@ -70,6 +75,28 @@ function StatCard({
                 {description && <p className="text-xs text-muted-foreground">{description}</p>}
             </CardContent>
         </Card>
+    );
+
+    if (!href) {
+        return card;
+    }
+
+    return (
+        <Link href={href} className="block">
+            {card}
+        </Link>
+    );
+}
+
+/**
+ * Raqamni orqasidagi ro'yxatga olib boradigan bosiladigan qiymat.
+ * Dashboard'dagi statistika badge'lari uchun.
+ */
+function StatLink({ href, children }: { href: string; children: React.ReactNode }) {
+    return (
+        <Link href={href} className="transition-opacity hover:opacity-80">
+            {children}
+        </Link>
     );
 }
 
@@ -255,14 +282,16 @@ function DirectorDashboard({ stats }: { stats: DirectorStats }) {
                     value={stats.awaiting_approval.count}
                     icon={Clock}
                     className={stats.awaiting_approval.count > 0 ? 'border-amber-300 dark:border-amber-700' : ''}
+                    href={INCOMING_URL}
                 />
                 <StatCard
                     title="Всего документов"
                     value={stats.documents_total.total}
                     description={`В процессе: ${stats.documents_total.in_progress}`}
                     icon={FileText}
+                    href={INCOMING_URL}
                 />
-                <StatCard title="Завершено" value={stats.documents_total.finished} icon={CheckCircle2} />
+                <StatCard title="Завершено" value={stats.documents_total.finished} icon={CheckCircle2} href={`${INCOMING_URL}&is_finished=1`} />
                 <StatCard title="Возвращено" value={stats.returned_count} icon={RotateCcw} />
             </div>
 
@@ -302,8 +331,9 @@ function DeputyDirectorDashboard({ stats }: { stats: DeputyDirectorStats }) {
                     value={stats.awaiting_approval.count}
                     icon={Clock}
                     className={stats.awaiting_approval.count > 0 ? 'border-amber-300 dark:border-amber-700' : ''}
+                    href={INCOMING_URL}
                 />
-                <StatCard title="Всего утверждено" value={stats.total_approved} icon={CheckCircle2} />
+                <StatCard title="Всего утверждено" value={stats.total_approved} icon={CheckCircle2} href={INCOMING_URL} />
                 <StatCard title="Возвращено" value={stats.returned_count} icon={RotateCcw} />
             </div>
 
@@ -326,8 +356,9 @@ function BuxgalterDashboard({ stats }: { stats: BuxgalterStats }) {
                     value={stats.awaiting_approval.count}
                     icon={Clock}
                     className={stats.awaiting_approval.count > 0 ? 'border-amber-300 dark:border-amber-700' : ''}
+                    href={INCOMING_URL}
                 />
-                <StatCard title="Всего обработано" value={stats.total_processed} icon={CheckCircle2} />
+                <StatCard title="Всего обработано" value={stats.total_processed} icon={CheckCircle2} href={`${INCOMING_URL}&is_finished=1`} />
                 <StatCard title="Завершённые (сумма)" value={formatAmount(stats.financial_summary.finished_amount)} icon={Package} />
                 <StatCard title="В процессе (сумма)" value={formatAmount(stats.financial_summary.in_progress_amount)} icon={FileText} />
             </div>
@@ -368,20 +399,23 @@ function HeaderFrpDashboard({ stats }: { stats: HeaderFrpStats }) {
                     value={stats.awaiting_approval.count}
                     icon={Clock}
                     className={stats.awaiting_approval.count > 0 ? 'border-amber-300 dark:border-amber-700' : ''}
+                    href={INCOMING_URL}
                 />
                 <StatCard
                     title="Документы команды"
                     value={stats.team_documents.total}
                     description={`Завершено: ${stats.team_documents.finished}`}
                     icon={Users}
+                    href={INCOMING_URL}
                 />
                 <StatCard
                     title="Мои документы"
                     value={stats.own_documents.total}
                     description={`Черновики: ${stats.own_documents.draft}`}
                     icon={FileText}
+                    href="/documents/sent?scope=mine"
                 />
-                <StatCard title="Возвращённые (команда)" value={stats.team_documents.returned} icon={RotateCcw} />
+                <StatCard title="Возвращённые (команда)" value={stats.team_documents.returned} icon={RotateCcw} href="/documents/return" />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -409,7 +443,9 @@ function HeaderFrpDashboard({ stats }: { stats: HeaderFrpStats }) {
                                             <TableCell className="font-medium">{member.name}</TableCell>
                                             <TableCell>{member.phone}</TableCell>
                                             <TableCell>
-                                                <Badge variant="secondary">{member.documents_count}</Badge>
+                                                <StatLink href={`${INCOMING_URL}&author=${member.id}`}>
+                                                    <Badge variant="secondary">{member.documents_count}</Badge>
+                                                </StatLink>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -434,19 +470,25 @@ function HeaderFrpDashboard({ stats }: { stats: HeaderFrpStats }) {
                         <div className="flex items-center gap-2">
                             <Send className="h-4 w-4 text-blue-500" />
                             <span className="text-sm">Отправлены:</span>
-                            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{stats.team_documents.sent}</Badge>
+                            <StatLink href={`${INCOMING_URL}&is_finished=0`}>
+                                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{stats.team_documents.sent}</Badge>
+                            </StatLink>
                         </div>
                         <div className="flex items-center gap-2">
                             <RotateCcw className="h-4 w-4 text-red-500" />
                             <span className="text-sm">Возвращены:</span>
-                            <Badge variant="destructive">{stats.team_documents.returned}</Badge>
+                            <StatLink href="/documents/return">
+                                <Badge variant="destructive">{stats.team_documents.returned}</Badge>
+                            </StatLink>
                         </div>
                         <div className="flex items-center gap-2">
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                             <span className="text-sm">Завершены:</span>
-                            <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                {stats.team_documents.finished}
-                            </Badge>
+                            <StatLink href={`${INCOMING_URL}&is_finished=1`}>
+                                <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                    {stats.team_documents.finished}
+                                </Badge>
+                            </StatLink>
                         </div>
                     </div>
                 </CardContent>
@@ -461,17 +503,29 @@ function FrpDashboard({ stats }: { stats: FrpStats }) {
     return (
         <div className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-                <StatCard title="Всего документов" value={stats.own_documents.total} icon={FileText} />
-                <StatCard title="Черновики" value={stats.own_documents.draft} icon={FileText} />
-                <StatCard title="Отправлены" value={stats.own_documents.sent} icon={Send} />
+                <StatCard title="Всего документов" value={stats.own_documents.total} icon={FileText} href="/documents/sent" />
+                <StatCard title="Черновики" value={stats.own_documents.draft} icon={FileText} href="/documents/draft" />
+                <StatCard title="Отправлены" value={stats.own_documents.sent} icon={Send} href="/documents/sent?is_finished=0" />
                 <StatCard
                     title="Возвращены"
                     value={stats.own_documents.returned}
                     icon={RotateCcw}
                     className={stats.own_documents.returned > 0 ? 'border-red-300 dark:border-red-700' : ''}
+                    href="/documents/return"
                 />
-                <StatCard title="Завершены" value={stats.own_documents.finished} icon={CheckCircle2} />
+                <StatCard title="Завершены" value={stats.own_documents.finished} icon={CheckCircle2} href="/documents/sent?is_finished=1" />
             </div>
+
+            {stats.awaiting_approval.count > 0 && (
+                <StatCard
+                    title="Ожидают вашего подтверждения"
+                    value={stats.awaiting_approval.count}
+                    description="Акты, назначенные вам на приём"
+                    icon={Clock}
+                    className="border-amber-300 dark:border-amber-700"
+                    href="/documents/incoming"
+                />
+            )}
 
             {stats.warehouse && (
                 <Card>
@@ -496,6 +550,10 @@ function FrpDashboard({ stats }: { stats: FrpStats }) {
                 <DocumentMiniTable title="Последние документы" documents={stats.recent_documents} />
                 <DocumentMiniTable title="Возвращённые документы" documents={stats.pending_returns} />
             </div>
+
+            {stats.awaiting_approval.count > 0 && (
+                <DocumentMiniTable title="Ожидают вашего подтверждения" documents={stats.awaiting_approval.documents} />
+            )}
         </div>
     );
 }
