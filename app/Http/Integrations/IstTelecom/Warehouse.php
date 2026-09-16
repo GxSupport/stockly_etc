@@ -14,7 +14,7 @@ class Warehouse extends Connector
      */
     public function resolveBaseUrl(): string
     {
-        return 'http://89.236.216.12:8083';
+        return config('services.one_c.base_url');
     }
 
     /**
@@ -27,7 +27,7 @@ class Warehouse extends Connector
         return [
             'Content-Type' => 'application/json',
             'Accept' => '*/*',
-            'Authorization' => 'Basic aHR0cGJvdDpodHRwYm90',
+            'Authorization' => 'Basic '.config('services.one_c.basic_auth'),
         ];
     }
 

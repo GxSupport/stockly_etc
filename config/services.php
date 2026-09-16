@@ -27,8 +27,13 @@ return [
     'resend' => [
         'key' => env('RESEND_KEY'),
     ],
-    'app'=>[
-        'local'=> env('APP_ENV','production')
+    'app' => [
+        'local' => env('APP_ENV', 'production'),
+    ],
+
+    'one_c' => [
+        'base_url' => env('ONE_C_BASE_URL', 'http://89.236.216.12:8083'),
+        'basic_auth' => env('ONE_C_BASIC_AUTH', 'aHR0cGJvdDpodHRwYm90'),
     ],
 
     'slack' => [
