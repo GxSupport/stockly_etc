@@ -13,7 +13,6 @@ use App\Models\DocumentReturned;
 use App\Models\Documents;
 use App\Models\DocumentType;
 use App\Models\User;
-use GuzzleHttp\Client;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -595,99 +594,19 @@ class DocumentService
 
     }
 
-    public function getGoods($code, $title, $date): array
+    /**
+     * Sklad qoldig'i — ProductService::getProductsList (1C get_stock_wh, issue #24) bilan bitta manba.
+     *
+     * @return array<int, ProductData>
+     *
+     * @throws \ErrorException
+     */
+    public function getGoods(string $code, string $title, ?string $date = null): array
     {
-        // Use direct Guzzle instead of Saloon for testing
-        $client = new Client([
-            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
-            'timeout' => 30,
-            'connect_timeout' => 10,
-            'verify' => false,
-        ]);
-
-        $baseUrl = 'http://89.236.216.12:8083';
-        $endpoint = '/base2/hs/CarData/os/empl';
-
-        $queryParams = [
-            'm' => 'get_stock_leftover',
-            'code' => $code,
-            'wh_name' => $title, // Raw title without encoding
-            'date' => $date,
-        ];
-
-        $fullUrl = $baseUrl.$endpoint.'?'.http_build_query($queryParams);
-
-        Log::info('1C Integration Request (Guzzle)', [
-            'base_url' => $baseUrl,
-            'endpoint' => $endpoint,
-            'query_params' => $queryParams,
-            'full_url' => $fullUrl,
-            'raw_title' => $title,
-        ]);
-
         try {
-            $response = $client->get($endpoint, [
-                'base_uri' => $baseUrl,
-                'query' => $queryParams,
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                    'Accept' => '*/*',
-                    'Authorization' => 'Basic aHR0cGJvdDpodHRwYm90',
-                ],
-            ]);
-
-            $statusCode = $response->getStatusCode();
-            $body = $response->getBody()->getContents();
-
-            Log::info('1C Integration Response (Guzzle)', [
-                'status' => $statusCode,
-                'successful' => $statusCode >= 200 && $statusCode < 300,
-                'body_length' => strlen($body),
-            ]);
-
-            $send = [];
-
-            if ($statusCode >= 200 && $statusCode < 300) {
-                $clean = str_replace('﻿', '', $body);
-                $items = json_decode($clean, true);
-
-                Log::info('1C Integration Parsed Data (Guzzle)', [
-                    'items_count' => is_array($items) ? count($items) : 'not_array',
-                ]);
-
-                if (is_array($items)) {
-                    foreach ($items as $value) {
-                        $send[] = new ProductData(
-                            $value['Номенклатура'],
-                            $value['Склад'],
-                            $value['ЕдИзм'],
-                            $this->numberFromStringForProduct($value['СуммаОстаток']),
-                            $value['КоличествоОстаток'],
-                            $value['КодНоменклатуры']
-                        );
-                    }
-                } else {
-                    Log::warning('1C Integration: items is not array (Guzzle)', ['items' => $items]);
-                }
-            } else {
-                Log::error('1C Integration Failed (Guzzle)', [
-                    'status' => $statusCode,
-                    'body' => $body,
-                    'url' => $fullUrl,
-                ]);
-                throw new \ErrorException('Ошибка подключения к серверу,ошибка: '.$statusCode);
-            }
-
-            Log::info('1C Integration Final Result (Guzzle)', ['products_count' => count($send)]);
-
-            return $send;
-
+            return app(ProductService::class)->getProductsList($code, $title, $date);
         } catch (\Exception $e) {
-            Log::error('1C Integration Exception (Guzzle)', [
-                'message' => $e->getMessage(),
-                'url' => $fullUrl,
-            ]);
-            throw new \ErrorException('Ошибка подключения к серверу: '.$e->getMessage());
+            throw new \ErrorException($e->getMessage());
         }
     }
 

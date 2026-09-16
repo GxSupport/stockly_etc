@@ -110,7 +110,7 @@ class WarehouseService
             'verify' => false,
         ]);
 
-        $baseUrl = 'http://89.236.216.12:8083';
+        $baseUrl = config('services.one_c.base_url');
         $endpoint = '/base2/hs/CarData/wh_data';
 
         Log::info('1C Warehouse Sync Request', ['endpoint' => $endpoint]);
@@ -121,7 +121,7 @@ class WarehouseService
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'Accept' => '*/*',
-                    'Authorization' => 'Basic aHR0cGJvdDpodHRwYm90',
+                    'Authorization' => 'Basic '.config('services.one_c.basic_auth'),
                 ],
             ]);
 

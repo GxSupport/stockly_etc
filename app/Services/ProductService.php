@@ -10,6 +10,7 @@ use App\Models\UserWarehouse;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ProductService
@@ -50,7 +51,7 @@ class ProductService
             'verify' => false,
         ]);
 
-        $baseUrl = 'http://89.236.216.12:8083';
+        $baseUrl = config('services.one_c.base_url');
         $endpoint = '/base2/hs/CarData/goods/goodsget_stock_leftover_os'; // Same endpoint as GetGoodsRequest
 
         // Build query parameters like GetGoodsRequest does
@@ -83,7 +84,7 @@ class ProductService
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'Accept' => '*/*',
-                    'Authorization' => 'Basic aHR0cGJvdDpodHRwYm90',
+                    'Authorization' => 'Basic '.config('services.one_c.basic_auth'),
                 ],
             ]);
 
@@ -160,7 +161,7 @@ class ProductService
             'verify' => false,
         ]);
 
-        $baseUrl = 'http://89.236.216.12:8083';
+        $baseUrl = config('services.one_c.base_url');
         $endpoint = '/base2/hs/CarData/os_composition/get_composition';
 
         $requestBody = [
@@ -185,7 +186,7 @@ class ProductService
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'Accept' => '*/*',
-                    'Authorization' => 'Basic aHR0cGJvdDpodHRwYm90',
+                    'Authorization' => 'Basic '.config('services.one_c.basic_auth'),
                 ],
             ]);
 
@@ -244,102 +245,153 @@ class ProductService
         }
     }
 
+    /**
+     * Tanlangan sklad qoldig'i (issue #24) — 1C ning `get_stock_wh?date=&wh_code=` metodi.
+     * Eski `os/empl?m=get_stock_leftover` sklad bo'yicha filtrlamas edi, shuning uchun ro'yxat bo'sh kelardi.
+     *
+     * @return array<int, ProductData>
+     */
     public function getProductsList(string $warehouseCode, string $warehouseTitle, ?string $date = null): array
     {
-        $date = $date ?? date('d.m.Y');
-        $date = date('d.m.Y', strtotime($date));
+        $date = date('d.m.Y', strtotime($date ?? date('d.m.Y')));
 
-        $client = new Client([
-            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
-            'timeout' => 120,
-            'connect_timeout' => 10,
-            'verify' => false,
-        ]);
-
-        $baseUrl = 'http://89.236.216.12:8083';
-        $endpoint = '/base2/hs/CarData/os/empl';
-
-        $queryParams = [
-            'm' => 'get_stock_leftover',
-            'code' => $warehouseCode,
-            'wh_name' => $warehouseTitle,
-            'date' => $date,
-        ];
-
+        $baseUrl = config('services.one_c.base_url');
+        $endpoint = '/base2/hs/CarData/get_stock_wh';
+        $queryParams = ['date' => $date, 'wh_code' => $warehouseCode];
         $fullUrl = $baseUrl.$endpoint.'?'.http_build_query($queryParams);
 
-        Log::info('1C Products Integration Request (Guzzle)', [
-            'base_url' => $baseUrl,
-            'endpoint' => $endpoint,
-            'query_params' => $queryParams,
-            'full_url' => $fullUrl,
-        ]);
+        Log::info('1C Stock WH Request', ['url' => $fullUrl]);
 
         try {
-            $response = $client->get($endpoint, [
-                'base_uri' => $baseUrl,
-                'query' => $queryParams,
-                'headers' => [
+            $response = Http::withOptions([
+                'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
+                'verify' => false,
+            ])
+                ->withHeaders([
                     'Content-Type' => 'application/json',
                     'Accept' => '*/*',
-                    'Authorization' => 'Basic aHR0cGJvdDpodHRwYm90',
-                ],
-            ]);
+                    'Authorization' => 'Basic '.config('services.one_c.basic_auth'),
+                ])
+                ->connectTimeout(10)
+                ->timeout(120)
+                ->get($baseUrl.$endpoint, $queryParams);
 
-            $statusCode = $response->getStatusCode();
-            $body = $response->getBody()->getContents();
-
-            Log::info('1C Products Integration Response (Guzzle)', [
-                'status' => $statusCode,
-                'successful' => $statusCode >= 200 && $statusCode < 300,
-                'body_length' => strlen($body),
-            ]);
-
-            $products = [];
-
-            if ($statusCode >= 200 && $statusCode < 300) {
-                $clean = str_replace('﻿', '', $body);
-                $items = json_decode($clean, true);
-
-                Log::info('1C Products Integration Parsed Data (Guzzle)', [
-                    'items_count' => is_array($items) ? count($items) : 'not_array',
-                ]);
-
-                if (is_array($items)) {
-                    foreach ($items as $value) {
-                        $products[] = new ProductData(
-                            name: $value['Номенклатура'],
-                            warehouse: $value['Склад'],
-                            measure: $value['ЕдИзм'],
-                            price: $this->numberFromStringForProduct($value['СуммаОстаток']),
-                            count: $value['КоличествоОстаток'],
-                            nomenclature: $value['КодНоменклатуры'],
-                            warehouse_code: $warehouseCode,
-                        );
-                    }
-                } else {
-                    Log::warning('1C Products Integration: items is not array (Guzzle)', ['items' => $items]);
-                }
-            } else {
-                Log::error('1C Products Integration Failed (Guzzle)', [
-                    'status' => $statusCode,
-                    'body' => $body,
-                    'url' => $fullUrl,
-                ]);
-                throw new \Exception('Ошибка подключения к серверу, ошибка: '.$statusCode);
+            if (! $response->successful()) {
+                Log::error('1C Stock WH Failed', ['status' => $response->status(), 'url' => $fullUrl]);
+                throw new \Exception('Ошибка подключения к серверу, ошибка: '.$response->status());
             }
 
-            Log::info('1C Products Integration Final Result (Guzzle)', ['products_count' => count($products)]);
+            $items = json_decode(str_replace("\xEF\xBB\xBF", '', $response->body()), true);
+
+            if (! is_array($items)) {
+                Log::warning('1C Stock WH: response is not an array', ['url' => $fullUrl]);
+
+                return [];
+            }
+
+            $products = $this->mapStockWhItems($items, $warehouseCode, $warehouseTitle);
+
+            Log::info('1C Stock WH Result', ['raw_count' => count($items), 'products_count' => count($products)]);
 
             return $products;
-
         } catch (\Exception $e) {
-            Log::error('1C Products Integration Exception (Guzzle)', [
-                'message' => $e->getMessage(),
-                'url' => $fullUrl,
-            ]);
+            Log::error('1C Stock WH Exception', ['message' => $e->getMessage(), 'url' => $fullUrl]);
             throw new \Exception('Ошибка подключения к серверу: '.$e->getMessage());
         }
+    }
+
+    /**
+     * get_stock_wh javobini ProductData ro'yxatiga aylantiradi.
+     * Bir xil tovar Субконто3 (hisob-kitob hujjati) bo'yicha bir necha qator bo'lib keladi —
+     * nom bo'yicha birlashtirilib, soni va summasi qo'shiladi. Narx = summa / soni (birlik narxi).
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     * @return array<int, ProductData>
+     */
+    public function mapStockWhItems(array $items, string $warehouseCode, string $warehouseTitle): array
+    {
+        $grouped = [];
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $name = $this->cleanStockWhName((string) ($item['Субконто1'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+
+            $quantity = $this->parseOneCNumber($item['КоличествоОстаток'] ?? null);
+            $sum = $this->parseOneCNumber($item['СуммаОстаток'] ?? null);
+
+            if (! isset($grouped[$name])) {
+                $grouped[$name] = ['quantity' => 0.0, 'sum' => 0.0];
+            }
+            $grouped[$name]['quantity'] += $quantity;
+            $grouped[$name]['sum'] += $sum;
+        }
+
+        $products = [];
+        foreach ($grouped as $name => $totals) {
+            $quantity = round($totals['quantity'], 3);
+            $sum = round($totals['sum'], 2);
+            $unitPrice = $quantity > 0 ? round($sum / $quantity, 2) : $sum;
+
+            $products[] = new ProductData(
+                name: $name,
+                warehouse: $warehouseTitle,
+                measure: 'шт.',
+                price: $unitPrice,
+                count: $this->formatQuantity($quantity),
+                nomenclature: mb_substr($name, 0, 255),
+                warehouse_code: $warehouseCode,
+            );
+        }
+
+        return $products;
+    }
+
+    /**
+     * Субконто1 ba'zan "53030008\t\tEchoLife HG510..." ko'rinishida keladi — boshidagi kod va tab/probellar olib tashlanadi.
+     */
+    public function cleanStockWhName(string $name): string
+    {
+        $name = str_replace("\xC2\xA0", ' ', $name);
+        $name = preg_replace('/^\s*\d{4,}\s*\t+\s*/u', '', $name) ?? $name;
+        $name = preg_replace('/\s+/u', ' ', $name) ?? $name;
+
+        return trim($name);
+    }
+
+    /**
+     * 1C raqamlari matn ko'rinishida keladi: "201 000", "452 913,81", "1 234.5".
+     * Probellar (oddiy va NBSP) olib tashlanadi, vergul kasr ajratgichi sifatida nuqtaga almashtiriladi.
+     */
+    public function parseOneCNumber(mixed $value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return (float) $value;
+        }
+
+        $number = str_replace([' ', "\xC2\xA0", "\xE2\x80\xAF"], '', (string) $value);
+
+        if (str_contains($number, ',') && str_contains($number, '.')) {
+            $number = str_replace(',', '', $number);
+        } else {
+            $number = str_replace(',', '.', $number);
+        }
+
+        return is_numeric($number) ? (float) $number : 0.0;
+    }
+
+    private function formatQuantity(float $quantity): string
+    {
+        return rtrim(rtrim(number_format($quantity, 3, '.', ''), '0'), '.');
     }
 
     /**
@@ -360,7 +412,7 @@ class ProductService
             'verify' => false,
         ]);
 
-        $baseUrl = 'http://89.236.216.12:8083';
+        $baseUrl = config('services.one_c.base_url');
         $endpoint = '/base2/hs/CarData/goods/goodsget_stock_leftover_os';
         $queryParams = ['whCode' => $warehouseCode, 'date' => $date];
 
@@ -373,7 +425,7 @@ class ProductService
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'Accept' => '*/*',
-                    'Authorization' => 'Basic aHR0cGJvdDpodHRwYm90',
+                    'Authorization' => 'Basic '.config('services.one_c.basic_auth'),
                 ],
             ]);
 
@@ -430,7 +482,7 @@ class ProductService
             'verify' => false,
         ]);
 
-        $baseUrl = 'http://89.236.216.12:8083';
+        $baseUrl = config('services.one_c.base_url');
         $endpoint = '/base2/hs/CarData/goods/goodsget_stock_leftover_os';
         $queryParams = ['date' => date('d.m.Y')];
 
@@ -443,7 +495,7 @@ class ProductService
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'Accept' => '*/*',
-                    'Authorization' => 'Basic aHR0cGJvdDpodHRwYm90',
+                    'Authorization' => 'Basic '.config('services.one_c.basic_auth'),
                 ],
             ]);
 
@@ -504,24 +556,6 @@ class ProductService
 
     public function numberFromStringForProduct(?string $number): float
     {
-        // если значение пустое или null
-        if (empty($number)) {
-            return 0.0;
-        }
-
-        // убираем запятые и пробелы
-        $number = str_replace([',', ' '], '', $number);
-
-        // проверяем что значение числовое
-        if (! is_numeric($number)) {
-            return 0.0;
-        }
-
-        // конвертируем сумму в сумы в тийины
-        $number = (float) $number * 100;
-        // форматируем число в float
-        $number = $number / 100;
-
-        return $number;
+        return round($this->parseOneCNumber($number), 2);
     }
 }

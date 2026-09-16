@@ -842,6 +842,13 @@ export default function DocumentForm({
                                     const needsWarehouse = rowNeedsWarehouse(product);
                                     const rowLoading = !!productsLoading[rowKey] && !needsWarehouse;
                                     const rowError = needsWarehouse ? null : productsError[rowKey];
+                                    // 1С javob berdi, lekin skladda qoldiq yo'q (issue #24) — foydalanuvchiga tushunarli xabar
+                                    const rowEmpty =
+                                        !needsWarehouse &&
+                                        !rowLoading &&
+                                        !rowError &&
+                                        !!productsByWarehouse[rowKey] &&
+                                        getProductsForRow(product).length === 0;
 
                                     return (
                                     <div key={product.id} className="rounded-lg border p-4">
@@ -914,6 +921,20 @@ export default function DocumentForm({
                                                             onClick={() => fetchWarehouseProducts(rowKey, true)}
                                                         >
                                                             Повторить
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                                {rowEmpty && (
+                                                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                                                        <span>В 1С по этому складу нет остатков</span>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-6 px-2 text-xs"
+                                                            onClick={() => fetchWarehouseProducts(rowKey, true)}
+                                                        >
+                                                            Обновить
                                                         </Button>
                                                     </div>
                                                 )}
