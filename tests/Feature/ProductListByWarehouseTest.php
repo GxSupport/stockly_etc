@@ -117,3 +117,27 @@ test('list without warehouse_code merges products from every warehouse assigned 
         ->assertJsonPath('data.0.nomenclature', 'A')
         ->assertJsonPath('data.1.nomenclature', 'B');
 });
+
+test('list with source=os loads the warehouse OS register instead of goods (issue #27)', function () {
+    $user = createProductListFixtures();
+
+    $mock = $this->mock(ProductService::class);
+    $mock->shouldReceive('getWarehouseOsList')
+        ->once()
+        ->withArgs(fn ($code) => $code === 'WH-PLT-2')
+        ->andReturn([['nomenclature' => 'OS-1', 'warehouse_code' => 'WH-PLT-2']]);
+    $mock->shouldNotReceive('getProductsList');
+
+    $this->actingAs($user)
+        ->getJson('/api/product/list?warehouse_code=WH-PLT-2&source=os')
+        ->assertOk()
+        ->assertJsonPath('data.0.nomenclature', 'OS-1');
+});
+
+test('list rejects an unknown source', function () {
+    $user = createProductListFixtures();
+
+    $this->actingAs($user)
+        ->getJson('/api/product/list?warehouse_code=WH-PLT-2&source=foo')
+        ->assertUnprocessable();
+});
