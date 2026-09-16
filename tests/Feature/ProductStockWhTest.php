@@ -113,3 +113,29 @@ test('getProductsList throws a readable error when 1C fails', function () {
 
     app(ProductService::class)->getProductsList('1137', 'Склад');
 })->throws(Exception::class, 'Ошибка подключения к серверу');
+
+test('getWarehouseOsList maps the OS register and stamps the warehouse code (issue #27)', function () {
+    config(['services.one_c.base_url' => 'http://one-c.test:8083']);
+
+    Http::fake([
+        'one-c.test:8083/base2/hs/CarData/goods/goodsget_stock_leftover_os*' => Http::response([
+            [
+                'ОсновноеСредство' => 'IAD - 132 на узле10582 "Alfa Profil"',
+                'ОсновноеСредствоКод' => 'ETC002623',
+                'Склад' => '" ALFA PROFIL" Яшнаб. р-н',
+                'СтоимостьОстаток' => '10 550 000',
+                'КоличествоОстаток' => '0',
+            ],
+        ]),
+    ]);
+
+    $products = app(ProductService::class)->getWarehouseOsList('ETC005793');
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'whCode=ETC005793') && str_contains($request->url(), 'date='.date('d.m.Y')));
+
+    expect($products)->toHaveCount(1);
+    expect($products[0]->nomenclature)->toBe('ETC002623');
+    expect($products[0]->warehouse_code)->toBe('ETC005793');
+    expect($products[0]->price)->toBe(10550000.0);
+    expect($products[0]->count)->toBe('0');
+});

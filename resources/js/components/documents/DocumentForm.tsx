@@ -188,12 +188,13 @@ export default function DocumentForm({
                 }
                 if (field === 'quantity' && p.selected_product) {
                     const maxQty = p.max_quantity;
-                    const validatedQuantity = Math.max(1, Math.min(value, maxQty));
+                    // max_quantity 0 — qoldiq noma'lum (ОС registrida КоличествоОстаток 0 keladi), cheklanmaydi
+                    const validatedQuantity = maxQty > 0 ? Math.max(1, Math.min(value, maxQty)) : Math.max(1, value);
                     updated.quantity = validatedQuantity;
                     updated.amount = parseNumericValue(p.selected_product.price) * validatedQuantity;
                     setQuantityWarnings((prev) => ({
                         ...prev,
-                        [String(p.id)]: value > maxQty ? `Превышает остаток на складе — доступно ${maxQty}` : null,
+                        [String(p.id)]: maxQty > 0 && value > maxQty ? `Превышает остаток на складе — доступно ${maxQty}` : null,
                     }));
                 }
                 return updated;
@@ -203,27 +204,33 @@ export default function DocumentForm({
         setData('products', updatedProducts);
     };
 
+    // Демонтажа (issue #27): tovarlar ОС registridan («Товары» modali bilan bir xil manba) — kalit 'os:<sklad kodi>'
+    const OS_KEY_PREFIX = 'os:';
+    const osKeyFor = (warehouseCode: string) => `${OS_KEY_PREFIX}${warehouseCode}`;
+
     // Tanlangan skladdan (yoki '' — o'z skladidan) tovar ro'yxatini 1С orqali yuklash
-    const fetchWarehouseProducts = async (code: string, force = false) => {
-        if (!force && (productsByWarehouse[code] || inFlightProducts.current.has(code))) return;
-        inFlightProducts.current.add(code);
-        setProductsLoading((prev) => ({ ...prev, [code]: true }));
-        setProductsError((prev) => ({ ...prev, [code]: null }));
+    const fetchWarehouseProducts = async (key: string, force = false) => {
+        if (!force && (productsByWarehouse[key] || inFlightProducts.current.has(key))) return;
+        const fromOsRegister = key.startsWith(OS_KEY_PREFIX);
+        const code = fromOsRegister ? key.slice(OS_KEY_PREFIX.length) : key;
+        inFlightProducts.current.add(key);
+        setProductsLoading((prev) => ({ ...prev, [key]: true }));
+        setProductsError((prev) => ({ ...prev, [key]: null }));
         try {
             const response = await axios.get('/api/product/list', {
-                params: code ? { warehouse_code: code } : {},
+                params: code ? { warehouse_code: code, ...(fromOsRegister ? { source: 'os' } : {}) } : {},
                 timeout: 120000,
             });
             if (response.data.success) {
-                setProductsByWarehouse((prev) => ({ ...prev, [code]: response.data.data }));
+                setProductsByWarehouse((prev) => ({ ...prev, [key]: response.data.data }));
             } else {
-                setProductsError((prev) => ({ ...prev, [code]: response.data.message || 'Ошибка при загрузке товаров из 1С' }));
+                setProductsError((prev) => ({ ...prev, [key]: response.data.message || 'Ошибка при загрузке товаров из 1С' }));
             }
         } catch {
-            setProductsError((prev) => ({ ...prev, [code]: 'Ошибка при загрузке товаров из 1С' }));
+            setProductsError((prev) => ({ ...prev, [key]: 'Ошибка при загрузке товаров из 1С' }));
         } finally {
-            inFlightProducts.current.delete(code);
-            setProductsLoading((prev) => ({ ...prev, [code]: false }));
+            inFlightProducts.current.delete(key);
+            setProductsLoading((prev) => ({ ...prev, [key]: false }));
         }
     };
 
@@ -231,7 +238,7 @@ export default function DocumentForm({
     // Смонтаж (issue #18): har doim o'z skladi ('') — «Место установки» ga bog'lanmaydi.
     const getWarehouseKeyForRow = (p: ProductItem): string => {
         if (isDirectWorkflowType) return p.warehouse_code ?? '';
-        if (isDismantlingDocument) return selectedWarehouse?.code ?? '';
+        if (isDismantlingDocument) return selectedWarehouse?.code ? osKeyFor(selectedWarehouse.code) : '';
         return '';
     };
 
@@ -321,7 +328,7 @@ export default function DocumentForm({
             return;
         }
         if (isDismantlingDocument && selectedWarehouse?.code) {
-            fetchWarehouseProducts(selectedWarehouse.code);
+            fetchWarehouseProducts(osKeyFor(selectedWarehouse.code));
         }
     }, [selectedDocumentType?.id, showProductNotes, isInstallationDocument, isDismantlingDocument, selectedWarehouse?.code]);
 

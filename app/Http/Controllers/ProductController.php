@@ -16,6 +16,9 @@ class ProductController extends Controller
     /**
      * Tovar qoldiqlari ro'yxati: warehouse_code berilsa — o'sha sklad,
      * berilmasa — foydalanuvchiga biriktirilgan barcha skladlar birlashtirilib qaytariladi.
+     *
+     * source=os (issue #27, Демонтажа) — ОС (asosiy vositalar) registri, «Товары» modali bilan bir xil manba.
+     * Aks holda — tovar qoldig'i (get_stock_wh).
      */
     public function list(ProductListRequest $request): JsonResponse
     {
@@ -50,16 +53,22 @@ class ProductController extends Controller
         }
 
         $date = $request->input('date');
+        $fromOsRegister = $request->input('source') === 'os';
 
         try {
             $products = [];
 
             foreach ($warehouses as $warehouse) {
-                $products = array_merge($products, $this->productService->getProductsList(
-                    warehouseCode: $warehouse->code,
-                    warehouseTitle: $warehouse->title,
-                    date: $date
-                ));
+                $products = array_merge($products, $fromOsRegister
+                    ? $this->productService->getWarehouseOsList(
+                        warehouseCode: $warehouse->code,
+                        date: $date
+                    )
+                    : $this->productService->getProductsList(
+                        warehouseCode: $warehouse->code,
+                        warehouseTitle: $warehouse->title,
+                        date: $date
+                    ));
             }
 
             return response()->json([

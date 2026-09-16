@@ -25,6 +25,7 @@ class ProductListRequest extends FormRequest
         return [
             'date' => ['nullable', 'date_format:d.m.Y'],
             'warehouse_code' => ['nullable', 'string', 'exists:warehouse,code'],
+            'source' => ['nullable', 'in:goods,os'],
         ];
     }
 
@@ -38,6 +39,7 @@ class ProductListRequest extends FormRequest
         return [
             'date.date_format' => 'Сана формати нотўғри. Тўғри формат: дд.мм.ЙЙЙЙ',
             'warehouse_code.exists' => 'Склад не найден',
+            'source.in' => 'Неверный источник остатков',
         ];
     }
 }

@@ -405,13 +405,6 @@ class ProductService
     {
         $date = date('d.m.Y', strtotime($date ?? date('d.m.Y')));
 
-        $client = new Client([
-            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
-            'timeout' => 60,
-            'connect_timeout' => 10,
-            'verify' => false,
-        ]);
-
         $baseUrl = config('services.one_c.base_url');
         $endpoint = '/base2/hs/CarData/goods/goodsget_stock_leftover_os';
         $queryParams = ['whCode' => $warehouseCode, 'date' => $date];
@@ -419,25 +412,25 @@ class ProductService
         Log::info('1C Warehouse OS Request', ['endpoint' => $endpoint, 'query_params' => $queryParams]);
 
         try {
-            $response = $client->get($endpoint, [
-                'base_uri' => $baseUrl,
-                'query' => $queryParams,
-                'headers' => [
+            $response = Http::withOptions([
+                'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
+                'verify' => false,
+            ])
+                ->withHeaders([
                     'Content-Type' => 'application/json',
                     'Accept' => '*/*',
                     'Authorization' => 'Basic '.config('services.one_c.basic_auth'),
-                ],
-            ]);
+                ])
+                ->connectTimeout(10)
+                ->timeout(60)
+                ->get($baseUrl.$endpoint, $queryParams);
 
-            $statusCode = $response->getStatusCode();
-            $body = $response->getBody()->getContents();
-
-            if ($statusCode < 200 || $statusCode >= 300) {
-                Log::error('1C Warehouse OS Failed', ['status' => $statusCode]);
-                throw new \Exception('Ошибка подключения к серверу, ошибка: '.$statusCode);
+            if (! $response->successful()) {
+                Log::error('1C Warehouse OS Failed', ['status' => $response->status()]);
+                throw new \Exception('Ошибка подключения к серверу, ошибка: '.$response->status());
             }
 
-            $items = json_decode(str_replace('﻿', '', $body), true);
+            $items = json_decode(str_replace("\xEF\xBB\xBF", '', $response->body()), true);
             if (! is_array($items)) {
                 return [];
             }
@@ -451,6 +444,7 @@ class ProductService
                     price: $this->numberFromStringForProduct($value['СтоимостьОстаток'] ?? null),
                     count: (string) ($value['КоличествоОстаток'] ?? ''),
                     nomenclature: (string) ($value['ОсновноеСредствоКод'] ?? ''),
+                    warehouse_code: $warehouseCode,
                 );
             }
 
