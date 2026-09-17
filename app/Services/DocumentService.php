@@ -16,12 +16,22 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class DocumentService
 {
+    /** Faqat foydalanuvchining o'zi yaratgan hujjatlar */
+    public const SCOPE_MINE = 'mine';
+
+    /** Faqat foydalanuvchi tasdig'ini kutayotgan (boshqalardan kelgan) hujjatlar */
+    public const SCOPE_INCOMING = 'incoming';
+
+    /** Ikkalasi ham */
+    public const SCOPE_ALL = 'all';
+
     public Documents $document;
 
     public ?User $user;
@@ -31,6 +41,9 @@ class DocumentService
     public ?DocumentPriorityConfig $current_config;
 
     private bool $attachedHead = false;
+
+    /** @var Collection<int, int>|null */
+    private ?Collection $incomingIds = null;
 
     private mixed $requestFront;
 
@@ -111,125 +124,34 @@ class DocumentService
             return $query->latest()->paginate($perPage);
         }
 
-        // For 'sent', we implement the detailed logic from the old service.
         if ($status === 'sent') {
-            // FRP uchun - faqat o'zlari yaratgan hujjatlarni ko'rsatish
-            if ($this->user->type === 'frp') {
-                $query = Documents::with(['user_info', 'document_type', 'products', 'priority.role_info'])
-                    ->where('is_draft', 0)
-                    ->where('is_returned', 0)
-                    ->whereHas('priority', function ($q) {
-                        // Foydalanuvchi yaratgan hujjatlar (birinchi priority - frp)
-                        $q->where('ordering', 1)
-                            ->where('user_id', $this->user->id)
-                            ->where('is_active', 1);
-                    });
+            $scope = $this->resolveScope($request->input('scope'));
 
-                $this->applyFilters($query, $search, $startDate, $endDate, $documentType, $documentStatus);
+            $query = Documents::with(['user_info', 'author', 'document_type', 'products', 'priority.role_info'])
+                ->where('is_draft', 0)
+                ->where('is_returned', 0);
 
-                return $query->latest()->paginate($perPage);
-            }
-
-            // Header FRP uchun - o'zlari yaratgan VA tasdiqlash kutayotgan hujjatlar
-            if ($this->user->type === 'header_frp') {
-                $query = Documents::with(['user_info', 'document_type', 'products', 'priority.role_info'])
-                    ->where('is_draft', 0)
-                    ->where('is_returned', 0)
-                    ->where(function ($q) {
-                        // 1. O'zlari yaratgan hujjatlar (ordering=1, user_id=current_user)
-                        $q->whereHas('priority', function ($subQ) {
-                            $subQ->where('ordering', 1)
-                                ->where('user_id', $this->user->id)
-                                ->where('is_active', 1);
-                        })
-                        // 2. YOKI FRP dan kelgan, tasdiqlash kutayotgan hujjatlar
-                            ->orWhere(function ($subQ) {
-                                $subQ->where('status', 2) // header_frp bosqichida
-                                    ->whereHas('priority', function ($priorityQ) {
-                                        $priorityQ->where('ordering', 2)
-                                            ->where('user_role', 'header_frp')
-                                            ->where('is_success', false)
-                                            ->where('is_active', 1)
-                                            // Приём-передача (direct) da boshliq user_id bilan belgilanadi —
-                                            // faqat o'ziga bo'ysunuvchi ishchining aktini ko'radi.
-                                            // Ketma-ket workflow'da user_id null — barcha header_frp ko'radi.
-                                            ->where(function ($userQ) {
-                                                $userQ->whereNull('user_id')
-                                                    ->orWhere('user_id', $this->user->id);
-                                            });
-                                    });
-                            });
-                    });
-
-                $this->applyFilters($query, $search, $startDate, $endDate, $documentType, $documentStatus);
-
-                return $query->latest()->paginate($perPage);
-            }
-
-            // Boshqa rollar uchun - tasdiqlash navbatidagi hujjatlar
-            // Priority bo'yicha filtrlanadi - status tekshiruvi kerak emas
-            // chunki har bir document type uchun ordering har xil bo'lishi mumkin
-            // (masalan, deputy_director skip qilinsa, director ordering=3 bo'ladi)
-
-            // Get the document IDs from the DocumentPriority table with filters
-            $documentIdsQuery = DocumentPriority::where('is_active', 1)
-                ->where('is_success', false) // Faqat tasdiqlanmagan hujjatlarni ko'rsatish
-                ->where('user_role', '!=', 'assigned') // assigned hujjatlar faqat 'incoming' da ko'rinadi
-                ->where(function ($query) {
-                    // Rol bo'yicha (assigned emas). deputy_director ham endi rol asosida ishlaydi —
-                    // istalgan zam direktor o'z rolidagi hujjatni ko'radi.
-                    $query->where('user_role', $this->user->type)
-                        ->where(function ($q2) {
-                            $q2->whereNull('user_id')
-                                ->orWhere('user_id', $this->user->id);
-                        });
-                })
-                // Faqat hujjat shu bosqichga kelgan bo'lsa ko'rsatish
-                // document.status = priority.ordering
-                ->whereHas('document', function ($query) use ($search, $startDate, $endDate, $documentType, $documentStatus) {
-                    $query->where('is_draft', 0)
-                        ->where('is_returned', 0)
-                        ->whereColumn('documents.status', 'document_priority.ordering');
-
-                    // Apply filters to document relation
-                    if ($search) {
-                        $query->where('number', 'like', "%{$search}%");
-                    }
-
-                    if ($startDate) {
-                        $query->where('date_order', '>=', $startDate);
-                    }
-
-                    if ($endDate) {
-                        $query->where('date_order', '<=', $endDate);
-                    }
-
-                    if ($documentType) {
-                        $query->where('document_type_id', $documentType);
-                    }
-
-                    if ($documentStatus) {
-                        if ($documentStatus === 'draft') {
-                            $query->where('is_draft', 1);
-                        } elseif ($documentStatus === 'returned') {
-                            $query->where('is_returned', 1);
-                        } elseif ($documentStatus === 'finished') {
-                            $query->where('is_finished', 1);
-                        } elseif ($documentStatus === 'processing') {
-                            $query->where('is_draft', 0)
-                                ->where('is_returned', 0)
-                                ->where('is_finished', 0);
-                        }
-                    }
+            if ($scope === self::SCOPE_MINE) {
+                $query->where('author_id', $this->user->id);
+            } elseif ($scope === self::SCOPE_INCOMING) {
+                $query->whereIn('id', $this->incomingDocumentIds());
+            } else {
+                $incomingIds = $this->incomingDocumentIds();
+                $query->where(function ($q) use ($incomingIds) {
+                    $q->where('author_id', $this->user->id)
+                        ->orWhereIn('id', $incomingIds);
                 });
+            }
 
-            $documentIds = $documentIdsQuery->pluck('document_id');
+            // Dashboard'dagi «Члены команды» qatoridan muallif bo'yicha o'tish uchun.
+            // Qamrov yuqorida allaqachon cheklangani uchun bu faqat qo'shimcha filtr.
+            if ($author = $request->input('author')) {
+                $query->where('author_id', $author);
+            }
 
-            // Now, fetch the documents with those IDs
-            return Documents::with(['user_info', 'document_type', 'products', 'priority.role_info'])
-                ->whereIn('id', $documentIds)
-                ->latest()
-                ->paginate($perPage);
+            $this->applyFilters($query, $search, $startDate, $endDate, $documentType, $documentStatus);
+
+            return $query->latest()->paginate($perPage);
         }
 
         // 'incoming' - Kelgan hujjatlar (faqat tayinlangan hujjatlar - oddiy ishchilar uchun)
@@ -280,6 +202,98 @@ class DocumentService
         return Documents::query()->where('id', -1)->paginate($perPage);
     }
 
+    /**
+     * «Отправленные» ro'yxatida foydalanuvchi uchun mantiqiy bo'lgan qamrovlar.
+     * Ikkalasi ham mavjud bo'lgandagina frontendda filtr ko'rsatiladi.
+     *
+     * @return array<int, string>
+     */
+    public function availableScopes(): array
+    {
+        $scopes = [];
+
+        if ($this->authoredCount() > 0) {
+            $scopes[] = self::SCOPE_MINE;
+        }
+
+        if ($this->incomingDocumentIds()->isNotEmpty()) {
+            $scopes[] = self::SCOPE_INCOMING;
+        }
+
+        if (count($scopes) > 1) {
+            $scopes[] = self::SCOPE_ALL;
+        }
+
+        return $scopes;
+    }
+
+    /**
+     * So'ralgan qamrovni tekshirish. Ruxsat etilmagan yoki bo'sh qiymat kelsa —
+     * tasdiqlash kerak bo'lgan hujjat e'tibordan chetda qolmasligi uchun «Входящие» ustunroq.
+     */
+    public function resolveScope(?string $requested): string
+    {
+        $available = $this->availableScopes();
+
+        if ($requested && in_array($requested, $available, true)) {
+            return $requested;
+        }
+
+        if (in_array(self::SCOPE_INCOMING, $available, true)) {
+            return self::SCOPE_INCOMING;
+        }
+
+        return $available[0] ?? self::SCOPE_MINE;
+    }
+
+    /**
+     * «Входящие» — boshqa xodim yaratgan va tasdiqlash zanjiri foydalanuvchidan o'tadigan hujjatlar.
+     *
+     * Bu yerda hujjat qaysi bosqichda turgani tekshirilmaydi: boshliq o'zi tasdiqlagan aktni
+     * keyin ham shu ro'yxatdan topa olishi kerak. Tasdiq kutayotganlari incomingCount() da
+     * alohida sanaladi va «Входящие» yonidagi hisoblagichda ko'rsatiladi.
+     *
+     * 'assigned' bosqichi bu yerda emas — u alohida «Келган» tabida ko'rsatiladi.
+     *
+     * @return Collection<int, int>
+     */
+    private function incomingDocumentIds(): Collection
+    {
+        return $this->incomingIds ??= DocumentPriority::query()
+            ->where('is_active', 1)
+            ->where('user_role', $this->user->type)
+            ->where(function ($query) {
+                $query->whereNull('user_id')->orWhere('user_id', $this->user->id);
+            })
+            ->whereHas('document', function ($query) {
+                // author_id NULL — muallifi aniqlanmagan eski hujjat; u «Мои» ga tushmagani uchun
+                // bu yerdan ham chiqarib yuborilsa, ro'yxatdan butunlay yo'qoladi.
+                $query->whereNull('author_id')
+                    ->orWhere('author_id', '!=', $this->user->id);
+            })
+            ->pluck('document_id');
+    }
+
+    /**
+     * Hozir aynan shu foydalanuvchining tasdig'ini kutayotgan hujjatlar soni.
+     */
+    public function incomingCount(): int
+    {
+        return DocumentPriority::query()
+            ->awaitingApprovalFor($this->user)
+            ->where('user_role', '!=', 'assigned')
+            ->count();
+    }
+
+    private function authoredCount(): int
+    {
+        return Documents::query()
+            ->where('author_id', $this->user->id)
+            ->where('is_draft', 0)
+            ->where('is_returned', 0)
+            ->count();
+    }
+
     private function applyFilters($query, $search, $startDate, $endDate, $documentType, $documentStatus): void
     {
         if ($search) {
@@ -314,6 +328,7 @@ class DocumentService
                 throw new \Exception('Тип документа обязателен для заполнения');
             }
             $document->user_id = $this->user->id;
+            $document->author_id = $this->user->id;
             $document->date_order = date('Y-m-d');
             $document->number = $request->input('number');
             $document->main_tool = $request->input('main_tool');
@@ -399,6 +414,7 @@ class DocumentService
                 throw new \Exception('Тип документа обязателен для заполнения');
             }
             $document->user_id = $this->user->id;
+            $document->author_id ??= $this->user->id;
             // Для существующих документов дата не изменяется
             $document->number = $request->input('number');
             $document->main_tool = $request->input('main_tool');
