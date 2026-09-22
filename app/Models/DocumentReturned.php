@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
  * App\Models\DocumentReturned Qaytarilgan hujjatlar modeli
+ *
  * @property int $id ID raqami
  * @property int $document_id Hujjat ID
  * @property int $from_id Kimdan
@@ -23,15 +25,23 @@ use Illuminate\Support\Carbon;
 class DocumentReturned extends Model
 {
     use HasFactory;
+
     protected $table = 'document_returned';
+
+    public function document(): BelongsTo
+    {
+        return $this->belongsTo(Documents::class, 'document_id', 'id');
+    }
+
     public function fromInfo(): HasOne
     {
-        return $this->hasOne(User::class,'id','from_id')
-            ->select(['id','name','type','phone']);
+        return $this->hasOne(User::class, 'id', 'from_id')
+            ->select(['id', 'name', 'type', 'phone']);
     }
+
     public function toInfo(): HasOne
     {
-        return $this->hasOne(User::class,'id','to_id')
-            ->select(['id','name','type','phone']);
+        return $this->hasOne(User::class, 'id', 'to_id')
+            ->select(['id', 'name', 'type', 'phone']);
     }
 }

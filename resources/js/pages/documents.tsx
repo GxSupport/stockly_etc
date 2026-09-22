@@ -40,6 +40,7 @@ interface Document {
     status: number;
     author: Author | null;
     priority: Priority[];
+    unread_returns_count?: number;
 }
 
 interface PaginatedData {
@@ -136,7 +137,7 @@ export default function Documents({
     awaitingApprovalCount,
     filters,
 }: DocumentsPageProps) {
-    const { auth } = usePage().props as unknown as { auth: { user: { type: string } } };
+    const { auth, unreadReturnedCount = 0 } = usePage().props as unknown as { auth: { user: { type: string } }; unreadReturnedCount?: number };
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [startDate, setStartDate] = useState(filters.start_date || '');
     const [endDate, setEndDate] = useState(filters.end_date || '');
@@ -228,7 +229,8 @@ export default function Documents({
         availableTabs.push({ value: 'incoming', label: 'Келган', badge: incomingCount });
     }
     if (isAdmin || canCreate) {
-        availableTabs.push({ value: 'return', label: 'Возврат' });
+        // O'qilmagan qaytarilgan aktlar soni (issue #32)
+        availableTabs.push({ value: 'return', label: 'Возврат', badge: unreadReturnedCount });
     }
 
     return (
@@ -427,7 +429,11 @@ export default function Documents({
                                             documents.data.map((document) => (
                                                 <tr
                                                     key={document.id}
-                                                    className="cursor-pointer border-b hover:bg-muted/50"
+                                                    className={`cursor-pointer border-b hover:bg-muted/50 ${
+                                                        currentTab === 'return' && (document.unread_returns_count ?? 0) > 0
+                                                            ? 'bg-red-50 font-semibold dark:bg-red-950/30'
+                                                            : ''
+                                                    }`}
                                                     onClick={() => handleRowClick(document)}
                                                 >
                                                     <td className="h-12 px-4 align-middle">
