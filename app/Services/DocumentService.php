@@ -34,7 +34,13 @@ class DocumentService
 
     public Documents $document;
 
-    public ?User $user;
+    /**
+     * Joriy foydalanuvchi — har safar Auth dan olinadi. Konstruktorda muhrlab bo'lmaydi:
+     * controller'ga inject qilingan servis bir nechta so'rovda qayta ishlatilishi mumkin (testlarda ham).
+     */
+    public ?User $user {
+        get => Auth::user();
+    }
 
     public ?DocumentPriority $priority;
 
@@ -49,9 +55,6 @@ class DocumentService
 
     public function __construct(?int $id = null)
     {
-        // User ni birinchi o'rnatish kerak, chunki setPriority() dan foydalanadi
-        $this->user = Auth::user();
-
         if (! is_null($id)) {
             $document = Documents::find($id);
             if (empty($document)) {
@@ -137,7 +140,9 @@ class DocumentService
             if ($scope === self::SCOPE_MINE) {
                 $query->where('author_id', $this->user->id);
             } elseif ($scope === self::SCOPE_INCOMING) {
-                $query->whereIn('id', $this->incomingDocumentIds());
+                // Faqat hozir aynan shu foydalanuvchining tasdig'ini kutayotganlar (issue #31);
+                // o'tib ketganlari «Все» da qoladi
+                $query->whereIn('id', $this->awaitingDocumentIds());
             } else {
                 $incomingIds = $this->incomingDocumentIds();
                 $query->where(function ($q) use ($incomingIds) {
@@ -154,7 +159,8 @@ class DocumentService
 
             $this->applyFilters($query, $search, $startDate, $endDate, $documentType, $documentStatus);
 
-            return $query->latest()->paginate($perPage);
+            // «Входящие» — oxirgi kelgan (bosqichi o'zgargan) akt tepada
+            return $query->latest($scope === self::SCOPE_INCOMING ? 'updated_at' : 'created_at')->paginate($perPage);
         }
 
         // 'incoming' - Kelgan hujjatlar (faqat tayinlangan hujjatlar - oddiy ishchilar uchun)
@@ -206,33 +212,35 @@ class DocumentService
     }
 
     /**
-     * «Отправленные» ro'yxatida foydalanuvchi uchun mantiqiy bo'lgan qamrovlar.
-     * Ikkalasi ham mavjud bo'lgandagina frontendda filtr ko'rsatiladi.
+     * «Отправленные» ro'yxatida foydalanuvchi uchun mantiqiy bo'lgan qamrovlar (issue #31).
+     * - frp: unga hech kim hujjat yubormaydi — faqat «Мои», filtr ko'rsatilmaydi.
+     * - Tasdiqlash zanjiridagi rollar (header_frp, deputy_director, director, buxgalter): «Входящие» va «Все»
+     *   hujjat yaratgan-yaratmaganidan qat'i nazar doim mavjud.
+     * - «Мои» faqat akt yaratadigan rollarda (header_frp, deputy_director).
      *
      * @return array<int, string>
      */
     public function availableScopes(): array
     {
+        if ($this->user->type === 'frp' || ! $this->isApproverRole()) {
+            return [self::SCOPE_MINE];
+        }
+
         $scopes = [];
 
-        if ($this->authoredCount() > 0) {
+        if ($this->user->canCreateDocuments()) {
             $scopes[] = self::SCOPE_MINE;
         }
 
-        if ($this->incomingDocumentIds()->isNotEmpty()) {
-            $scopes[] = self::SCOPE_INCOMING;
-        }
-
-        if (count($scopes) > 1) {
-            $scopes[] = self::SCOPE_ALL;
-        }
+        $scopes[] = self::SCOPE_INCOMING;
+        $scopes[] = self::SCOPE_ALL;
 
         return $scopes;
     }
 
     /**
-     * So'ralgan qamrovni tekshirish. Ruxsat etilmagan yoki bo'sh qiymat kelsa —
-     * tasdiqlash kerak bo'lgan hujjat e'tibordan chetda qolmasligi uchun «Входящие» ustunroq.
+     * So'ralgan qamrovni tekshirish. Ruxsat etilmagan yoki bo'sh qiymat kelsa:
+     * tasdiq kutayotgan hujjat bo'lsa — «Входящие» (e'tibordan chetda qolmasin), aks holda «Все».
      */
     public function resolveScope(?string $requested): string
     {
@@ -242,11 +250,36 @@ class DocumentService
             return $requested;
         }
 
-        if (in_array(self::SCOPE_INCOMING, $available, true)) {
+        if (in_array(self::SCOPE_INCOMING, $available, true) && $this->incomingCount() > 0) {
             return self::SCOPE_INCOMING;
         }
 
+        if (in_array(self::SCOPE_ALL, $available, true)) {
+            return self::SCOPE_ALL;
+        }
+
         return $available[0] ?? self::SCOPE_MINE;
+    }
+
+    /**
+     * Foydalanuvchi roli biror hujjat turining tasdiqlash zanjirida bormi.
+     */
+    private function isApproverRole(): bool
+    {
+        return DocumentPriorityConfig::query()->where('user_role', $this->user->type)->exists();
+    }
+
+    /**
+     * Hozir aynan shu foydalanuvchining tasdig'ini kutayotgan hujjatlar (assigned bosqichisiz).
+     *
+     * @return Collection<int, int>
+     */
+    private function awaitingDocumentIds(): Collection
+    {
+        return DocumentPriority::query()
+            ->awaitingApprovalFor($this->user)
+            ->where('user_role', '!=', 'assigned')
+            ->pluck('document_id');
     }
 
     /**
@@ -285,15 +318,6 @@ class DocumentService
         return DocumentPriority::query()
             ->awaitingApprovalFor($this->user)
             ->where('user_role', '!=', 'assigned')
-            ->count();
-    }
-
-    private function authoredCount(): int
-    {
-        return Documents::query()
-            ->where('author_id', $this->user->id)
-            ->where('is_draft', 0)
-            ->where('is_returned', 0)
             ->count();
     }
 

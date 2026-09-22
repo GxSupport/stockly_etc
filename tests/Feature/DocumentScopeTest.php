@@ -40,7 +40,7 @@ function cleanupScopeFixtures(): void
         $type->delete();
     }
 
-    foreach ([998900000191, 998900000192, 998900000193] as $phone) {
+    foreach ([998900000191, 998900000192, 998900000193, 998900000194] as $phone) {
         User::where('phone', $phone)->delete();
     }
 }
@@ -49,7 +49,7 @@ function cleanupScopeFixtures(): void
  * Ketma-ket workflow: frp(1) → header_frp(2) → buxgalter(3).
  * Aynan shu zanjirda header_frp bosqichi user_id siz yaratiladi.
  *
- * @return array{type: DocumentType, boss: User, worker: User, otherWorker: User}
+ * @return array{type: DocumentType, boss: User, worker: User, otherWorker: User, accountant: User}
  */
 function createScopeFixtures(): array
 {
@@ -74,6 +74,11 @@ function createScopeFixtures(): array
     );
     $otherWorker->update(['senior_id' => $boss->id]);
 
+    $accountant = User::firstOrCreate(
+        ['phone' => 998900000194],
+        ['name' => 'Accountant Scope', 'type' => 'buxgalter', 'password' => bcrypt('password'), 'is_active' => 1]
+    );
+
     $type = DocumentType::create([
         'code' => 'TST-SEQ',
         'title' => 'Тестовый смонтированных',
@@ -90,7 +95,7 @@ function createScopeFixtures(): array
         ]);
     }
 
-    return ['type' => $type, 'boss' => $boss, 'worker' => $worker, 'otherWorker' => $otherWorker];
+    return ['type' => $type, 'boss' => $boss, 'worker' => $worker, 'otherWorker' => $otherWorker, 'accountant' => $accountant];
 }
 
 /**
@@ -283,4 +288,81 @@ test('o\'chirilgan tur АКТ ro\'yxati filtrida ko\'rsatilmaydi', function () {
         ->component('documents')
         ->where('documentTypes', fn ($types) => collect($types)->pluck('title')->doesntContain('Тестовый приём-передача'))
     );
+});
+
+// ---------- Issue #31: «Входящие» barcha tasdiqlovchi rollarda, faqat hozir kutayotganlar ----------
+
+test('buxgalter hujjat yaratmasa ham «Входящие» va «Все» qamrovlariga ega, «Мои» yo\'q', function () {
+    $fx = createScopeFixtures();
+
+    $this->actingAs($fx['accountant']);
+    $service = new DocumentService;
+
+    expect($service->availableScopes())->toBe(['incoming', 'all']);
+    // Kutayotgan hujjat yo\'q — sukut bo\'yicha «Все»
+    expect($service->resolveScope(null))->toBe('all');
+    expect($service->resolveScope('mine'))->toBe('all');
+
+    // Buxgalter bosqichiga (3) yetgan akt — endi sukut bo\'yicha «Входящие»
+    makeSentDocument($fx, $fx['worker'], status: 3);
+    expect((new DocumentService)->resolveScope(null))->toBe('incoming');
+});
+
+test('«Входящие» da faqat hozir shu foydalanuvchi tasdig\'ini kutayotganlar, o\'tib ketganlari «Все» da', function () {
+    $fx = createScopeFixtures();
+    $awaiting = makeSentDocument($fx, $fx['worker'], status: 2);
+    $passed = makeSentDocument($fx, $fx['otherWorker'], status: 3);
+    DocumentPriority::where('document_id', $passed->id)->where('ordering', 2)->update(['is_success' => true, 'user_id' => $fx['boss']->id]);
+
+    $this->actingAs($fx['boss']);
+    $service = new DocumentService;
+
+    $incoming = $service->list(new Request(['scope' => 'incoming']), 'sent')->pluck('id');
+    expect($incoming)->toContain($awaiting->id);
+    expect($incoming)->not->toContain($passed->id);
+    expect($service->incomingCount())->toBe(1);
+
+    $all = (new DocumentService)->list(new Request(['scope' => 'all']), 'sent')->pluck('id');
+    expect($all)->toContain($awaiting->id);
+    expect($all)->toContain($passed->id);
+});
+
+test('«Входящие» oxirgi kelgan akt tepada tartiblanadi', function () {
+    $fx = createScopeFixtures();
+    $older = makeSentDocument($fx, $fx['worker'], status: 2);
+    $newer = makeSentDocument($fx, $fx['otherWorker'], status: 2);
+    Documents::whereKey($older->id)->update(['created_at' => now()->subDay(), 'updated_at' => now()->addMinute()]);
+    Documents::whereKey($newer->id)->update(['created_at' => now(), 'updated_at' => now()->subHour()]);
+
+    $this->actingAs($fx['boss']);
+
+    $ids = (new DocumentService)->list(new Request(['scope' => 'incoming']), 'sent')->pluck('id')->values();
+
+    expect($ids->search($older->id))->toBeLessThan($ids->search($newer->id));
+});
+
+test('oddiy ishchida «Входящие» qamrovi hech qachon bo\'lmaydi', function () {
+    $fx = createScopeFixtures();
+    makeSentDocument($fx, $fx['worker']);
+
+    $this->actingAs($fx['worker']);
+
+    expect((new DocumentService)->availableScopes())->toBe(['mine']);
+    expect((new DocumentService)->resolveScope('incoming'))->toBe('mine');
+});
+
+test('dashboard «Ожидают утверждения» soni «Входящие» ro\'yxati bilan mos keladi', function () {
+    $fx = createScopeFixtures();
+    makeSentDocument($fx, $fx['worker'], status: 2);
+    makeSentDocument($fx, $fx['otherWorker'], status: 2);
+    makeSentDocument($fx, $fx['boss'], status: 2); // o\'z akti — sanalmaydi
+
+    $this->actingAs($fx['boss']);
+
+    $stats = (new DashboardService)->getStatsByRole($fx['boss']);
+    $listCount = (new DocumentService)->list(new Request(['scope' => 'incoming']), 'sent')->total();
+
+    expect($stats['awaiting_approval']['count'])->toBe(2);
+    expect($listCount)->toBe(2);
+    expect((new DocumentService)->incomingCount())->toBe(2);
 });
