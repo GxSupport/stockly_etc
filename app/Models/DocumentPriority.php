@@ -90,10 +90,14 @@ class DocumentPriority extends Model
                             ->where('user_id', $user->id);
                     });
             })
-            ->whereHas('document', function (Builder $documentQuery) {
+            ->whereHas('document', function (Builder $documentQuery) use ($user) {
                 $documentQuery->where('is_draft', 0)
                     ->where('is_returned', 0)
-                    ->whereColumn('documents.status', 'document_priority.ordering');
+                    ->whereColumn('documents.status', 'document_priority.ordering')
+                    // Muallif o'z aktini tasdiqlamaydi (issue #30, #31)
+                    ->where(function (Builder $authorQuery) use ($user) {
+                        $authorQuery->whereNull('author_id')->orWhere('author_id', '!=', $user->id);
+                    });
             });
     }
 }
