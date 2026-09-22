@@ -34,13 +34,8 @@ class DocumentService
 
     public Documents $document;
 
-    /**
-     * Joriy foydalanuvchi — har safar Auth dan olinadi. Konstruktorda muhrlab bo'lmaydi:
-     * controller'ga inject qilingan servis bir nechta so'rovda qayta ishlatilishi mumkin (testlarda ham).
-     */
-    public ?User $user {
-        get => Auth::user();
-    }
+    /** @var User|null Joriy foydalanuvchi — qarang __get() */
+    // Ataylab e'lon qilinmagan: $this->user har safar __get() orqali Auth::user() dan olinadi.
 
     public ?DocumentPriority $priority;
 
@@ -64,6 +59,20 @@ class DocumentService
                 $this->setPriority();
             }
         }
+    }
+
+    /**
+     * Joriy foydalanuvchi har safar Auth dan olinadi. Konstruktorda muhrlab bo'lmaydi:
+     * controller'ga inject qilingan servis bir nechta so'rovda qayta ishlatilishi mumkin.
+     * (PHP 8.2 bilan mos — property hook ishlatilmaydi.)
+     */
+    public function __get(string $name): mixed
+    {
+        if ($name === 'user') {
+            return Auth::user();
+        }
+
+        throw new \LogicException("Undefined property: DocumentService::\${$name}");
     }
 
     private function setPriority(): void
