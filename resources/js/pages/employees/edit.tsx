@@ -12,6 +12,9 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 
+// АКТ yaratadigan rollar — ularga sklad biriktiriladi (backend: User::DOCUMENT_CREATOR_ROLES)
+const WAREHOUSE_ROLES = ['frp', 'header_frp', 'deputy_director'];
+
 interface Department {
     id: number;
     dep_code: string;
@@ -62,6 +65,7 @@ export default function EditEmployee({ employee, dep_list, senior_list = [] }: E
     const { auth } = usePage<SharedData>().props;
     const [selectedDepartment, setSelectedDepartment] = useState<string>(employee.dep_code || '');
     const [selectedType, setSelectedType] = useState<string>(employee.type || '');
+    const hasWarehouse = WAREHOUSE_ROLES.includes(selectedType);
     const [selectedWarehouse, setSelectedWarehouse] = useState<string>((employee.warehouse?.warehouse_id || '').toString());
     const [selectedSenior, setSelectedSenior] = useState<string>((employee.senior_id || '').toString());
     const [phoneValue, setPhoneValue] = useState<string>('');
@@ -231,24 +235,27 @@ export default function EditEmployee({ employee, dep_list, senior_list = [] }: E
                                             <InputError message={errors.chat_id} />
                                         </div>
 
+                                        {/* Sklad akt yaratadigan rollarga biriktiriladi: МОЛ (majburiy), Старший МОЛ, Зам директор (issue #29, #30) */}
+                                        {hasWarehouse && (
+                                            <div className="grid gap-2">
+                                                <Label>Склад{selectedType === 'frp' ? ' *' : ''}</Label>
+                                                <DynamicSearchableSelect
+                                                    value={selectedWarehouse}
+                                                    onValueChange={setSelectedWarehouse}
+                                                    placeholder="Выберите склад"
+                                                    searchPlaceholder="Поиск склада..."
+                                                    searchUrl="/employees/search-warehouses"
+                                                    selectedOption={currentWarehouse}
+                                                    disabled={!isAdmin}
+                                                    emptyText="Склады не найдены"
+                                                />
+                                                <InputError message={errors.warehouse_id} />
+                                                <input type="hidden" name="warehouse_id" value={selectedWarehouse} />
+                                            </div>
+                                        )}
+
                                         {selectedType === 'frp' && (
                                             <>
-                                                <div className="grid gap-2">
-                                                    <Label>Склад</Label>
-                                                    <DynamicSearchableSelect
-                                                        value={selectedWarehouse}
-                                                        onValueChange={setSelectedWarehouse}
-                                                        placeholder="Выберите склад"
-                                                        searchPlaceholder="Поиск склада..."
-                                                        searchUrl="/employees/search-warehouses"
-                                                        selectedOption={currentWarehouse}
-                                                        disabled={!isAdmin}
-                                                        emptyText="Склады не найдены"
-                                                    />
-                                                    <InputError message={errors.warehouse_id} />
-                                                    <input type="hidden" name="warehouse_id" value={selectedWarehouse} />
-                                                </div>
-
                                                 <div className="grid gap-2">
                                                     <Label>Руководитель МОЛ</Label>
                                                     <SearchableSelect

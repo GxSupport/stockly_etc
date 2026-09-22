@@ -59,10 +59,11 @@ class DocumentPriorityService
     /**
      * Ketma-ket workflow uchun priority yaratish
      * Tartib: FRP(1) → Header FRP(2) → Deputy Director(3) → Director(4) → Buxgalter(5)
-     * - deputy_director - rol asosidagi bitta bosqich (istalgan bitta zam direktor tasdiqlaydi)
-     * - header_frp yaratganda - frp bosqichi skip qilinadi (FRP tasdiqlashi kerak emas)
-     * - hujjatning requires_deputy_approval = false bo'lsa, deputy_director bosqichi skip qilinadi
-     *   (flag hujjat yaratilayotganda foydalanuvchi tomonidan belgilanadi)
+     * - Zanjir yaratuvchining o'z bosqichidan boshlanadi: undan quyidagi bosqichlar tushib qoladi
+     *   (frp → to'liq zanjir; header_frp → frp'siz; deputy_director → frp va header_frp'siz). Issue #29, #30.
+     * - deputy_director — rol asosidagi bitta bosqich (istalgan bitta zam direktor tasdiqlaydi)
+     * - hujjatning requires_deputy_approval = false bo'lsa, deputy_director bosqichi skip qilinadi.
+     *   Yaratuvchi o'zi deputy_director bo'lsa, uning bosqichi belgidan qat'i nazar saqlanadi.
      */
     private function createSequentialWorkflowPriority(int $document_id, int $type, ?string $creator_type = null): void
     {
@@ -71,32 +72,24 @@ class DocumentPriorityService
             throw new \Exception('Не найдено приоритета для типа документа: '.$type);
         }
 
-        // Hujjatning o'zidan requires_deputy_approval flagini olish
         $document = Documents::find($document_id);
 
-        // deputy_director skip qilinsa, director va buxgalter ordering ni 1 ga kamaytirish kerak
-        $skipDeputy = ! $document || ! $document->requires_deputy_approval;
+        $creatorOrdering = $this->creatorOrdering($items, $creator_type);
+        $skipDeputy = $creator_type !== 'deputy_director' && (! $document || ! $document->requires_deputy_approval);
         $orderingAdjustment = 0;
 
         foreach ($items as $item) {
-            // header_frp yaratganda frp bosqichini skip qilish
-            // (ular uchun FRP tasdiqlashi kerak emas)
-            if ($creator_type === 'header_frp' && $item->user_role === 'frp') {
+            // Yaratuvchidan quyidagi bosqichlar tushib qoladi — yaratuvchi o'zi shu bosqichda turibdi
+            if ($item->ordering < $creatorOrdering) {
                 continue;
             }
 
-            // deputy_director - agar requires_deputy_approval = false bo'lsa, bosqichni skip qilish
-            // (keyingi bosqichlar ordering ni 1 ga kamaytiradi)
             if ($item->user_role === 'deputy_director' && $skipDeputy) {
                 $orderingAdjustment = 1;
 
                 continue;
             }
 
-            // Barcha rollar (deputy_director ham) uchun rol asosidagi bitta priority.
-            // Deputy_director endi boshqa rollar kabi ishlaydi: istalgan bitta zam direktor
-            // tasdiqlasa yetarli (avval har bir zam direktor uchun alohida bosqich yaratilar,
-            // shu sabab bir nechta zam direktor bo'lganda hujjat bir necha marta tasdiqlanardi).
             $this->addPriority([
                 'document_id' => $document_id,
                 'ordering' => $item->ordering - $orderingAdjustment,
@@ -105,6 +98,29 @@ class DocumentPriorityService
                 'is_active' => true,
             ]);
         }
+    }
+
+    /**
+     * Yaratuvchi rolining config'dagi bosqichi. Rol zanjirda bo'lmasa — 1 (hech narsa tushmaydi).
+     *
+     * @param  Collection<int, DocumentPriorityConfig>  $items
+     */
+    private function creatorOrdering(Collection $items, ?string $creator_type): int
+    {
+        $stage = $creator_type ? $items->firstWhere('user_role', $creator_type) : null;
+
+        return $stage ? (int) $stage->ordering : 1;
+    }
+
+    /**
+     * Hujjat zanjirining birinchi (yaratuvchi) bosqichi — hujjat status'i shu yerdan boshlanadi.
+     */
+    public function firstOrdering(int $document_id): int
+    {
+        return (int) (DocumentPriority::query()
+            ->where('document_id', $document_id)
+            ->where('is_active', true)
+            ->min('ordering') ?? 1);
     }
 
     /**

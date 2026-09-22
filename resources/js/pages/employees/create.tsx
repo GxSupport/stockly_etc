@@ -11,6 +11,9 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 
+// АКТ yaratadigan rollar — ularga sklad biriktiriladi (backend: User::DOCUMENT_CREATOR_ROLES)
+const WAREHOUSE_ROLES = ['frp', 'header_frp', 'deputy_director'];
+
 interface Department {
     id: number;
     dep_code: string;
@@ -49,6 +52,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function CreateEmployee({ dep_list, warehouses, supervisors }: CreateEmployeeProps) {
     const [selectedType, setSelectedType] = useState<string>('');
+    const hasWarehouse = WAREHOUSE_ROLES.includes(selectedType);
     const [selectedDepartment, setSelectedDepartment] = useState<string>('');
     const [selectedWarehouse, setSelectedWarehouse] = useState<string>('');
     const [selectedSupervisor, setSelectedSupervisor] = useState<string>('');
@@ -194,21 +198,24 @@ export default function CreateEmployee({ dep_list, warehouses, supervisors }: Cr
                                             <InputError message={errors.password} />
                                         </div>
 
+                                        {/* Sklad akt yaratadigan rollarga biriktiriladi: МОЛ (majburiy), Старший МОЛ, Зам директор (issue #29, #30) */}
+                                        {hasWarehouse && (
+                                            <div className="grid gap-2">
+                                                <Label>Склад{selectedType === 'frp' ? ' *' : ''}</Label>
+                                                <SearchableSelect
+                                                    options={warehouseOptions}
+                                                    value={selectedWarehouse}
+                                                    onValueChange={setSelectedWarehouse}
+                                                    placeholder="Выберите склад"
+                                                    searchPlaceholder="Поиск склада..."
+                                                />
+                                                <InputError message={errors.warehouse_id} />
+                                                <input type="hidden" name="warehouse_id" value={selectedWarehouse} />
+                                            </div>
+                                        )}
+
                                         {selectedType === 'frp' && (
                                             <>
-                                                <div className="grid gap-2">
-                                                    <Label>Склад *</Label>
-                                                    <SearchableSelect
-                                                        options={warehouseOptions}
-                                                        value={selectedWarehouse}
-                                                        onValueChange={setSelectedWarehouse}
-                                                        placeholder="Выберите склад"
-                                                        searchPlaceholder="Поиск склада..."
-                                                    />
-                                                    <InputError message={errors.warehouse_id} />
-                                                    <input type="hidden" name="warehouse_id" value={selectedWarehouse} />
-                                                </div>
-
                                                 <div className="grid gap-2">
                                                     <Label>Руководитель *</Label>
                                                     <SearchableSelect
