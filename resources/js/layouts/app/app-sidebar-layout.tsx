@@ -3,6 +3,7 @@ import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { FlashHandler } from '@/components/flash-handler';
+import { ReturnedDocumentsBanner } from '@/components/returned-documents-banner';
 import { ToastContainer } from '@/components/ui/toast';
 import { ToastProvider, useToast } from '@/hooks/use-toast';
 import { type BreadcrumbItem } from '@/types';
@@ -16,6 +17,7 @@ function AppSidebarLayoutContent({ children, breadcrumbs = [] }: PropsWithChildr
             <AppSidebar />
             <AppContent variant="sidebar" className="overflow-x-hidden">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
+                <ReturnedDocumentsBanner />
                 {children}
             </AppContent>
             <FlashHandler />

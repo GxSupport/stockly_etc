@@ -116,6 +116,9 @@ class DocumentService
 
         if ($status === 'return') {
             $query = Documents::with(['user_info', 'document_type', 'products', 'priority'])
+                ->withCount(['notes as unread_returns_count' => fn ($q) => $q
+                    ->where('to_id', $this->user->id)
+                    ->where('is_solved', 0)])
                 ->where('is_returned', 1)
                 ->where('user_id', $this->user->id);
 
@@ -863,6 +866,11 @@ class DocumentService
                 $nextOrdering = $this->document->status + 1;
                 $this->document->status = $nextOrdering;
                 $this->document->is_draft = 0;
+                // Qaytarilgan akt qayta yuborilganda «Возврат» dan chiqadi va qaytarish yozuvlari hal qilingan bo'ladi (issue #32)
+                if ($this->document->is_returned) {
+                    $this->document->is_returned = 0;
+                    DocumentReturned::query()->where('document_id', $this->document->id)->update(['is_solved' => 1]);
+                }
                 $this->document->save();
 
                 // Keyingi odamga Telegram orqali xabar yuborish
@@ -1030,6 +1038,36 @@ class DocumentService
     public function getReturnedStatus(): int
     {
         return 1;
+    }
+
+    /**
+     * Foydalanuvchiga qaytarilgan va u hali ochib ko'rmagan aktlar soni (issue #32).
+     * «Возврат» tabi yonidagi raqam va layout'dagi ogohlantirish shundan.
+     */
+    public static function unreadReturnedCount(User $user): int
+    {
+        return DocumentReturned::query()
+            ->where('to_id', $user->id)
+            ->where('is_solved', 0)
+            ->whereHas('document', fn ($q) => $q->where('is_returned', 1))
+            ->distinct('document_id')
+            ->count('document_id');
+    }
+
+    /**
+     * Joriy foydalanuvchi qaytarilgan aktni ochdi — qaytarish yozuvlari «o'qilgan» (is_solved) bo'ladi.
+     */
+    public function markReturnedAsRead(): void
+    {
+        if (! $this->document->is_returned) {
+            return;
+        }
+
+        DocumentReturned::query()
+            ->where('document_id', $this->document->id)
+            ->where('to_id', $this->user->id)
+            ->where('is_solved', 0)
+            ->update(['is_solved' => 1]);
     }
 
     /**

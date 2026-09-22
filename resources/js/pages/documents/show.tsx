@@ -68,9 +68,17 @@ interface Document {
     document_type: DocumentType;
     user_info: UserInfo;
     note?: string | null;
-    notes?: any[];
+    notes?: ReturnNote[];
     created_at: string;
     updated_at: string;
+}
+
+interface ReturnNote {
+    id: number;
+    note: string;
+    is_solved: number | boolean;
+    created_at: string;
+    from_info?: { id: number; name: string; type: string } | null;
 }
 
 interface StaffList {
@@ -169,6 +177,7 @@ export default function ShowDocument({ document, mainToolName = null, history = 
     };
 
     const documentTypeId = Number(document.type);
+    const lastReturnNote = document.notes && document.notes.length > 0 ? document.notes[document.notes.length - 1] : null;
 
     // Приём-передача (to'g'ridan-to'g'ri workflow) — priority zanjirida 'assigned' bosqichi bor
     const isTransferDocument = Boolean(document.priority?.some((el) => el.user_role === 'assigned'));
@@ -260,6 +269,25 @@ export default function ShowDocument({ document, mainToolName = null, history = 
                 </div>
 
                 {/* Document View Container */}
+                {/* Rad etish sababi — qaytarilgan aktda muallifga aniq ko'rinishi kerak (issue #32) */}
+                {document.is_returned && lastReturnNote && (
+                    <div className="print:hidden mx-auto w-full max-w-4xl rounded-lg border border-red-300 bg-red-50 p-4 text-sm dark:border-red-800 dark:bg-red-950/40">
+                        <div className="mb-1 font-semibold text-red-800 dark:text-red-200">Документ возвращён (Отказ)</div>
+                        <div className="text-red-900 dark:text-red-100">
+                            <span className="font-medium">
+                                {lastReturnNote.from_info?.name ?? '—'}
+                                {lastReturnNote.from_info?.type ? ` (${workerTypeLabels[lastReturnNote.from_info.type] ?? lastReturnNote.from_info.type})` : ''}
+                            </span>
+                            {' · '}
+                            {formatDate(lastReturnNote.created_at)}
+                        </div>
+                        <div className="mt-2 whitespace-pre-line text-red-900 dark:text-red-100">
+                            <span className="font-medium">Причина: </span>
+                            {lastReturnNote.note}
+                        </div>
+                    </div>
+                )}
+
                 <Card className="print-area mx-auto w-full max-w-4xl">
                     <CardContent className="p-8" style={{ fontFamily: 'Times New Roman, Times, serif' }}>
                         {/* Header with Approval Section */}

@@ -334,7 +334,7 @@ function DeputyDirectorDashboard({ stats }: { stats: DeputyDirectorStats }) {
                     href={INCOMING_URL}
                 />
                 <StatCard title="Всего утверждено" value={stats.total_approved} icon={CheckCircle2} href={INCOMING_URL} />
-                <StatCard title="Возвращено" value={stats.returned_count} icon={RotateCcw} />
+                <StatCard title="Возвращено" value={stats.returned_count} icon={RotateCcw} href="/documents/return" />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">

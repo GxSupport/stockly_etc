@@ -189,6 +189,7 @@ class DocumentController extends Controller
         try {
             $documentService = new DocumentService($id);
             $document = $documentService->document;
+            $documentService->markReturnedAsRead();
 
             // Get document history
             $history = [];
@@ -235,6 +236,7 @@ class DocumentController extends Controller
         try {
             $documentService = new DocumentService($id);
             $document = $documentService->document;
+            $documentService->markReturnedAsRead();
 
             // Only allow editing of draft documents
             if ($document->is_finished) {

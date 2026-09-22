@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\DocumentService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -46,6 +47,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // Qaytarilgan, hali ochilmagan aktlar — «Возврат» tabidagi raqam va ogohlantirish (issue #32)
+            'unreadReturnedCount' => fn () => $request->user() ? DocumentService::unreadReturnedCount($request->user()) : 0,
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
