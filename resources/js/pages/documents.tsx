@@ -211,9 +211,11 @@ export default function Documents({
     const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('ru-RU');
 
     const isFrp = auth.user?.type === 'frp' || auth.user?.type === 'header_frp';
+    // АКТ yaratadigan rollar (issue #29, #30): Черновик / Возврат tablari va «Добавить АКТ» tugmasi
+    const canCreate = isFrp || auth.user?.type === 'deputy_director';
     const isAdmin = auth.user?.type === 'admin';
     const availableTabs: { value: string; label: string; badge?: number }[] = [];
-    if (isAdmin || isFrp) {
+    if (isAdmin || canCreate) {
         availableTabs.push({ value: 'draft', label: 'Черновик' });
     }
     availableTabs.push({
@@ -225,7 +227,7 @@ export default function Documents({
     if (incomingCount > 0 || currentTab === 'incoming') {
         availableTabs.push({ value: 'incoming', label: 'Келган', badge: incomingCount });
     }
-    if (isAdmin || isFrp) {
+    if (isAdmin || canCreate) {
         availableTabs.push({ value: 'return', label: 'Возврат' });
     }
 
@@ -235,7 +237,7 @@ export default function Documents({
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold tracking-tight">АКТ</h1>
-                    {isFrp && (
+                    {canCreate && (
                         <Button onClick={() => router.visit('/documents/create')} className="gap-2">
                             <Plus className="h-4 w-4" />
                             Добавить АКТ

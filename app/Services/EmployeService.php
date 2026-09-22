@@ -63,7 +63,7 @@ class EmployeService
             'senior_id' => $data['senior_id'] ?? null,
         ]);
 
-        if ($user['type'] == 'frp' && isset($data['warehouse_id'])) {
+        if ($user->canCreateDocuments() && ! empty($data['warehouse_id'])) {
             $this->addOrCheckUserWarehouse($user->id, $data['warehouse_id']);
         }
 
@@ -169,23 +169,20 @@ class EmployeService
 
             $employee->save();
 
-            // Handle warehouse assignment logic
-            $currentType = $employee->type;
-
-            // If user is 'frp' type, handle warehouse assignment
-            if ($currentType === 'frp') {
+            // Sklad faqat akt yaratadigan rollarga biriktiriladi (frp, header_frp, deputy_director — issue #29, #30).
+            // Sklad yuborilmasa mavjud bog'lanish saqlanib qoladi; rol boshqa bo'lsa bog'lanish olib tashlanadi.
+            if ($employee->canCreateDocuments()) {
                 if (! empty($data['warehouse_id'])) {
                     $this->addOrCheckUserWarehouse($employee->id, $data['warehouse_id']);
                 }
             } else {
-                // Remove warehouse assignment if user type is not 'frp'
                 $this->deleteOldUserWarehouse($employee->id);
             }
 
             return $employee;
 
         } catch (QueryException $e) {
-            throw new \Exception('Database error occurred while updating employee: '.$e->getMessage());
+            throw new Exception('Database error occurred while updating employee: '.$e->getMessage());
         }
     }
 
@@ -197,7 +194,7 @@ class EmployeService
         ])->first();
 
         if (is_null($dep)) {
-            throw new \Exception('Department code does not exist or is inactive.');
+            throw new Exception('Department code does not exist or is inactive.');
         }
     }
 
@@ -212,12 +209,12 @@ class EmployeService
 
     public function getWarehouseList(): Collection
     {
-        return \App\Models\Warehouse::all();
+        return Warehouse::all();
     }
 
     public function searchWarehouses(string $search = '', int $limit = 10): Collection
     {
-        $query = \App\Models\Warehouse::query()
+        $query = Warehouse::query()
             ->where('is_active', true)
             ->select(['id', 'code', 'title']);
 

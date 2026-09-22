@@ -1,7 +1,7 @@
 import OsCompositionModal from '@/components/documents/OsCompositionModal';
 import WarehouseProductsModal from '@/components/documents/WarehouseProductsModal';
 import SmsConfirmationModal from '@/components/SmsConfirmationModal';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { Calendar, LoaderCircle, PackageSearch, Plus, RefreshCw, Save, Send, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -98,6 +98,10 @@ export default function DocumentForm({
     documentNotes = [],
 }: DocumentFormProps) {
     const currentYear = new Date().getFullYear();
+    const { auth } = usePage().props as unknown as { auth: { user: { type: string } } };
+    // Yaratuvchi o'zi Зам директор bo'lsa, o'zini o'ziga tasdiqlatish mantiqsiz — belgi ko'rsatilmaydi,
+    // bosqich backendda baribir saqlanadi (issue #30)
+    const isDeputyCreator = auth.user?.type === 'deputy_director';
     const [isMainToolFromService, setIsMainToolFromService] = useState(true);
     const [mainToolOption, setMainToolOption] = useState<DynamicSearchableSelectOption | undefined>(undefined);
     const [osSelectKey, setOsSelectKey] = useState(0);
@@ -570,7 +574,7 @@ export default function DocumentForm({
                                 searchPlaceholder="Поиск типа документа..."
                             />
                             <InputError message={errors.document_type_id} />
-                            {selectedDocumentType && selectedDocumentType.workflow_type === 1 && (
+                            {selectedDocumentType && selectedDocumentType.workflow_type === 1 && !isDeputyCreator && (
                                 <div className="mt-1 flex items-center gap-2">
                                     <Checkbox
                                         id="requires_deputy_approval"

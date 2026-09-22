@@ -336,7 +336,7 @@ class DocumentService
             $document->address = $request->input('address');
             $document->in_charge = $request->input('in_charge');
             $document->assigned_user_id = $request->input('assigned_user_id');
-            $document->requires_deputy_approval = (bool) $request->input('requires_deputy_approval', false);
+            $document->requires_deputy_approval = $this->resolveRequiresDeputyApproval($request);
             $document->is_draft = 1;
             $document->status = 1;
             $document->save();
@@ -392,8 +392,9 @@ class DocumentService
             throw new \Exception('АКТ не найден!');
         }
 
-        // Проверяем статус документа как в старом проекте
-        if ($document->status != 1) {
+        // Faqat qoralama yoki qaytarilgan aktni tahrirlash mumkin. Status bo'yicha tekshirib bo'lmaydi:
+        // header_frp / deputy_director qoralamasi o'z bosqichidan (2 / 3) boshlanadi (issue #29, #30).
+        if (! $document->is_draft && ! $document->is_returned) {
             throw new \Exception('АКТ изменить невозможно!');
         }
 
@@ -422,7 +423,7 @@ class DocumentService
             $document->address = $request->input('address');
             $document->in_charge = $request->input('in_charge');
             $document->assigned_user_id = $request->input('assigned_user_id');
-            $document->requires_deputy_approval = (bool) $request->input('requires_deputy_approval', false);
+            $document->requires_deputy_approval = $this->resolveRequiresDeputyApproval($request);
             $document->note = $request->input('note');
             $document->is_draft = 1;
             $document->status = 1;
@@ -519,15 +520,31 @@ class DocumentService
         }
     }
 
+    /**
+     * Yaratuvchi o'zi deputy_director bo'lsa, uning bosqichi belgidan qat'i nazar zanjirda qoladi (issue #30) —
+     * aks holda o'z bosqichi tushib, hujjat noto'g'ri bosqichga ishora qilib qolardi.
+     */
+    private function resolveRequiresDeputyApproval(Request $request): bool
+    {
+        if ($this->user->type === 'deputy_director') {
+            return true;
+        }
+
+        return (bool) $request->input('requires_deputy_approval', false);
+    }
+
+    /**
+     * Yaratuvchi roli hujjat turining tasdiqlash zanjirida bo'lishi shart —
+     * zanjir aynan shu bosqichdan boshlanadi (frp, header_frp, deputy_director; issue #29, #30).
+     */
     public function checkStartPriorityConfig(): void
     {
-        // header_frp foydalanuvchilari uchun ordering=2 dan tekshirish
-        // (ular uchun FRP tasdiqlash bosqichi kerak emas)
-        $startOrdering = ($this->user->type === 'header_frp') ? 2 : 1;
+        $inChain = $this->user->canCreateDocuments() && DocumentPriorityConfig::query()
+            ->where('type_id', $this->document->type)
+            ->where('user_role', $this->user->type)
+            ->exists();
 
-        $item = (new DocumentPriorityService)
-            ->checkConfigByOrderingRole($startOrdering, $this->user->type, $this->document->type);
-        if (is_null($item)) {
+        if (! $inChain) {
             throw new \Exception('Вы не можете перевести заявку на следующий этап');
         }
     }
@@ -554,17 +571,18 @@ class DocumentService
             throw new \Exception('Документ или тип документа не установлен');
         }
 
-        (new DocumentPriorityService)->createPriority(
+        $priorityService = new DocumentPriorityService;
+        $priorityService->createPriority(
             $this->document->id,
             $this->document->type,
             $this->user->type
         );
 
-        // header_frp yaratganda status ni 2 ga o'tkazish
-        // (ular uchun FRP tasdiqlashi kerak emas, shuning uchun header_frp bosqichidan boshlanadi)
+        // Hujjat yaratuvchining o'z bosqichidan boshlanadi: frp → 1, header_frp → 2, deputy_director → 3.
+        // Undan quyidagi bosqichlar zanjirda yo'q (issue #29, #30).
         $documentType = DocumentType::find($this->document->type);
-        if ($this->user->type === 'header_frp' && $documentType && ! $documentType->isDirectWorkflow()) {
-            $this->document->status = 2;
+        if ($documentType && ! $documentType->isDirectWorkflow()) {
+            $this->document->status = $priorityService->firstOrdering($this->document->id);
             $this->document->save();
         }
     }
@@ -988,14 +1006,22 @@ class DocumentService
     /**
      * Get the user ID to assign document to after rejection
      */
+    /**
+     * Rad etilgan hujjat kimga qaytadi — har doim hujjat muallifiga.
+     * Zanjirning 1-bosqichi header_frp / deputy_director yaratgan hujjatda umuman yo'q (issue #29, #30, #32).
+     */
     public function getToCharge(): int
     {
+        if ($this->document->author_id) {
+            return (int) $this->document->author_id;
+        }
+
         $first_priority = (new DocumentPriorityService)->getPriorityByOrdering(
             $this->document->id,
-            1
+            (new DocumentPriorityService)->firstOrdering($this->document->id)
         );
 
-        return $first_priority->user_id;
+        return (int) ($first_priority?->user_id ?? $this->document->user_id);
     }
 
     /**

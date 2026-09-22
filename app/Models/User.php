@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -29,6 +30,19 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    /**
+     * АКТ yarata oladigan rollar (issue #29, #30). Ularga sklad biriktiriladi —
+     * Смонтированных va Списания tovar ro'yxati foydalanuvchining o'z skladidan olinadi.
+     *
+     * @var list<string>
+     */
+    public const DOCUMENT_CREATOR_ROLES = ['frp', 'header_frp', 'deputy_director'];
+
+    public function canCreateDocuments(): bool
+    {
+        return in_array($this->type, self::DOCUMENT_CREATOR_ROLES, true);
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -71,7 +85,7 @@ class User extends Authenticatable
             'id')->select('user_id', 'warehouse_id')->with('warehouse');
     }
 
-    public function documents(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function documents(): HasMany
     {
         return $this->hasMany(Documents::class, 'user_id', 'id');
     }

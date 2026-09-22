@@ -35,7 +35,7 @@ class DocumentController extends Controller
 
         // Default status aniqlash
         if (is_null($status)) {
-            if ($user->type === 'frp' || $user->type === 'header_frp') {
+            if ($user->canCreateDocuments()) {
                 $status = 'draft';
             } else {
                 // Boshqa rollar uchun - agar tayinlangan hujjatlar bo'lsa incoming, aks holda sent
@@ -174,7 +174,9 @@ class DocumentController extends Controller
                     ->with('success', 'Документ успешно создан');
             }
 
-            return back()->with('error', 'Ошибка при создании документа');
+            $message = $response->getData(true)['message'] ?? null;
+
+            return back()->with('error', $message ?: 'Ошибка при создании документа')->withInput();
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage())
                 ->withInput();
@@ -293,7 +295,9 @@ class DocumentController extends Controller
                     ->with('success', 'Документ успешно обновлен');
             }
 
-            return back()->with('error', 'Ошибка при обновлении документа');
+            $message = $response->getData(true)['message'] ?? null;
+
+            return back()->with('error', $message ?: 'Ошибка при обновлении документа');
         } catch (\Exception $e) {
             Log::error('Error updating document: '.$e->getMessage());
             session('errors', collect([$e->getMessage()]));

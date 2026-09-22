@@ -164,7 +164,8 @@ export default function ShowDocument({ document, mainToolName = null, history = 
     };
 
     const getResponsiblePerson = () => {
-        return document.priority?.find((el) => el.user_role === 'frp')?.user_info?.name || '';
+        // header_frp / deputy_director yaratgan aktda frp bosqichi yo'q — muallif ko'rsatiladi (issue #29, #30)
+        return document.priority?.find((el) => el.user_role === 'frp')?.user_info?.name || document.user_info?.name || '';
     };
 
     const documentTypeId = Number(document.type);
