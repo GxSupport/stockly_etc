@@ -41,6 +41,7 @@ interface Document {
     author: Author | null;
     priority: Priority[];
     unread_returns_count?: number;
+    is_awaiting_me?: boolean;
 }
 
 interface PaginatedData {
@@ -194,6 +195,16 @@ export default function Documents({
     const handlePageChange = (newPage: number) => navigate(buildParams({ page: newPage }));
 
     const handleScopeChange = (value: Scope) => navigate(buildParams({ scope: value, page: 1 }));
+
+    // «Возврат» — o'qilmagan qaytarilgan akt; «Входящие» / «Все» — hozir shu foydalanuvchining
+    // tasdig'ini kutayotgan akt (issue #39). Rang faqat «Подтвердить» / «Отказать» dan keyin yo'qoladi.
+    const isHighlightedRow = (document: Document): boolean => {
+        if (currentTab === 'return') {
+            return (document.unread_returns_count ?? 0) > 0;
+        }
+
+        return currentTab === 'sent' && document.is_awaiting_me === true;
+    };
 
     const handleRowClick = (doc: Document) => {
         if (currentTab === 'sent' || currentTab === 'incoming') {
@@ -430,9 +441,7 @@ export default function Documents({
                                                 <tr
                                                     key={document.id}
                                                     className={`cursor-pointer border-b hover:bg-muted/50 ${
-                                                        currentTab === 'return' && (document.unread_returns_count ?? 0) > 0
-                                                            ? 'bg-red-50 font-semibold dark:bg-red-950/30'
-                                                            : ''
+                                                        isHighlightedRow(document) ? 'bg-red-50 font-semibold dark:bg-red-950/30' : ''
                                                     }`}
                                                     onClick={() => handleRowClick(document)}
                                                 >

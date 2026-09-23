@@ -366,3 +366,67 @@ test('dashboard «Ожидают утверждения» soni «Входящи�
     expect($listCount)->toBe(2);
     expect((new DocumentService)->incomingCount())->toBe(2);
 });
+
+test('«Входящие» va «Все» da tasdiq kutayotgan akt is_awaiting_me bilan belgilanadi (issue #39)', function () {
+    $fx = createScopeFixtures();
+    $awaiting = makeSentDocument($fx, $fx['worker'], status: 2);
+    $passed = makeSentDocument($fx, $fx['otherWorker'], status: 3);
+    DocumentPriority::where('document_id', $passed->id)->where('ordering', 2)->update(['is_success' => true, 'user_id' => $fx['boss']->id]);
+    $own = makeSentDocument($fx, $fx['boss'], status: 2);
+
+    $this->actingAs($fx['boss']);
+
+    $incoming = (new DocumentService)->list(new Request(['scope' => 'incoming']), 'sent')->getCollection()->keyBy('id');
+    expect($incoming[$awaiting->id]->is_awaiting_me)->toBeTrue();
+
+    $all = (new DocumentService)->list(new Request(['scope' => 'all']), 'sent')->getCollection()->keyBy('id');
+    expect($all[$awaiting->id]->is_awaiting_me)->toBeTrue();
+    expect($all[$passed->id]->is_awaiting_me)->toBeFalse();
+    expect($all[$own->id]->is_awaiting_me)->toBeFalse();
+
+    // «Входящие» yonidagi son ranglangan qatorlar soniga teng
+    expect((new DocumentService)->incomingCount())->toBe($all->where('is_awaiting_me', true)->count());
+});
+
+test('«Мои» da is_awaiting_me har doim false (muallif o\'z aktini tasdiqlamaydi)', function () {
+    $fx = createScopeFixtures();
+    $own = makeSentDocument($fx, $fx['boss'], status: 2);
+
+    $this->actingAs($fx['boss']);
+
+    $mine = (new DocumentService)->list(new Request(['scope' => 'mine']), 'sent')->getCollection()->keyBy('id');
+
+    expect($mine[$own->id]->is_awaiting_me)->toBeFalse();
+});
+
+test('belgisi aktni ochganda emas, faqat tasdiqlangandan keyin yo\'qoladi', function () {
+    $fx = createScopeFixtures();
+    $document = makeSentDocument($fx, $fx['worker'], status: 2);
+
+    $this->actingAs($fx['boss']);
+
+    $this->get(route('documents.show', $document->id))->assertOk();
+    $afterOpen = (new DocumentService)->list(new Request(['scope' => 'all']), 'sent')->getCollection()->keyBy('id');
+    expect($afterOpen[$document->id]->is_awaiting_me)->toBeTrue();
+
+    expect((new DocumentService($document->id))->sendToNext())->toBeTrue();
+
+    $afterApprove = (new DocumentService)->list(new Request(['scope' => 'all']), 'sent')->getCollection()->keyBy('id');
+    expect($afterApprove[$document->id]->is_awaiting_me)->toBeFalse();
+    expect((new DocumentService)->incomingCount())->toBe(0);
+});
+
+test('sent sahifasi is_awaiting_me belgisini Inertia prop sifatida yuboradi', function () {
+    $fx = createScopeFixtures();
+    $document = makeSentDocument($fx, $fx['worker'], status: 2);
+
+    $this->actingAs($fx['boss']);
+
+    $this->get(route('documents.index', ['status' => 'sent', 'scope' => 'incoming']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('documents')
+            ->where('awaitingApprovalCount', 1)
+            ->where('documents.data.0.id', $document->id)
+            ->where('documents.data.0.is_awaiting_me', true));
+});
