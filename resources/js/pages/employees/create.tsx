@@ -2,6 +2,7 @@ import { Form, Head, router } from '@inertiajs/react';
 import { ArrowLeft, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 
+import { DynamicSearchableSelect } from '@/components/dynamic-searchable-select';
 import InputError from '@/components/input-error';
 import { SearchableSelect, SearchableSelectOption } from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -21,13 +22,6 @@ interface Department {
     is_active: boolean;
 }
 
-interface Warehouse {
-    id: number;
-    code: string;
-    title: string;
-    is_active: boolean;
-}
-
 interface Supervisor {
     id: number;
     name: string;
@@ -35,7 +29,6 @@ interface Supervisor {
 
 interface CreateEmployeeProps {
     dep_list: Department[];
-    warehouses: Warehouse[];
     supervisors: Supervisor[];
 }
 
@@ -50,7 +43,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function CreateEmployee({ dep_list, warehouses, supervisors }: CreateEmployeeProps) {
+export default function CreateEmployee({ dep_list, supervisors }: CreateEmployeeProps) {
     const [selectedType, setSelectedType] = useState<string>('');
     const hasWarehouse = WAREHOUSE_ROLES.includes(selectedType);
     const [selectedDepartment, setSelectedDepartment] = useState<string>('');
@@ -74,13 +67,6 @@ export default function CreateEmployee({ dep_list, warehouses, supervisors }: Cr
         .map((dept) => ({
             value: dept.dep_code,
             label: `${dept.dep_code} - ${dept.title}`,
-        }));
-
-    const warehouseOptions: SearchableSelectOption[] = warehouses
-        .filter((warehouse) => warehouse.is_active)
-        .map((warehouse) => ({
-            value: warehouse.id.toString(),
-            label: `${warehouse.code} - ${warehouse.title}`,
         }));
 
     const supervisorOptions: SearchableSelectOption[] = supervisors.map((supervisor) => ({
@@ -121,7 +107,6 @@ export default function CreateEmployee({ dep_list, warehouses, supervisors }: Cr
         const formatted = formatPhoneNumber(e.target.value);
         setPhoneValue(formatted);
     };
-
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -202,12 +187,14 @@ export default function CreateEmployee({ dep_list, warehouses, supervisors }: Cr
                                         {hasWarehouse && (
                                             <div className="grid gap-2">
                                                 <Label>Склад{selectedType === 'frp' ? ' *' : ''}</Label>
-                                                <SearchableSelect
-                                                    options={warehouseOptions}
+                                                <DynamicSearchableSelect
                                                     value={selectedWarehouse}
                                                     onValueChange={setSelectedWarehouse}
                                                     placeholder="Выберите склад"
                                                     searchPlaceholder="Поиск склада..."
+                                                    searchUrl="/employees/search-warehouses"
+                                                    paginated={true}
+                                                    emptyText="Склады не найдены"
                                                 />
                                                 <InputError message={errors.warehouse_id} />
                                                 <input type="hidden" name="warehouse_id" value={selectedWarehouse} />
