@@ -245,6 +245,7 @@ export default function EditEmployee({ employee, dep_list, senior_list = [] }: E
                                                     placeholder="Выберите склад"
                                                     searchPlaceholder="Поиск склада..."
                                                     searchUrl="/employees/search-warehouses"
+                                                    paginated={true}
                                                     selectedOption={currentWarehouse}
                                                     disabled={!isAdmin}
                                                     emptyText="Склады не найдены"

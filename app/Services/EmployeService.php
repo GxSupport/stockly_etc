@@ -207,25 +207,28 @@ class EmployeService
         return $employee->delete();
     }
 
-    public function getWarehouseList(): Collection
-    {
-        return Warehouse::all();
-    }
-
-    public function searchWarehouses(string $search = '', int $limit = 10): Collection
+    /**
+     * Xodimga biriktirish uchun faol skladlar — kod bo'yicha barqaror tartibda,
+     * sahifalab (issue #37: ro'yxat 20 tada tugab qolmasligi uchun).
+     */
+    public function searchWarehouses(string $search = '', int $limit = 20, int $page = 0): Collection
     {
         $query = Warehouse::query()
             ->where('is_active', true)
             ->select(['id', 'code', 'title']);
 
-        if (! empty($search)) {
+        if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
                     ->orWhere('title', 'like', "%{$search}%");
             });
         }
 
-        return $query->limit($limit)->get();
+        return $query->orderBy('code')
+            ->orderBy('id')
+            ->skip($page * $limit)
+            ->limit($limit)
+            ->get();
     }
 
     public function getSeniorList(): Collection

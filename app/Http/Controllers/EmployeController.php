@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\DepListService;
 use App\Services\EmployeService;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -41,12 +42,10 @@ class EmployeController extends Controller
     public function create()
     {
         $dep_list = $this->depListService->getDepList();
-        $warehouses = $this->employeService->getWarehouseList();
         $supervisors = $this->employeService->getSeniorList();
 
         return Inertia::render('employees/create', [
             'dep_list' => $dep_list,
-            'warehouses' => $warehouses,
             'supervisors' => $supervisors,
         ]);
     }
@@ -98,12 +97,13 @@ class EmployeController extends Controller
         ]);
     }
 
-    public function searchWarehouses(Request $request)
+    public function searchWarehouses(Request $request): JsonResponse
     {
-        $search = $request->input('search') ?? '';
-        $limit = (int) ($request->input('limit') ?? 10);
+        $search = (string) $request->input('search', '');
+        $limit = min(max(1, (int) $request->input('limit', 20)), 50);
+        $page = max(0, (int) $request->input('page', 0));
 
-        $warehouses = $this->employeService->searchWarehouses($search, $limit);
+        $warehouses = $this->employeService->searchWarehouses($search, $limit, $page);
 
         return response()->json($warehouses);
     }
@@ -121,7 +121,7 @@ class EmployeController extends Controller
             return redirect()
                 ->route('employees.index')
                 ->with('success', 'Сотрудник успешно обновлен');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return redirect()
                 ->back()
                 ->withInput()
