@@ -146,12 +146,14 @@ class DocumentService
                 ->where('is_draft', 0)
                 ->where('is_returned', 0);
 
+            $awaitingIds = $scope === self::SCOPE_MINE ? collect() : $this->awaitingDocumentIds();
+
             if ($scope === self::SCOPE_MINE) {
                 $query->where('author_id', $this->user->id);
             } elseif ($scope === self::SCOPE_INCOMING) {
                 // Faqat hozir aynan shu foydalanuvchining tasdig'ini kutayotganlar (issue #31);
                 // o'tib ketganlari «Все» da qoladi
-                $query->whereIn('id', $this->awaitingDocumentIds());
+                $query->whereIn('id', $awaitingIds);
             } else {
                 $incomingIds = $this->incomingDocumentIds();
                 $query->where(function ($q) use ($incomingIds) {
@@ -169,7 +171,16 @@ class DocumentService
             $this->applyFilters($query, $search, $startDate, $endDate, $documentType, $documentStatus);
 
             // «Входящие» — oxirgi kelgan (bosqichi o'zgargan) akt tepada
-            return $query->latest($scope === self::SCOPE_INCOMING ? 'updated_at' : 'created_at')->paginate($perPage);
+            $paginator = $query->latest($scope === self::SCOPE_INCOMING ? 'updated_at' : 'created_at')->paginate($perPage);
+
+            // Qator ro'yxatda ajralib turishi uchun: hozir aynan shu foydalanuvchining
+            // tasdig'ini kutayotgan akt (issue #39). Ochganda emas, faqat tasdiqlash /
+            // rad etishdan keyin yo'qoladi — chunki awaitingApprovalFor bosqichga bog'liq.
+            $paginator->getCollection()->each(function (Documents $document) use ($awaitingIds) {
+                $document->setAttribute('is_awaiting_me', $awaitingIds->contains($document->id));
+            });
+
+            return $paginator;
         }
 
         // 'incoming' - Kelgan hujjatlar (faqat tayinlangan hujjatlar - oddiy ishchilar uchun)
@@ -288,6 +299,7 @@ class DocumentService
         return DocumentPriority::query()
             ->awaitingApprovalFor($this->user)
             ->where('user_role', '!=', 'assigned')
+            ->distinct()
             ->pluck('document_id');
     }
 
@@ -324,10 +336,7 @@ class DocumentService
      */
     public function incomingCount(): int
     {
-        return DocumentPriority::query()
-            ->awaitingApprovalFor($this->user)
-            ->where('user_role', '!=', 'assigned')
-            ->count();
+        return $this->awaitingDocumentIds()->count();
     }
 
     private function applyFilters($query, $search, $startDate, $endDate, $documentType, $documentStatus): void
