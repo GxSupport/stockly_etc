@@ -13,6 +13,7 @@ use App\Models\DocumentReturned;
 use App\Models\Documents;
 use App\Models\DocumentType;
 use App\Models\User;
+use App\Models\Warehouse as WarehouseModel;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -680,10 +681,10 @@ class DocumentService
      *
      * @throws \ErrorException
      */
-    public function getGoods(string $code, string $title, ?string $date = null): array
+    public function getGoods(WarehouseModel $warehouse, ?string $date = null): array
     {
         try {
-            return app(ProductService::class)->getProductsList($code, $title, $date);
+            return app(ProductService::class)->getProductsList($warehouse, $date);
         } catch (\Exception $e) {
             throw new \ErrorException($e->getMessage());
         }

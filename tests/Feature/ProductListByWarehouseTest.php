@@ -54,7 +54,7 @@ test('list with warehouse_code loads products for the selected warehouse', funct
     $this->mock(ProductService::class)
         ->shouldReceive('getProductsList')
         ->once()
-        ->withArgs(fn ($code, $title) => $code === 'WH-PLT-2' && $title === 'Другой склад TST')
+        ->withArgs(fn ($warehouse) => $warehouse->code === 'WH-PLT-2' && $warehouse->title === 'Другой склад TST')
         ->andReturn([]);
 
     $this->actingAs($user)
@@ -69,7 +69,7 @@ test('list without warehouse_code keeps using the own user warehouse', function 
     $this->mock(ProductService::class)
         ->shouldReceive('getProductsList')
         ->once()
-        ->withArgs(fn ($code, $title) => $code === 'WH-PLT-1' && $title === 'Собственный склад TST')
+        ->withArgs(fn ($warehouse) => $warehouse->code === 'WH-PLT-1' && $warehouse->title === 'Собственный склад TST')
         ->andReturn([]);
 
     $this->actingAs($user)
@@ -103,11 +103,11 @@ test('list without warehouse_code merges products from every warehouse assigned 
     $mock = $this->mock(ProductService::class);
     $mock->shouldReceive('getProductsList')
         ->once()
-        ->withArgs(fn ($code) => $code === 'WH-PLT-1')
+        ->withArgs(fn ($warehouse) => $warehouse->code === 'WH-PLT-1')
         ->andReturn([['nomenclature' => 'A', 'warehouse' => 'Собственный склад TST']]);
     $mock->shouldReceive('getProductsList')
         ->once()
-        ->withArgs(fn ($code) => $code === 'WH-PLT-3')
+        ->withArgs(fn ($warehouse) => $warehouse->code === 'WH-PLT-3')
         ->andReturn([['nomenclature' => 'B', 'warehouse' => 'Второй собственный склад TST']]);
 
     $this->actingAs($user)

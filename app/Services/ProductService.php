@@ -7,6 +7,7 @@ use App\Data\ProductData;
 use App\Data\ProductServiceData;
 use App\Models\BasicResource;
 use App\Models\UserWarehouse;
+use App\Models\Warehouse;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Auth;
@@ -248,16 +249,22 @@ class ProductService
     /**
      * Tanlangan sklad qoldig'i (issue #24) — 1C ning `get_stock_wh?date=&wh_code=` metodi.
      * Eski `os/empl?m=get_stock_leftover` sklad bo'yicha filtrlamas edi, shuning uchun ro'yxat bo'sh kelardi.
+     * `wh_code` parametri nomiga qaramay 1С skladning УИД (uid) ini kutadi — Код yuborilsa 500 qaytaradi.
      *
      * @return array<int, ProductData>
      */
-    public function getProductsList(string $warehouseCode, string $warehouseTitle, ?string $date = null): array
+    public function getProductsList(Warehouse $warehouse, ?string $date = null): array
     {
+        if (blank($warehouse->uid)) {
+            Log::warning('1C Stock WH: warehouse has no uid', ['warehouse_id' => $warehouse->id, 'code' => $warehouse->code]);
+            throw new \Exception('У склада нет УИД 1С — обновите список складов');
+        }
+
         $date = date('d.m.Y', strtotime($date ?? date('d.m.Y')));
 
         $baseUrl = config('services.one_c.base_url');
         $endpoint = '/base2/hs/CarData/get_stock_wh';
-        $queryParams = ['date' => $date, 'wh_code' => $warehouseCode];
+        $queryParams = ['date' => $date, 'wh_code' => $warehouse->uid];
         $fullUrl = $baseUrl.$endpoint.'?'.http_build_query($queryParams);
 
         Log::info('1C Stock WH Request', ['url' => $fullUrl]);
@@ -289,7 +296,7 @@ class ProductService
                 return [];
             }
 
-            $products = $this->mapStockWhItems($items, $warehouseCode, $warehouseTitle);
+            $products = $this->mapStockWhItems($items, $warehouse->code, $warehouse->title);
 
             Log::info('1C Stock WH Result', ['raw_count' => count($items), 'products_count' => count($products)]);
 

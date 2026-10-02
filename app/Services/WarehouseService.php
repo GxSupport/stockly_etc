@@ -7,6 +7,7 @@ use App\Models\Warehouse;
 use App\Models\WarehouseType;
 use GuzzleHttp\Client;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -20,6 +21,7 @@ class WarehouseService
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
+                    ->orWhere('uid', 'like', "%{$search}%")
                     ->orWhere('title', 'like', "%{$search}%");
             });
         }
@@ -95,6 +97,12 @@ class WarehouseService
      */
     public function syncWarehouses(): int
     {
+        // 1С javobi ~12 MB JSON (~34 ming sklad) — PHP massivida ~85 MB, standart 128 MB limit yetmaydi
+        $memoryLimit = ini_get('memory_limit');
+        if ($memoryLimit !== '-1' && ini_parse_quantity($memoryLimit) < 512 * 1024 * 1024) {
+            ini_set('memory_limit', '512M');
+        }
+
         return $this->storeWarehouses($this->fetchWarehousesFromApi());
     }
 
@@ -151,10 +159,11 @@ class WarehouseService
     }
 
     /**
-     * Kelgan skladlarni code bo'yicha batch upsert qiladi, ВидСклада matnini warehouse_type ga
+     * Kelgan skladlarni uid (УИД) bo'yicha batch upsert qiladi, ВидСклада matnini warehouse_type ga
      * bog'laydi, API'da bo'lmagan skladlarni faolsizlantiradi (o'chirmaydi — FK saqlanadi).
      *
-     * 1С javobidagi kalitlar: Код (code), Наименование (title), ВидСклада (type).
+     * 1С javobidagi kalitlar: УИД (uid), Код (code), Наименование (title), ВидСклада (type).
+     * Код 1С da takrorlanadi (turli skladlarda bir xil kod), shuning uchun kalit — УИД.
      * is_active javobda yo'q — sinxronlangan barcha sklad faol deb belgilanadi.
      *
      * @param  array<int, array<string, mixed>>  $items
@@ -179,6 +188,7 @@ class WarehouseService
 
         $rows = collect($items)
             ->map(fn ($item) => [
+                'uid' => trim((string) ($item['УИД'] ?? '')),
                 'code' => trim((string) ($item['Код'] ?? '')),
                 'title' => mb_substr(trim((string) ($item['Наименование'] ?? '')), 0, 255),
                 'type' => $resolveType($item['ВидСклада'] ?? null),
@@ -186,9 +196,12 @@ class WarehouseService
                 'created_at' => $now,
                 'updated_at' => $now,
             ])
-            ->filter(fn ($row) => $row['code'] !== '' && $row['title'] !== '')
-            ->keyBy('code') // dublikat kodlarni birlashtirish (oxirgi yozuv qoladi)
+            ->filter(fn ($row) => $row['uid'] !== '' && $row['code'] !== '' && $row['title'] !== '')
+            ->keyBy('uid') // dublikat UID larni birlashtirish (oxirgi yozuv qoladi)
             ->values();
+
+        // 1С javobi (~34 ming sklad) PHP massivida ~70 MB — 128 MB limitga sig'ish uchun bo'shatamiz
+        unset($items);
 
         if ($rows->isEmpty()) {
             return 0;
@@ -200,11 +213,81 @@ class WarehouseService
         DB::transaction(function () use ($rows) {
             Warehouse::query()->update(['is_active' => false]);
 
+            $this->assignUidsToLegacyWarehouses($rows);
+
             $rows->chunk(500)->each(function ($chunk) {
-                Warehouse::upsert($chunk->all(), ['code'], ['title', 'type', 'is_active', 'updated_at']);
+                Warehouse::upsert($chunk->all(), ['uid'], ['code', 'title', 'type', 'is_active', 'updated_at']);
             });
         });
 
         return $rows->count();
+    }
+
+    /**
+     * UID siz eski skladlarni (code kalit bo'lgan davrdan) 1С javobidagi UID bilan bog'laydi,
+     * aks holda upsert ularning o'rniga yangi yozuv qo'shib, user_warehouse bog'lanishlari eski
+     * (faolsiz) yozuvda qolib ketadi. Bir kodli bir nechta sklad bo'lsa — avval nomi mos keladigani,
+     * bo'lmasa oxirgisi (avvalgi code-upsert ham oxirgisini saqlardi).
+     *
+     * @param  SupportCollection<int, array<string, mixed>>  $rows
+     */
+    private function assignUidsToLegacyWarehouses(SupportCollection $rows): void
+    {
+        $legacy = Warehouse::query()
+            ->whereNull('uid')
+            ->toBase()
+            ->get(['id', 'code', 'title']);
+
+        if ($legacy->isEmpty()) {
+            return;
+        }
+
+        /** @var array<string, array<int, array{id: int, title: string}>> $legacyByCode */
+        $legacyByCode = [];
+        foreach ($legacy as $warehouse) {
+            $legacyByCode[$warehouse->code][] = ['id' => $warehouse->id, 'title' => $warehouse->title];
+        }
+        unset($legacy);
+
+        // Faqat eski yozuvi bor kodlar uchun $rows indekslari (qator nusxalari emas — xotira tejash)
+        /** @var array<string, array<int, int>> $rowIndexesByCode */
+        $rowIndexesByCode = [];
+        foreach ($rows as $index => $row) {
+            if (isset($legacyByCode[$row['code']])) {
+                $rowIndexesByCode[$row['code']][] = $index;
+            }
+        }
+
+        $usedUids = array_flip(Warehouse::query()->whereNotNull('uid')->pluck('uid')->all());
+
+        $updates = [];
+        foreach ($rowIndexesByCode as $code => $indexes) {
+            foreach ($legacyByCode[$code] as $warehouse) {
+                $match = null;
+                foreach ($indexes as $index) {
+                    $candidate = $rows[$index];
+                    if (isset($usedUids[$candidate['uid']])) {
+                        continue;
+                    }
+                    if ($candidate['title'] === $warehouse['title']) {
+                        $match = $candidate;
+                        break;
+                    }
+                    $match = $candidate;
+                }
+
+                if ($match === null) {
+                    continue;
+                }
+
+                $usedUids[$match['uid']] = true;
+                $updates[] = ['id' => $warehouse['id'], 'code' => $code, 'title' => $warehouse['title'], 'uid' => $match['uid']];
+            }
+        }
+
+        // id bo'yicha upsert — faqat mavjud yozuvlarning uid ustuni yangilanadi (yangi qator qo'shilmaydi)
+        foreach (array_chunk($updates, 500) as $chunk) {
+            Warehouse::upsert($chunk, ['id'], ['uid']);
+        }
     }
 }

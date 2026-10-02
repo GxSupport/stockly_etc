@@ -1,12 +1,21 @@
 <?php
 
+use App\Models\Warehouse;
 use App\Services\ProductService;
 use Illuminate\Support\Facades\Http;
 
 /**
+ * 1С get_stock_wh `wh_code` parametrida sklad Код emas, УИД kutadi.
+ */
+function stockWhWarehouse(string $title = 'Склад', ?string $uid = 'e613c384-7f20-11dd-b658-0030058823c4'): Warehouse
+{
+    return new Warehouse(['code' => '1137', 'uid' => $uid, 'title' => $title]);
+}
+
+/**
  * Issue #24: «Добавить товар» ro'yxati 1C ning get_stock_wh?date=&wh_code= metodidan olinadi.
  */
-test('getProductsList calls get_stock_wh with today date and warehouse code and maps the response', function () {
+test('getProductsList calls get_stock_wh with today date and warehouse uid and maps the response', function () {
     config(['services.one_c.base_url' => 'http://one-c.test:8083']);
 
     Http::fake([
@@ -22,13 +31,13 @@ test('getProductsList calls get_stock_wh with today date and warehouse code and 
         ]),
     ]);
 
-    $products = app(ProductService::class)->getProductsList('1137', 'Склад Самарканд');
+    $products = app(ProductService::class)->getProductsList(stockWhWarehouse('Склад Самарканд'));
 
     Http::assertSent(function ($request) {
         parse_str(parse_url($request->url(), PHP_URL_QUERY), $query);
 
         return str_starts_with($request->url(), 'http://one-c.test:8083/base2/hs/CarData/get_stock_wh')
-            && $query['wh_code'] === '1137'
+            && $query['wh_code'] === 'e613c384-7f20-11dd-b658-0030058823c4'
             && $query['date'] === date('d.m.Y')
             && $request->hasHeader('Authorization', 'Basic '.config('services.one_c.basic_auth'));
     });
@@ -45,7 +54,7 @@ test('getProductsList calls get_stock_wh with today date and warehouse code and 
 test('getProductsList passes the explicit date through in dd.mm.yyyy', function () {
     Http::fake(['*' => Http::response([])]);
 
-    app(ProductService::class)->getProductsList('1137', 'Склад', '01.02.2026');
+    app(ProductService::class)->getProductsList(stockWhWarehouse(), '01.02.2026');
 
     Http::assertSent(fn ($request) => str_contains($request->url(), 'date=01.02.2026'));
 });
@@ -105,13 +114,13 @@ test('cleanStockWhName strips leading code and tabs but keeps plain names', func
 test('getProductsList returns an empty list when 1C responds with a non-array body', function () {
     Http::fake(['*' => Http::response('null')]);
 
-    expect(app(ProductService::class)->getProductsList('1137', 'Склад'))->toBe([]);
+    expect(app(ProductService::class)->getProductsList(stockWhWarehouse()))->toBe([]);
 });
 
 test('getProductsList throws a readable error when 1C fails', function () {
     Http::fake(['*' => Http::response('', 500)]);
 
-    app(ProductService::class)->getProductsList('1137', 'Склад');
+    app(ProductService::class)->getProductsList(stockWhWarehouse());
 })->throws(Exception::class, 'Ошибка подключения к серверу');
 
 test('getWarehouseOsList maps the OS register and stamps the warehouse code (issue #27)', function () {
@@ -138,4 +147,13 @@ test('getWarehouseOsList maps the OS register and stamps the warehouse code (iss
     expect($products[0]->warehouse_code)->toBe('ETC005793');
     expect($products[0]->price)->toBe(10550000.0);
     expect($products[0]->count)->toBe('0');
+});
+
+test('getProductsList refuses a warehouse without 1C uid and does not call 1C', function () {
+    Http::fake();
+
+    expect(fn () => app(ProductService::class)->getProductsList(stockWhWarehouse(uid: null)))
+        ->toThrow(Exception::class, 'У склада нет УИД 1С — обновите список складов');
+
+    Http::assertNothingSent();
 });
