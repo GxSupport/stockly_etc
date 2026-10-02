@@ -94,7 +94,7 @@ class DocumentController extends Controller
         $documentTypes = DocumentType::query()->active()->get();
 
         try {
-            $products = $this->documentService->getGoods($code, $title, $date);
+            $products = $this->documentService->getGoods($warehouse->warehouse, $date);
         } catch (\ErrorException $e) {
             $products = [];
             Log::error($e->getMessage());
@@ -261,7 +261,7 @@ class DocumentController extends Controller
             $documentTypes = DocumentType::query()->active()->get();
 
             try {
-                $products = $this->documentService->getGoods($code, $title, $date);
+                $products = $this->documentService->getGoods($warehouse->warehouse, $date);
             } catch (\ErrorException $e) {
                 $products = [];
                 Log::error($e->getMessage());

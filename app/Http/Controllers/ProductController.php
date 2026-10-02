@@ -25,7 +25,8 @@ class ProductController extends Controller
         $warehouseCode = $request->input('warehouse_code');
 
         if ($warehouseCode) {
-            $warehouse = Warehouse::query()->where('code', $warehouseCode)->first();
+            // Код 1С da takrorlanishi mumkin — faol sklad ustun
+            $warehouse = Warehouse::query()->where('code', $warehouseCode)->orderByDesc('is_active')->first();
 
             if (! $warehouse) {
                 return response()->json([
@@ -65,8 +66,7 @@ class ProductController extends Controller
                         date: $date
                     )
                     : $this->productService->getProductsList(
-                        warehouseCode: $warehouse->code,
-                        warehouseTitle: $warehouse->title,
+                        warehouse: $warehouse,
                         date: $date
                     ));
             }

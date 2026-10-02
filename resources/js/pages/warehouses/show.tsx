@@ -19,6 +19,7 @@ interface WarehouseType {
 interface Warehouse {
     id: number;
     code: string;
+    uid: string | null;
     title: string;
     type: number;
     type_info: WarehouseType | null;
@@ -182,6 +183,10 @@ export default function WarehouseShow({ warehouse }: WarehouseShowPageProps) {
                             <div>
                                 <div className="text-sm text-muted-foreground">Код склада</div>
                                 <div className="font-mono font-medium">{warehouse.code}</div>
+                            </div>
+                            <div>
+                                <div className="text-sm text-muted-foreground">УИД 1С</div>
+                                <div className="font-mono text-sm break-all">{warehouse.uid || '—'}</div>
                             </div>
                             <div>
                                 <div className="text-sm text-muted-foreground">Название</div>

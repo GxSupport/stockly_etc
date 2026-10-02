@@ -16,6 +16,7 @@ interface WarehouseType {
 interface Warehouse {
     id: number;
     code: string;
+    uid: string | null;
     title: string;
     type: number;
     type_info: WarehouseType;
@@ -104,7 +105,7 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                 <div className="flex gap-4">
                     <div className="flex-1">
                         <Input
-                            placeholder="Поиск по коду или названию склада..."
+                            placeholder="Поиск по коду, УИД или названию склада..."
                             value={searchQuery}
                             onChange={(e) => handleSearch(e.target.value)}
                         />
@@ -117,6 +118,7 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                             <thead>
                                 <tr className="border-b bg-muted/50">
                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Код склада</th>
+                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">УИД 1С</th>
                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Название</th>
                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Тип</th>
                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Статус</th>
@@ -134,6 +136,11 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                                         >
                                             <td className="h-12 px-4 align-middle">
                                                 <div className="font-mono text-sm font-medium">{warehouse.code}</div>
+                                            </td>
+                                            <td className="h-12 px-4 align-middle">
+                                                <div className="font-mono text-xs whitespace-nowrap text-muted-foreground">
+                                                    {warehouse.uid || '—'}
+                                                </div>
                                             </td>
                                             <td className="h-12 px-4 align-middle">
                                                 <div className="font-medium">{warehouse.title}</div>
@@ -168,7 +175,7 @@ export default function Warehouses({ warehouses, total, page, perPage, search }:
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={canManage ? 6 : 5} className="h-24 text-center">
+                                        <td colSpan={canManage ? 7 : 6} className="h-24 text-center">
                                             <div className="text-muted-foreground">Склады не найдены</div>
                                         </td>
                                     </tr>
