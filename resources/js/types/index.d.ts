@@ -45,6 +45,20 @@ export interface User {
 
 // Dashboard types
 
+export interface DashboardStatusBreakdown {
+    total: number;
+    draft: number;
+    sent: number;
+    returned: number;
+    finished: number;
+}
+
+export interface DashboardTypeCount {
+    type: number;
+    title: string;
+    count: number;
+}
+
 export interface DashboardDocument {
     id: number;
     number: string;
@@ -63,19 +77,17 @@ export interface AdminStats {
         total: number;
         active: number;
         inactive: number;
+        new_this_month: number;
     };
     users_by_role: Array<{
         type: string;
         name: string;
         count: number;
     }>;
-    documents: {
-        total: number;
-        draft: number;
-        sent: number;
-        returned: number;
-        finished: number;
+    documents: DashboardStatusBreakdown & {
+        this_month: number;
     };
+    documents_by_type: DashboardTypeCount[];
     recent_users: Array<{
         id: number;
         name: string;
@@ -100,12 +112,10 @@ export interface DirectorStats {
         total: number;
         finished: number;
         in_progress: number;
+        this_month: number;
     };
-    documents_by_type: Array<{
-        type: number;
-        title: string;
-        count: number;
-    }>;
+    documents_status: DashboardStatusBreakdown;
+    documents_by_type: DashboardTypeCount[];
     recently_finished: DashboardDocument[];
     returned_count: number;
 }
@@ -116,6 +126,8 @@ export interface DeputyDirectorStats {
         documents: DashboardDocument[];
     };
     total_approved: number;
+    approved_this_month: number;
+    approved_by_type: DashboardTypeCount[];
     recently_processed: DashboardDocument[];
     returned_count: number;
 }
@@ -126,11 +138,8 @@ export interface BuxgalterStats {
         documents: DashboardDocument[];
     };
     total_processed: number;
-    documents_by_type: Array<{
-        type: number;
-        title: string;
-        count: number;
-    }>;
+    documents_status: DashboardStatusBreakdown;
+    documents_by_type: DashboardTypeCount[];
     financial_summary: {
         finished_amount: number;
         in_progress_amount: number;
@@ -139,13 +148,7 @@ export interface BuxgalterStats {
 }
 
 export interface HeaderFrpStats {
-    team_documents: {
-        total: number;
-        draft: number;
-        sent: number;
-        returned: number;
-        finished: number;
-    };
+    team_documents: DashboardStatusBreakdown;
     awaiting_approval: {
         count: number;
         documents: DashboardDocument[];
@@ -169,13 +172,8 @@ export interface FrpStats {
         count: number;
         documents: DashboardDocument[];
     };
-    own_documents: {
-        total: number;
-        draft: number;
-        sent: number;
-        returned: number;
-        finished: number;
-    };
+    own_documents: DashboardStatusBreakdown;
+    documents_by_type: DashboardTypeCount[];
     warehouse: {
         user_id: number;
         warehouse_id: number;
@@ -194,4 +192,5 @@ export type DashboardStats = AdminStats | DirectorStats | DeputyDirectorStats | 
 export interface DashboardPageProps {
     stats: DashboardStats;
     userRole: string;
+    roleName: string | null;
 }
