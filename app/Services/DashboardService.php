@@ -10,6 +10,8 @@ use App\Models\DocumentType;
 use App\Models\User;
 use App\Models\UserRoles;
 use App\Models\Warehouse;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 
 class DashboardService
 {
@@ -37,27 +39,21 @@ class DashboardService
         $totalUsers = User::query()->count();
         $activeUsers = User::query()->where('is_active', 1)->count();
         $inactiveUsers = $totalUsers - $activeUsers;
+        $newUsersThisMonth = User::query()->where('created_at', '>=', $this->startOfMonth())->count();
+
+        $roleNames = UserRoles::query()->pluck('name', 'title');
 
         $usersByRole = User::query()
             ->selectRaw('type, COUNT(*) as count')
             ->whereNotNull('type')
             ->groupBy('type')
+            ->orderByDesc('count')
             ->get()
-            ->map(function ($item) {
-                $role = UserRoles::query()->where('title', $item->type)->first();
-
-                return [
-                    'type' => $item->type,
-                    'name' => $role?->name ?? $item->type,
-                    'count' => $item->count,
-                ];
-            });
-
-        $totalDocuments = Documents::query()->count();
-        $draftDocuments = Documents::query()->where('is_draft', 1)->count();
-        $sentDocuments = Documents::query()->where('is_draft', 0)->where('is_finished', 0)->where('is_returned', 0)->count();
-        $returnedDocuments = Documents::query()->where('is_returned', 1)->count();
-        $finishedDocuments = Documents::query()->where('is_finished', 1)->count();
+            ->map(fn ($item) => [
+                'type' => $item->type,
+                'name' => $roleNames[$item->type] ?? $item->type,
+                'count' => (int) $item->count,
+            ]);
 
         $recentUsers = User::query()
             ->with('role')
@@ -70,15 +66,14 @@ class DashboardService
                 'total' => $totalUsers,
                 'active' => $activeUsers,
                 'inactive' => $inactiveUsers,
+                'new_this_month' => $newUsersThisMonth,
             ],
             'users_by_role' => $usersByRole,
             'documents' => [
-                'total' => $totalDocuments,
-                'draft' => $draftDocuments,
-                'sent' => $sentDocuments,
-                'returned' => $returnedDocuments,
-                'finished' => $finishedDocuments,
+                ...$this->statusBreakdown(Documents::query()),
+                'this_month' => Documents::query()->where('created_at', '>=', $this->startOfMonth())->count(),
             ],
+            'documents_by_type' => $this->documentsByType(Documents::query()),
             'recent_users' => $recentUsers,
             'system' => [
                 'warehouses' => Warehouse::query()->count(),
@@ -107,20 +102,6 @@ class DashboardService
         $finishedDocuments = Documents::query()->where('is_finished', 1)->count();
         $inProgressDocuments = Documents::query()->where('is_finished', 0)->where('is_draft', 0)->count();
 
-        $documentsByType = Documents::query()
-            ->selectRaw('type, COUNT(*) as count')
-            ->groupBy('type')
-            ->get()
-            ->map(function ($item) {
-                $docType = DocumentType::query()->find($item->type);
-
-                return [
-                    'type' => $item->type,
-                    'title' => $docType?->title ?? 'Неизвестный тип',
-                    'count' => $item->count,
-                ];
-            });
-
         $recentlyFinished = Documents::query()
             ->where('is_finished', 1)
             ->with(['document_type', 'user_info'])
@@ -140,8 +121,10 @@ class DashboardService
                 'total' => $totalDocuments,
                 'finished' => $finishedDocuments,
                 'in_progress' => $inProgressDocuments,
+                'this_month' => Documents::query()->where('created_at', '>=', $this->startOfMonth())->count(),
             ],
-            'documents_by_type' => $documentsByType,
+            'documents_status' => $this->statusBreakdown(Documents::query()),
+            'documents_by_type' => $this->documentsByType(Documents::query()),
             'recently_finished' => $recentlyFinished,
             'returned_count' => $returnedCount,
         ];
@@ -162,16 +145,15 @@ class DashboardService
             ->get()
             ->map(fn ($p) => $this->formatPriorityDocument($p));
 
-        $totalApproved = DocumentPriority::query()
+        $approvedQuery = DocumentPriority::query()
             ->where('user_role', 'deputy_director')
             ->where('user_id', $user->id)
-            ->where('is_success', true)
-            ->count();
+            ->where('is_success', true);
 
-        $recentlyProcessed = DocumentPriority::query()
-            ->where('user_role', 'deputy_director')
-            ->where('user_id', $user->id)
-            ->where('is_success', true)
+        $totalApproved = (clone $approvedQuery)->count();
+        $approvedThisMonth = (clone $approvedQuery)->where('updated_at', '>=', $this->startOfMonth())->count();
+
+        $recentlyProcessed = (clone $approvedQuery)
             ->with(['document.document_type', 'document.user_info'])
             ->latest('updated_at')
             ->limit(5)
@@ -182,12 +164,18 @@ class DashboardService
             ->where('from_id', $user->id)
             ->count();
 
+        $approvedByType = $this->documentsByType(
+            Documents::query()->whereIn('id', (clone $approvedQuery)->select('document_id'))
+        );
+
         return [
             'awaiting_approval' => [
                 'count' => $awaitingCount,
                 'documents' => $awaitingDocuments,
             ],
             'total_approved' => $totalApproved,
+            'approved_this_month' => $approvedThisMonth,
+            'approved_by_type' => $approvedByType,
             'recently_processed' => $recentlyProcessed,
             'returned_count' => $returnedCount,
         ];
@@ -213,20 +201,6 @@ class DashboardService
             ->where('is_success', true)
             ->count();
 
-        $documentsByType = Documents::query()
-            ->selectRaw('type, COUNT(*) as count')
-            ->groupBy('type')
-            ->get()
-            ->map(function ($item) {
-                $docType = DocumentType::query()->find($item->type);
-
-                return [
-                    'type' => $item->type,
-                    'title' => $docType?->title ?? 'Неизвестный тип',
-                    'count' => $item->count,
-                ];
-            });
-
         $finishedTotalAmount = Documents::query()
             ->where('is_finished', 1)
             ->sum('total_amount');
@@ -250,7 +224,8 @@ class DashboardService
                 'documents' => $awaitingDocuments,
             ],
             'total_processed' => $totalProcessed,
-            'documents_by_type' => $documentsByType,
+            'documents_status' => $this->statusBreakdown(Documents::query()),
+            'documents_by_type' => $this->documentsByType(Documents::query()),
             'financial_summary' => [
                 'finished_amount' => $finishedTotalAmount,
                 'in_progress_amount' => $inProgressTotalAmount,
@@ -267,12 +242,6 @@ class DashboardService
         $subordinateIds = User::query()
             ->where('senior_id', $user->id)
             ->pluck('id');
-
-        $teamTotal = Documents::query()->whereIn('user_id', $subordinateIds)->count();
-        $teamDraft = Documents::query()->whereIn('user_id', $subordinateIds)->where('is_draft', 1)->count();
-        $teamSent = Documents::query()->whereIn('user_id', $subordinateIds)->where('is_draft', 0)->where('is_finished', 0)->where('is_returned', 0)->count();
-        $teamReturned = Documents::query()->whereIn('user_id', $subordinateIds)->where('is_returned', 1)->count();
-        $teamFinished = Documents::query()->whereIn('user_id', $subordinateIds)->where('is_finished', 1)->count();
 
         $awaitingQuery = DocumentPriority::query()->awaitingApprovalFor($user);
 
@@ -291,16 +260,11 @@ class DashboardService
         $teamMembers = User::query()
             ->where('senior_id', $user->id)
             ->withCount('documents')
+            ->orderByDesc('documents_count')
             ->get(['id', 'name', 'phone', 'type']);
 
         return [
-            'team_documents' => [
-                'total' => $teamTotal,
-                'draft' => $teamDraft,
-                'sent' => $teamSent,
-                'returned' => $teamReturned,
-                'finished' => $teamFinished,
-            ],
+            'team_documents' => $this->statusBreakdown(Documents::query()->whereIn('user_id', $subordinateIds)),
             'awaiting_approval' => [
                 'count' => $awaitingCount,
                 'documents' => $awaitingDocuments,
@@ -319,40 +283,30 @@ class DashboardService
      */
     private function getFrpStats(User $user): array
     {
-        $ownTotal = Documents::query()->where('user_id', $user->id)->count();
-        $ownDraft = Documents::query()->where('user_id', $user->id)->where('is_draft', 1)->count();
-        $ownSent = Documents::query()->where('user_id', $user->id)->where('is_draft', 0)->where('is_finished', 0)->where('is_returned', 0)->count();
-        $ownReturned = Documents::query()->where('user_id', $user->id)->where('is_returned', 1)->count();
-        $ownFinished = Documents::query()->where('user_id', $user->id)->where('is_finished', 1)->count();
+        $ownQuery = Documents::query()->where('user_id', $user->id);
 
         $warehouse = $user->warehouse;
 
-        $recentDocuments = Documents::query()
-            ->where('user_id', $user->id)
+        $recentDocuments = (clone $ownQuery)
             ->with(['document_type'])
             ->latest()
             ->limit(5)
             ->get()
             ->map(fn ($d) => $this->formatDocument($d));
 
-        $pendingReturns = Documents::query()
-            ->where('user_id', $user->id)
+        $pendingReturns = (clone $ownQuery)
             ->where('is_returned', 1)
             ->with(['document_type', 'notes'])
             ->latest()
+            ->limit(5)
             ->get()
             ->map(fn ($d) => $this->formatDocument($d));
 
         $awaitingQuery = DocumentPriority::query()->awaitingApprovalFor($user);
 
         return [
-            'own_documents' => [
-                'total' => $ownTotal,
-                'draft' => $ownDraft,
-                'sent' => $ownSent,
-                'returned' => $ownReturned,
-                'finished' => $ownFinished,
-            ],
+            'own_documents' => $this->statusBreakdown($ownQuery),
+            'documents_by_type' => $this->documentsByType($ownQuery),
             'awaiting_approval' => [
                 'count' => $awaitingQuery->count(),
                 'documents' => (clone $awaitingQuery)
@@ -366,6 +320,61 @@ class DashboardService
             'recent_documents' => $recentDocuments,
             'pending_returns' => $pendingReturns,
         ];
+    }
+
+    /**
+     * Hujjatlarni holatlar bo'yicha bitta so'rovda sanaydi.
+     *
+     * @param  Builder<Documents>  $query
+     * @return array{total: int, draft: int, sent: int, returned: int, finished: int}
+     */
+    private function statusBreakdown(Builder $query): array
+    {
+        $row = (clone $query)
+            ->toBase()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN is_draft = 1 THEN 1 ELSE 0 END) as draft')
+            ->selectRaw('SUM(CASE WHEN is_draft = 0 AND is_finished = 0 AND is_returned = 0 THEN 1 ELSE 0 END) as sent')
+            ->selectRaw('SUM(CASE WHEN is_returned = 1 THEN 1 ELSE 0 END) as returned')
+            ->selectRaw('SUM(CASE WHEN is_finished = 1 THEN 1 ELSE 0 END) as finished')
+            ->first();
+
+        return [
+            'total' => (int) ($row->total ?? 0),
+            'draft' => (int) ($row->draft ?? 0),
+            'sent' => (int) ($row->sent ?? 0),
+            'returned' => (int) ($row->returned ?? 0),
+            'finished' => (int) ($row->finished ?? 0),
+        ];
+    }
+
+    /**
+     * @param  Builder<Documents>  $query
+     * @return list<array{type: int, title: string, count: int}>
+     */
+    private function documentsByType(Builder $query): array
+    {
+        $counts = (clone $query)
+            ->selectRaw('type, COUNT(*) as documents_count')
+            ->groupBy('type')
+            ->orderByDesc('documents_count')
+            ->pluck('documents_count', 'type');
+
+        $titles = DocumentType::query()->whereIn('id', $counts->keys())->pluck('title', 'id');
+
+        return $counts
+            ->map(fn ($count, $type) => [
+                'type' => (int) $type,
+                'title' => $titles[$type] ?? 'Неизвестный тип',
+                'count' => (int) $count,
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function startOfMonth(): Carbon
+    {
+        return now()->startOfMonth();
     }
 
     /**

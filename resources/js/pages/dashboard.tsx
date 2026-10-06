@@ -1,3 +1,7 @@
+import { BarListChart } from '@/components/dashboard/bar-list-chart';
+import { ChartCard } from '@/components/dashboard/chart-card';
+import { DonutChart, toCategoricalSegments, type DonutSegment } from '@/components/dashboard/donut-chart';
+import { KpiCard } from '@/components/dashboard/kpi-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import type {
     AdminStats,
@@ -13,6 +18,8 @@ import type {
     BuxgalterStats,
     DashboardDocument,
     DashboardPageProps,
+    DashboardStatusBreakdown,
+    DashboardTypeCount,
     DeputyDirectorStats,
     DirectorStats,
     FrpStats,
@@ -20,8 +27,26 @@ import type {
     SharedData,
 } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import type { LucideIcon } from 'lucide-react';
-import { Building2, CheckCircle2, Clock, FileText, Package, RotateCcw, Send, Users, Warehouse, XCircle } from 'lucide-react';
+import {
+    Banknote,
+    Building2,
+    CalendarCheck,
+    CheckCircle2,
+    Clock,
+    FilePen,
+    FileStack,
+    FileText,
+    Hourglass,
+    RotateCcw,
+    Send,
+    UserCheck,
+    UserPlus,
+    Users,
+    UserX,
+    Warehouse,
+    XCircle,
+} from 'lucide-react';
+import type { ReactNode } from 'react';
 
 const TelegramIcon = ({ className }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -49,54 +74,46 @@ function formatAmount(amount: number): string {
     );
 }
 
-function StatCard({
-    title,
-    value,
-    description,
-    icon: Icon,
-    className,
-    href,
-}: {
-    title: string;
-    value: string | number;
-    description?: string;
-    icon: LucideIcon;
-    className?: string;
-    href?: string;
-}) {
-    const card = (
-        <Card className={`${className ?? ''} ${href ? 'h-full transition-colors hover:border-primary/50 hover:bg-muted/50' : ''}`}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{value}</div>
-                {description && <p className="text-xs text-muted-foreground">{description}</p>}
-            </CardContent>
-        </Card>
-    );
+function greeting(): string {
+    const hour = new Date().getHours();
 
-    if (!href) {
-        return card;
+    if (hour < 5 || hour >= 18) {
+        return 'Добрый вечер';
     }
 
-    return (
-        <Link href={href} className="block">
-            {card}
-        </Link>
-    );
+    return hour < 12 ? 'Доброе утро' : 'Добрый день';
 }
 
+type StatusLinks = Partial<Record<'draft' | 'sent' | 'returned' | 'finished', string>>;
+
 /**
- * Raqamni orqasidagi ro'yxatga olib boradigan bosiladigan qiymat.
- * Dashboard'dagi statistika badge'lari uchun.
+ * Hujjat holatlarini donut segmentlariga aylantiradi. Holat ranglari kategorik ranglardan alohida.
  */
-function StatLink({ href, children }: { href: string; children: React.ReactNode }) {
+function statusSegments(breakdown: DashboardStatusBreakdown, links: StatusLinks = {}): DonutSegment[] {
+    return [
+        { key: 'draft', label: 'Черновики', value: breakdown.draft, color: 'var(--viz-neutral)', href: links.draft },
+        { key: 'sent', label: 'В процессе', value: breakdown.sent, color: 'var(--viz-1)', href: links.sent },
+        { key: 'returned', label: 'Возвращены', value: breakdown.returned, color: 'var(--viz-critical)', href: links.returned },
+        { key: 'finished', label: 'Завершены', value: breakdown.finished, color: 'var(--viz-good)', href: links.finished },
+    ];
+}
+
+function typeBars(items: DashboardTypeCount[]) {
+    return items.map((item) => ({ key: item.type, label: item.title, value: item.count }));
+}
+
+function KpiGrid({ children, columns = 4 }: { children: ReactNode; columns?: 3 | 4 | 5 }) {
     return (
-        <Link href={href} className="transition-opacity hover:opacity-80">
+        <div
+            className={cn(
+                'grid grid-cols-2 gap-3 sm:gap-4',
+                columns === 3 && 'lg:grid-cols-3',
+                columns === 4 && 'lg:grid-cols-4',
+                columns === 5 && 'lg:grid-cols-3 xl:grid-cols-5',
+            )}
+        >
             {children}
-        </Link>
+        </div>
     );
 }
 
@@ -113,52 +130,48 @@ function DocumentStatusBadge({ doc }: { doc: DashboardDocument }) {
     return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">В процессе</Badge>;
 }
 
-function DocumentMiniTable({ documents, title }: { documents: DashboardDocument[]; title: string }) {
-    if (!documents || documents.length === 0) {
-        return (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base">{title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground">Нет документов</p>
-                </CardContent>
-            </Card>
-        );
-    }
-
+function DocumentMiniTable({ documents, title, href }: { documents: DashboardDocument[]; title: string; href?: string }) {
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-base">{title}</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <ChartCard
+            title={title}
+            action={
+                href && documents.length > 0 ? (
+                    <Link href={href} className="text-xs font-medium text-primary hover:underline">
+                        Все →
+                    </Link>
+                ) : undefined
+            }
+        >
+            {documents.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">Нет документов</p>
+            ) : (
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>№</TableHead>
-                            <TableHead>Тип</TableHead>
-                            <TableHead>Сумма</TableHead>
+                            <TableHead>Документ</TableHead>
+                            <TableHead className="text-right">Сумма</TableHead>
                             <TableHead>Статус</TableHead>
-                            <TableHead>Дата</TableHead>
+                            <TableHead className="text-right">Дата</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {documents.map((doc) => (
                             <TableRow key={doc.id} className="cursor-pointer" onClick={() => router.visit(`/documents/${doc.id}`)}>
-                                <TableCell className="font-medium">{doc.number}</TableCell>
-                                <TableCell>{doc.type_title}</TableCell>
-                                <TableCell>{formatAmount(doc.total_amount)}</TableCell>
+                                <TableCell className="max-w-56">
+                                    <div className="truncate font-medium">{doc.number}</div>
+                                    <div className="truncate text-xs text-muted-foreground">{doc.type_title}</div>
+                                </TableCell>
+                                <TableCell className="text-right whitespace-nowrap tabular-nums">{formatAmount(doc.total_amount)}</TableCell>
                                 <TableCell>
                                     <DocumentStatusBadge doc={doc} />
                                 </TableCell>
-                                <TableCell>{doc.created_at}</TableCell>
+                                <TableCell className="text-right whitespace-nowrap text-muted-foreground tabular-nums">{doc.created_at}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
-            </CardContent>
-        </Card>
+            )}
+        </ChartCard>
     );
 }
 
@@ -166,83 +179,56 @@ function DocumentMiniTable({ documents, title }: { documents: DashboardDocument[
 
 function AdminDashboard({ stats }: { stats: AdminStats }) {
     return (
-        <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard title="Всего пользователей" value={stats.users.total} description={`Активных: ${stats.users.active}`} icon={Users} />
-                <StatCard
-                    title="Всего документов"
+        <>
+            <KpiGrid>
+                <KpiCard
+                    label="Пользователи"
+                    value={stats.users.total}
+                    description={`Активных: ${stats.users.active}`}
+                    icon={UserCheck}
+                    tone="blue"
+                    href="/employees"
+                />
+                <KpiCard label="Новых за месяц" value={stats.users.new_this_month} icon={UserPlus} tone="emerald" href="/employees" />
+                <KpiCard label="Неактивные" value={stats.users.inactive} icon={UserX} tone="slate" href="/employees" />
+                <KpiCard label="Отделы" value={stats.system.departments} icon={Building2} tone="violet" href="/departments" />
+                <KpiCard label="Склады" value={stats.system.warehouses} icon={Warehouse} tone="sky" href="/warehouses" />
+                <KpiCard label="Типы документов" value={stats.system.document_types} icon={FileStack} tone="lime" href="/document-types" />
+                <KpiCard
+                    label="Всего документов"
                     value={stats.documents.total}
-                    description={`Завершено: ${stats.documents.finished}`}
+                    description={`За месяц: ${stats.documents.this_month}`}
                     icon={FileText}
+                    tone="cyan"
                 />
-                <StatCard title="Склады" value={stats.system.warehouses} icon={Warehouse} />
-                <StatCard
-                    title="Отделы"
-                    value={stats.system.departments}
-                    description={`Типов документов: ${stats.system.document_types}`}
-                    icon={Building2}
-                />
+                <KpiCard label="Завершено" value={stats.documents.finished} icon={CalendarCheck} tone="amber" />
+            </KpiGrid>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+                <ChartCard title="Документы по типам" className="lg:col-span-2">
+                    <BarListChart items={typeBars(stats.documents_by_type)} emptyMessage="Документов пока нет" />
+                </ChartCard>
+                <ChartCard title="Пользователи по ролям">
+                    <DonutChart
+                        centerLabel="Пользователей"
+                        segments={toCategoricalSegments(stats.users_by_role.map((role) => ({ key: role.type, label: role.name, value: role.count })))}
+                    />
+                </ChartCard>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Пользователи по ролям</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                            {stats.users_by_role.map((role) => (
-                                <div key={role.type} className="flex items-center justify-between">
-                                    <span className="text-sm">{role.name}</span>
-                                    <Badge variant="secondary">{role.count}</Badge>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Состояние документов</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-2 text-sm">
-                                    <FileText className="h-4 w-4 text-muted-foreground" /> Черновики
-                                </span>
-                                <Badge variant="secondary">{stats.documents.draft}</Badge>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-2 text-sm">
-                                    <Send className="h-4 w-4 text-blue-500" /> Отправлены
-                                </span>
-                                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{stats.documents.sent}</Badge>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-2 text-sm">
-                                    <RotateCcw className="h-4 w-4 text-red-500" /> Возвращены
-                                </span>
-                                <Badge variant="destructive">{stats.documents.returned}</Badge>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-2 text-sm">
-                                    <CheckCircle2 className="h-4 w-4 text-green-500" /> Завершены
-                                </span>
-                                <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                    {stats.documents.finished}
-                                </Badge>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base">Последние пользователи</CardTitle>
-                </CardHeader>
-                <CardContent>
+            <div className="grid gap-4 lg:grid-cols-3">
+                <ChartCard title="Состояние документов">
+                    <DonutChart centerLabel="Документов" segments={statusSegments(stats.documents)} emptyMessage="Документов пока нет" />
+                </ChartCard>
+                <ChartCard
+                    title="Последние пользователи"
+                    className="lg:col-span-2"
+                    action={
+                        <Link href="/employees" className="text-xs font-medium text-primary hover:underline">
+                            Все →
+                        </Link>
+                    }
+                >
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -256,18 +242,20 @@ function AdminDashboard({ stats }: { stats: AdminStats }) {
                             {stats.recent_users.map((user) => (
                                 <TableRow key={user.id}>
                                     <TableCell className="font-medium">{user.name}</TableCell>
-                                    <TableCell>{user.phone}</TableCell>
+                                    <TableCell className="tabular-nums">{user.phone}</TableCell>
                                     <TableCell>
                                         <Badge variant="outline">{user.role?.name ?? user.type}</Badge>
                                     </TableCell>
-                                    <TableCell>{user.created_at}</TableCell>
+                                    <TableCell className="text-muted-foreground tabular-nums">
+                                        {new Date(user.created_at).toLocaleDateString('ru-RU')}
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
-                </CardContent>
-            </Card>
-        </div>
+                </ChartCard>
+            </div>
+        </>
     );
 }
 
@@ -275,48 +263,54 @@ function AdminDashboard({ stats }: { stats: AdminStats }) {
 
 function DirectorDashboard({ stats }: { stats: DirectorStats }) {
     return (
-        <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                    title="Ожидают утверждения"
+        <>
+            <KpiGrid>
+                <KpiCard
+                    label="Ожидают утверждения"
                     value={stats.awaiting_approval.count}
                     icon={Clock}
-                    className={stats.awaiting_approval.count > 0 ? 'border-amber-300 dark:border-amber-700' : ''}
+                    tone="amber"
+                    highlight={stats.awaiting_approval.count > 0 && 'warning'}
                     href={INCOMING_URL}
                 />
-                <StatCard
-                    title="Всего документов"
+                <KpiCard
+                    label="Всего документов"
                     value={stats.documents_total.total}
-                    description={`В процессе: ${stats.documents_total.in_progress}`}
+                    description={`За месяц: ${stats.documents_total.this_month}`}
                     icon={FileText}
+                    tone="blue"
                     href={INCOMING_URL}
                 />
-                <StatCard title="Завершено" value={stats.documents_total.finished} icon={CheckCircle2} href={`${INCOMING_URL}&is_finished=1`} />
-                <StatCard title="Возвращено" value={stats.returned_count} icon={RotateCcw} />
+                <KpiCard
+                    label="Завершено"
+                    value={stats.documents_total.finished}
+                    icon={CheckCircle2}
+                    tone="emerald"
+                    href={`${INCOMING_URL}&is_finished=1`}
+                />
+                <KpiCard label="Возвращено" value={stats.returned_count} icon={RotateCcw} tone="rose" />
+            </KpiGrid>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+                <ChartCard title="Документы по типам" className="lg:col-span-2">
+                    <BarListChart items={typeBars(stats.documents_by_type)} emptyMessage="Документов пока нет" />
+                </ChartCard>
+                <ChartCard title="Документы по статусам">
+                    <DonutChart
+                        centerLabel="Документов"
+                        segments={statusSegments(stats.documents_status, {
+                            sent: `${INCOMING_URL}&is_finished=0`,
+                            finished: `${INCOMING_URL}&is_finished=1`,
+                        })}
+                    />
+                </ChartCard>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-                <DocumentMiniTable title="Ожидают вашего утверждения" documents={stats.awaiting_approval.documents} />
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Документы по типам</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                            {stats.documents_by_type.map((item) => (
-                                <div key={item.type} className="flex items-center justify-between">
-                                    <span className="text-sm">{item.title}</span>
-                                    <Badge variant="secondary">{item.count}</Badge>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
+            <div className="grid gap-4 xl:grid-cols-2">
+                <DocumentMiniTable title="Ожидают вашего утверждения" documents={stats.awaiting_approval.documents} href={INCOMING_URL} />
+                <DocumentMiniTable title="Последние завершённые" documents={stats.recently_finished} href={`${INCOMING_URL}&is_finished=1`} />
             </div>
-
-            <DocumentMiniTable title="Последние завершённые документы" documents={stats.recently_finished} />
-        </div>
+        </>
     );
 }
 
@@ -324,24 +318,54 @@ function DirectorDashboard({ stats }: { stats: DirectorStats }) {
 
 function DeputyDirectorDashboard({ stats }: { stats: DeputyDirectorStats }) {
     return (
-        <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
-                <StatCard
-                    title="Ожидают утверждения"
+        <>
+            <KpiGrid>
+                <KpiCard
+                    label="Ожидают утверждения"
                     value={stats.awaiting_approval.count}
                     icon={Clock}
-                    className={stats.awaiting_approval.count > 0 ? 'border-amber-300 dark:border-amber-700' : ''}
+                    tone="amber"
+                    highlight={stats.awaiting_approval.count > 0 && 'warning'}
                     href={INCOMING_URL}
                 />
-                <StatCard title="Всего утверждено" value={stats.total_approved} icon={CheckCircle2} href={INCOMING_URL} />
-                <StatCard title="Возвращено" value={stats.returned_count} icon={RotateCcw} href="/documents/return" />
+                <KpiCard label="Всего утверждено" value={stats.total_approved} icon={CheckCircle2} tone="emerald" href={INCOMING_URL} />
+                <KpiCard label="Утверждено за месяц" value={stats.approved_this_month} icon={CalendarCheck} tone="blue" href={INCOMING_URL} />
+                <KpiCard label="Возвращено" value={stats.returned_count} icon={RotateCcw} tone="rose" href="/documents/return" />
+            </KpiGrid>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+                <ChartCard title="Утверждённые документы по типам" className="lg:col-span-2">
+                    <BarListChart items={typeBars(stats.approved_by_type)} emptyMessage="Вы ещё не утверждали документы" />
+                </ChartCard>
+                <ChartCard title="Мои решения">
+                    <DonutChart
+                        centerLabel="Документов"
+                        segments={[
+                            { key: 'approved', label: 'Утверждено', value: stats.total_approved, color: 'var(--viz-good)', href: INCOMING_URL },
+                            {
+                                key: 'awaiting',
+                                label: 'Ожидают',
+                                value: stats.awaiting_approval.count,
+                                color: 'var(--viz-warning)',
+                                href: INCOMING_URL,
+                            },
+                            {
+                                key: 'returned',
+                                label: 'Возвращено',
+                                value: stats.returned_count,
+                                color: 'var(--viz-critical)',
+                                href: '/documents/return',
+                            },
+                        ]}
+                    />
+                </ChartCard>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-                <DocumentMiniTable title="Ожидают вашего утверждения" documents={stats.awaiting_approval.documents} />
+            <div className="grid gap-4 xl:grid-cols-2">
+                <DocumentMiniTable title="Ожидают вашего утверждения" documents={stats.awaiting_approval.documents} href={INCOMING_URL} />
                 <DocumentMiniTable title="Последние обработанные" documents={stats.recently_processed} />
             </div>
-        </div>
+        </>
     );
 }
 
@@ -349,42 +373,47 @@ function DeputyDirectorDashboard({ stats }: { stats: DeputyDirectorStats }) {
 
 function BuxgalterDashboard({ stats }: { stats: BuxgalterStats }) {
     return (
-        <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                    title="Ожидают обработки"
+        <>
+            <KpiGrid>
+                <KpiCard
+                    label="Ожидают обработки"
                     value={stats.awaiting_approval.count}
                     icon={Clock}
-                    className={stats.awaiting_approval.count > 0 ? 'border-amber-300 dark:border-amber-700' : ''}
+                    tone="amber"
+                    highlight={stats.awaiting_approval.count > 0 && 'warning'}
                     href={INCOMING_URL}
                 />
-                <StatCard title="Всего обработано" value={stats.total_processed} icon={CheckCircle2} href={`${INCOMING_URL}&is_finished=1`} />
-                <StatCard title="Завершённые (сумма)" value={formatAmount(stats.financial_summary.finished_amount)} icon={Package} />
-                <StatCard title="В процессе (сумма)" value={formatAmount(stats.financial_summary.in_progress_amount)} icon={FileText} />
+                <KpiCard
+                    label="Всего обработано"
+                    value={stats.total_processed}
+                    icon={CheckCircle2}
+                    tone="emerald"
+                    href={`${INCOMING_URL}&is_finished=1`}
+                />
+                <KpiCard label="Сумма завершённых" value={formatAmount(stats.financial_summary.finished_amount)} icon={Banknote} tone="violet" />
+                <KpiCard label="Сумма в процессе" value={formatAmount(stats.financial_summary.in_progress_amount)} icon={Hourglass} tone="sky" />
+            </KpiGrid>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+                <ChartCard title="Документы по типам" className="lg:col-span-2">
+                    <BarListChart items={typeBars(stats.documents_by_type)} emptyMessage="Документов пока нет" />
+                </ChartCard>
+                <ChartCard title="Документы по статусам">
+                    <DonutChart
+                        centerLabel="Документов"
+                        segments={statusSegments(stats.documents_status, {
+                            sent: `${INCOMING_URL}&is_finished=0`,
+                            finished: `${INCOMING_URL}&is_finished=1`,
+                        })}
+                    />
+                </ChartCard>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-                <DocumentMiniTable title="Ожидают вашей обработки" documents={stats.awaiting_approval.documents} />
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Документы по типам</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                            {stats.documents_by_type.map((item) => (
-                                <div key={item.type} className="flex items-center justify-between">
-                                    <span className="text-sm">{item.title}</span>
-                                    <Badge variant="secondary">{item.count}</Badge>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
+            <div className="grid gap-4 xl:grid-cols-2">
+                <DocumentMiniTable title="Ожидают вашей обработки" documents={stats.awaiting_approval.documents} href={INCOMING_URL} />
+                <DocumentMiniTable title="Последние завершённые" documents={stats.recently_finished} href={`${INCOMING_URL}&is_finished=1`} />
             </div>
-
-            <DocumentMiniTable title="Последние завершённые документы" documents={stats.recently_finished} />
-        </div>
+        </>
     );
 }
 
@@ -392,108 +421,73 @@ function BuxgalterDashboard({ stats }: { stats: BuxgalterStats }) {
 
 function HeaderFrpDashboard({ stats }: { stats: HeaderFrpStats }) {
     return (
-        <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                    title="Ожидают утверждения"
+        <>
+            <KpiGrid>
+                <KpiCard
+                    label="Ожидают утверждения"
                     value={stats.awaiting_approval.count}
                     icon={Clock}
-                    className={stats.awaiting_approval.count > 0 ? 'border-amber-300 dark:border-amber-700' : ''}
+                    tone="amber"
+                    highlight={stats.awaiting_approval.count > 0 && 'warning'}
                     href={INCOMING_URL}
                 />
-                <StatCard
-                    title="Документы команды"
+                <KpiCard
+                    label="Документы команды"
                     value={stats.team_documents.total}
                     description={`Завершено: ${stats.team_documents.finished}`}
                     icon={Users}
+                    tone="blue"
                     href={INCOMING_URL}
                 />
-                <StatCard
-                    title="Мои документы"
+                <KpiCard
+                    label="Мои документы"
                     value={stats.own_documents.total}
                     description={`Черновики: ${stats.own_documents.draft}`}
                     icon={FileText}
+                    tone="violet"
                     href="/documents/sent?scope=mine"
                 />
-                <StatCard title="Возвращённые (команда)" value={stats.team_documents.returned} icon={RotateCcw} href="/documents/return" />
+                <KpiCard
+                    label="Возвращённые (команда)"
+                    value={stats.team_documents.returned}
+                    icon={RotateCcw}
+                    tone="rose"
+                    highlight={stats.team_documents.returned > 0 && 'danger'}
+                    href="/documents/return"
+                />
+            </KpiGrid>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+                <ChartCard
+                    title="Документы по членам команды"
+                    subtitle="Нажмите на строку, чтобы открыть документы сотрудника"
+                    className="lg:col-span-2"
+                >
+                    <BarListChart
+                        items={stats.team_members.map((member) => ({
+                            key: member.id,
+                            label: member.name,
+                            value: member.documents_count,
+                            href: `${INCOMING_URL}&author=${member.id}`,
+                        }))}
+                        emptyMessage={stats.team_members.length === 0 ? 'Нет подчинённых' : 'У команды пока нет документов'}
+                    />
+                </ChartCard>
+                <ChartCard title="Документы команды по статусам">
+                    <DonutChart
+                        centerLabel="Документов"
+                        segments={statusSegments(stats.team_documents, {
+                            sent: `${INCOMING_URL}&is_finished=0`,
+                            returned: '/documents/return',
+                            finished: `${INCOMING_URL}&is_finished=1`,
+                        })}
+                        emptyMessage="У команды пока нет документов"
+                    />
+                </ChartCard>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-                <DocumentMiniTable title="Ожидают вашего утверждения" documents={stats.awaiting_approval.documents} />
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Члены команды</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {stats.team_members.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Нет подчинённых</p>
-                        ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Имя</TableHead>
-                                        <TableHead>Телефон</TableHead>
-                                        <TableHead>Документов</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {stats.team_members.map((member) => (
-                                        <TableRow key={member.id}>
-                                            <TableCell className="font-medium">{member.name}</TableCell>
-                                            <TableCell>{member.phone}</TableCell>
-                                            <TableCell>
-                                                <StatLink href={`${INCOMING_URL}&author=${member.id}`}>
-                                                    <Badge variant="secondary">{member.documents_count}</Badge>
-                                                </StatLink>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base">Документы команды по статусам</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                        <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">Черновики:</span>
-                            <Badge variant="secondary">{stats.team_documents.draft}</Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Send className="h-4 w-4 text-blue-500" />
-                            <span className="text-sm">Отправлены:</span>
-                            <StatLink href={`${INCOMING_URL}&is_finished=0`}>
-                                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{stats.team_documents.sent}</Badge>
-                            </StatLink>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <RotateCcw className="h-4 w-4 text-red-500" />
-                            <span className="text-sm">Возвращены:</span>
-                            <StatLink href="/documents/return">
-                                <Badge variant="destructive">{stats.team_documents.returned}</Badge>
-                            </StatLink>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            <span className="text-sm">Завершены:</span>
-                            <StatLink href={`${INCOMING_URL}&is_finished=1`}>
-                                <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                    {stats.team_documents.finished}
-                                </Badge>
-                            </StatLink>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+            <DocumentMiniTable title="Ожидают вашего утверждения" documents={stats.awaiting_approval.documents} href={INCOMING_URL} />
+        </>
     );
 }
 
@@ -501,60 +495,67 @@ function HeaderFrpDashboard({ stats }: { stats: HeaderFrpStats }) {
 
 function FrpDashboard({ stats }: { stats: FrpStats }) {
     return (
-        <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-                <StatCard title="Всего документов" value={stats.own_documents.total} icon={FileText} href="/documents/sent" />
-                <StatCard title="Черновики" value={stats.own_documents.draft} icon={FileText} href="/documents/draft" />
-                <StatCard title="Отправлены" value={stats.own_documents.sent} icon={Send} href="/documents/sent?is_finished=0" />
-                <StatCard
-                    title="Возвращены"
+        <>
+            <KpiGrid columns={5}>
+                <KpiCard label="Документы" value={stats.own_documents.total} icon={FileText} tone="blue" href="/documents/sent" />
+                <KpiCard label="Черновики" value={stats.own_documents.draft} icon={FilePen} tone="slate" href="/documents/draft" />
+                <KpiCard label="В процессе" value={stats.own_documents.sent} icon={Send} tone="sky" href="/documents/sent?is_finished=0" />
+                <KpiCard
+                    label="Возвращены"
                     value={stats.own_documents.returned}
                     icon={RotateCcw}
-                    className={stats.own_documents.returned > 0 ? 'border-red-300 dark:border-red-700' : ''}
+                    tone="rose"
+                    highlight={stats.own_documents.returned > 0 && 'danger'}
                     href="/documents/return"
                 />
-                <StatCard title="Завершены" value={stats.own_documents.finished} icon={CheckCircle2} href="/documents/sent?is_finished=1" />
-            </div>
+                <KpiCard
+                    label="Завершены"
+                    value={stats.own_documents.finished}
+                    icon={CheckCircle2}
+                    tone="emerald"
+                    href="/documents/sent?is_finished=1"
+                />
+            </KpiGrid>
 
             {stats.awaiting_approval.count > 0 && (
-                <StatCard
-                    title="Ожидают вашего подтверждения"
+                <KpiCard
+                    label="Ожидают вашего подтверждения"
                     value={stats.awaiting_approval.count}
                     description="Акты, назначенные вам на приём"
                     icon={Clock}
-                    className="border-amber-300 dark:border-amber-700"
+                    tone="amber"
+                    highlight="warning"
                     href="/documents/incoming"
                 />
             )}
 
-            {stats.warehouse && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Мой склад</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex items-center gap-3">
-                            <Warehouse className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                                <p className="font-medium">{stats.warehouse.warehouse?.title ?? 'Не назначен'}</p>
-                                {stats.warehouse.warehouse?.code && (
-                                    <p className="text-sm text-muted-foreground">Код: {stats.warehouse.warehouse.code}</p>
-                                )}
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            <div className="grid gap-4 md:grid-cols-2">
-                <DocumentMiniTable title="Последние документы" documents={stats.recent_documents} />
-                <DocumentMiniTable title="Возвращённые документы" documents={stats.pending_returns} />
+            <div className="grid gap-4 lg:grid-cols-3">
+                <ChartCard title="Мои документы по типам" className="lg:col-span-2">
+                    <BarListChart items={typeBars(stats.documents_by_type)} emptyMessage="У вас пока нет документов" />
+                </ChartCard>
+                <ChartCard title="Мои документы по статусам">
+                    <DonutChart
+                        centerLabel="Документов"
+                        segments={statusSegments(stats.own_documents, {
+                            draft: '/documents/draft',
+                            sent: '/documents/sent?is_finished=0',
+                            returned: '/documents/return',
+                            finished: '/documents/sent?is_finished=1',
+                        })}
+                        emptyMessage="У вас пока нет документов"
+                    />
+                </ChartCard>
             </div>
 
             {stats.awaiting_approval.count > 0 && (
-                <DocumentMiniTable title="Ожидают вашего подтверждения" documents={stats.awaiting_approval.documents} />
+                <DocumentMiniTable title="Ожидают вашего подтверждения" documents={stats.awaiting_approval.documents} href="/documents/incoming" />
             )}
-        </div>
+
+            <div className="grid gap-4 xl:grid-cols-2">
+                <DocumentMiniTable title="Последние документы" documents={stats.recent_documents} href="/documents/sent" />
+                <DocumentMiniTable title="Возвращённые документы" documents={stats.pending_returns} href="/documents/return" />
+            </div>
+        </>
     );
 }
 
@@ -578,9 +579,25 @@ function EmptyDashboard() {
 
 // ==================== MAIN COMPONENT ====================
 
+function DashboardHeader({ name, roleName, warehouse }: { name: string; roleName: string | null; warehouse?: string | null }) {
+    const today = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    return (
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <h1 className="text-xl font-semibold tracking-tight">
+                    {greeting()}, {name.split(' ')[0]}!
+                </h1>
+                <p className="text-sm text-muted-foreground">{[roleName, warehouse && `Склад: ${warehouse}`].filter(Boolean).join(' · ')}</p>
+            </div>
+            <p className="text-sm text-muted-foreground first-letter:uppercase">{today}</p>
+        </div>
+    );
+}
+
 export default function Dashboard() {
     const { auth } = usePage<SharedData>().props;
-    const { stats, userRole } = usePage<SharedData & DashboardPageProps>().props;
+    const { stats, userRole, roleName } = usePage<SharedData & DashboardPageProps>().props;
     const showModal = !auth.user.chat_id;
 
     const { data, setData, put, processing, errors } = useForm({
@@ -591,6 +608,9 @@ export default function Dashboard() {
         e.preventDefault();
         put('/user/chat-id');
     };
+
+    const frpWarehouse = userRole === 'frp' ? (stats as FrpStats).warehouse?.warehouse : null;
+    const warehouseLabel = frpWarehouse ? `${frpWarehouse.title}${frpWarehouse.code ? ` (${frpWarehouse.code})` : ''}` : null;
 
     const renderDashboard = () => {
         switch (userRole) {
@@ -679,7 +699,10 @@ export default function Dashboard() {
                 </DialogContent>
             </Dialog>
 
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">{renderDashboard()}</div>
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto bg-muted/40 p-4 md:p-6 dark:bg-transparent">
+                <DashboardHeader name={auth.user.name} roleName={roleName} warehouse={warehouseLabel} />
+                {renderDashboard()}
+            </div>
         </AppLayout>
     );
 }
