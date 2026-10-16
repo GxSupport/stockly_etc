@@ -3,6 +3,7 @@
 use App\Models\BasicResource;
 use App\Models\User;
 use App\Services\ProductService;
+use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
     // Use MySQL connection for these tests since migrations use dropForeign by name (unsupported in SQLite)
@@ -131,3 +132,32 @@ test('storeBasicResources upserts items and removes stale records', function () 
     expect(BasicResource::where('code', 'TST-NEW')->exists())->toBeTrue();
     expect(BasicResource::where('code', 'TST-STALE')->exists())->toBeFalse();
 });
+
+test('fetchAllBasicResourcesFromApi requests the whole OS register with the all-zero warehouse uid', function () {
+    config(['services.one_c.base_url' => 'http://one-c.test:8083']);
+
+    Http::fake([
+        'one-c.test:8083/base2/hs/CarData/goods/goodsget_stock_leftover_os*' => Http::response(
+            "\xEF\xBB\xBF".json_encode([['ОсновноеСредствоКод' => 'ETC001766', 'ОсновноеСредство' => 'а/м LACETTI']])
+        ),
+    ]);
+
+    $items = app(ProductService::class)->fetchAllBasicResourcesFromApi();
+
+    Http::assertSent(function ($request) {
+        parse_str(parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return $query['whCode'] === ProductService::ALL_WAREHOUSES_UID
+            && $query['date'] === date('d.m.Y')
+            && $request->hasHeader('Authorization', 'Basic '.config('services.one_c.basic_auth'));
+    });
+
+    expect($items)->toHaveCount(1);
+    expect($items[0]['ОсновноеСредствоКод'])->toBe('ETC001766');
+});
+
+test('fetchAllBasicResourcesFromApi throws a readable error when 1C rejects the request', function () {
+    Http::fake(['*' => Http::response('Ошибка при вызове конструктора (УникальныйИдентификатор)', 500)]);
+
+    app(ProductService::class)->fetchAllBasicResourcesFromApi();
+})->throws(Exception::class, 'Ошибка подключения к серверу');
