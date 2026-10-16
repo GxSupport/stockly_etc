@@ -16,6 +16,11 @@ use Illuminate\Support\Facades\Log;
 
 class ProductService
 {
+    /**
+     * goodsget_stock_leftover_os da `whCode` = nol УИД — barcha skladlar bo'yicha ОС registri.
+     */
+    public const ALL_WAREHOUSES_UID = '00000000-0000-0000-0000-000000000000';
+
     public function listServiceFromDepCode(): array
     {
         $user = Auth::user();
@@ -488,44 +493,39 @@ class ProductService
     }
 
     /**
+     * Barcha skladlar bo'yicha ОС registri. 1С `whCode` da УИД kutadi — `whCode`siz yoki bo'sh
+     * so'rovga 500 qaytaradi, nol УИД esa butun registrni beradi.
+     *
      * @return array<int, array<string, mixed>>
      */
     public function fetchAllBasicResourcesFromApi(): array
     {
-        $client = new Client([
-            'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
-            'timeout' => 180,
-            'connect_timeout' => 10,
-            'verify' => false,
-        ]);
-
         $baseUrl = config('services.one_c.base_url');
         $endpoint = '/base2/hs/CarData/goods/goodsget_stock_leftover_os';
-        $queryParams = ['date' => date('d.m.Y')];
+        $queryParams = ['whCode' => self::ALL_WAREHOUSES_UID, 'date' => date('d.m.Y')];
 
         Log::info('1C Basic Resources Sync Request', ['endpoint' => $endpoint, 'query_params' => $queryParams]);
 
         try {
-            $response = $client->get($endpoint, [
-                'base_uri' => $baseUrl,
-                'query' => $queryParams,
-                'headers' => [
+            $response = Http::withOptions([
+                'proxy' => (config('services.app.local') == 'local') ? 'socks5h://host.docker.internal:8089' : '',
+                'verify' => false,
+            ])
+                ->withHeaders([
                     'Content-Type' => 'application/json',
                     'Accept' => '*/*',
                     'Authorization' => 'Basic '.config('services.one_c.basic_auth'),
-                ],
-            ]);
+                ])
+                ->connectTimeout(10)
+                ->timeout(180)
+                ->get($baseUrl.$endpoint, $queryParams);
 
-            $statusCode = $response->getStatusCode();
-            $body = $response->getBody()->getContents();
-
-            if ($statusCode < 200 || $statusCode >= 300) {
-                Log::error('1C Basic Resources Sync Failed', ['status' => $statusCode]);
-                throw new \Exception('Ошибка подключения к серверу, ошибка: '.$statusCode);
+            if (! $response->successful()) {
+                Log::error('1C Basic Resources Sync Failed', ['status' => $response->status()]);
+                throw new \Exception('Ошибка подключения к серверу, ошибка: '.$response->status());
             }
 
-            $clean = str_replace('﻿', '', $body);
-            $items = json_decode($clean, true);
+            $items = json_decode(str_replace("\xEF\xBB\xBF", '', $response->body()), true);
 
             if (! is_array($items)) {
                 Log::warning('1C Basic Resources Sync: items is not array');
