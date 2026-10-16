@@ -367,15 +367,22 @@ class ProductService
     }
 
     /**
-     * Tovarning 1С dagi ETC kodi (issue #44) — `ОсновноеСредствоКод`, 1С probel bilan to'ldirib yuboradi.
+     * Tovarning 1С dagi ETC kodi (issue #44). ОС registri `ОсновноеСредствоКод` beradi; get_stock_wh
+     * hozircha kod bermaydi — 1С qo'shganda `ОсновноеСредствоКод` yoki `НоменклатураКод` dan olinadi.
+     * 1С kodni probel bilan to'ldirib yuboradi.
      *
      * @param  array<string, mixed>  $item
      */
     public function productCode(array $item): ?string
     {
-        $code = trim((string) ($item['ОсновноеСредствоКод'] ?? ''));
+        foreach (['ОсновноеСредствоКод', 'НоменклатураКод'] as $key) {
+            $code = trim((string) ($item[$key] ?? ''));
+            if ($code !== '') {
+                return mb_substr($code, 0, 50);
+            }
+        }
 
-        return $code === '' ? null : mb_substr($code, 0, 50);
+        return null;
     }
 
     /**
