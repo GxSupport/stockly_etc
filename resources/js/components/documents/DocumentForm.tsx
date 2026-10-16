@@ -36,6 +36,7 @@ interface Product {
     count: string;
     nomenclature: string;
     warehouse_code?: string | null;
+    code?: string | null;
 }
 export interface ProductItem {
     id: string | number;
@@ -45,6 +46,7 @@ export interface ProductItem {
     quantity: number;
     amount: number;
     nomenclature: string;
+    product_code?: string;
     warehouse_code?: string;
     warehouse_name?: string;
     max_quantity: number;
@@ -176,6 +178,7 @@ export default function DocumentForm({
                         updated.quantity = 1;
                         updated.amount = parseNumericValue(selectedProduct.price) * updated.quantity;
                         updated.nomenclature = selectedProduct.nomenclature;
+                        updated.product_code = selectedProduct.code ?? '';
                         updated.max_quantity = parseInt(selectedProduct.count);
                         // Демонтажа: qator yuqorida tanlangan sklad bilan muhrlanadi
                         if (isDismantlingDocument) {
@@ -356,7 +359,7 @@ export default function DocumentForm({
             const maxQty = parseInt(fresh.count);
             if (p.selected_product?.nomenclature === fresh.nomenclature && p.max_quantity === maxQty) return p;
             changed = true;
-            return { ...p, selected_product: fresh, measure: fresh.measure, max_quantity: maxQty };
+            return { ...p, selected_product: fresh, measure: fresh.measure, max_quantity: maxQty, product_code: fresh.code ?? p.product_code };
         });
         if (changed) setData('products', updatedProducts);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -482,6 +485,7 @@ export default function DocumentForm({
         return list.map((product) => ({
             value: product.nomenclature,
             label:
+                (product.code ? `${product.code} - ` : '') +
                 `${product.name.substring(0, 50)}... | ${product.measure} | ${formatAmount(product.price)} | Остаток: ${product.count}` +
                 (showWarehouse && product.warehouse ? ` | ${product.warehouse}` : ''),
         }));
@@ -918,6 +922,9 @@ export default function DocumentForm({
                                                     searchPlaceholder="Поиск товара..."
                                                     disabled={needsWarehouse || rowLoading}
                                                 />
+                                                {product.product_code && (
+                                                    <div className="mt-1 text-xs text-muted-foreground">Код: {product.product_code}</div>
+                                                )}
                                                 {needsWarehouse && (
                                                     <div className="mt-1 text-xs text-muted-foreground">Сначала выберите склад</div>
                                                 )}

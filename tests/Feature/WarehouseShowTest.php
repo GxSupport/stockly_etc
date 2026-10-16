@@ -67,9 +67,9 @@ test('warehouse products endpoint returns products from the integration', functi
     $warehouse = Warehouse::query()->first();
 
     $this->mock(ProductService::class)
-        ->shouldReceive('getProductsList')
+        ->shouldReceive('getWarehouseOsList')
         ->once()
-        ->withArgs(fn (string $warehouseCode, string $warehouseTitle, ?string $date) => $warehouseCode === $warehouse->code && $warehouseTitle === $warehouse->title && $date === '01.07.2026')
+        ->withArgs(fn (Warehouse $requested, ?string $date) => $requested->is($warehouse) && $date === '01.07.2026')
         ->andReturn([
             new ProductData(
                 name: 'Кабель UTP',
@@ -104,7 +104,7 @@ test('warehouse products endpoint returns error when integration fails', functio
     $warehouse = Warehouse::query()->first();
 
     $this->mock(ProductService::class)
-        ->shouldReceive('getProductsList')
+        ->shouldReceive('getWarehouseOsList')
         ->once()
         ->andThrow(new Exception('Ошибка подключения к серверу'));
 
@@ -124,7 +124,7 @@ test('non-management users can fetch warehouse products for document creation', 
     $warehouse = Warehouse::query()->first();
 
     $this->mock(ProductService::class)
-        ->shouldReceive('getProductsList')
+        ->shouldReceive('getWarehouseOsList')
         ->once()
         ->andReturn([]);
 

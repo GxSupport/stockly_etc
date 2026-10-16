@@ -33,6 +33,7 @@ class DocumentProducts extends Model
         'quantity',
         'amount',
         'nomenclature',
+        'product_code',
         'warehouse_code',
         'warehouse_name',
         'note',

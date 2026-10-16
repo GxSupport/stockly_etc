@@ -14,5 +14,6 @@ class ProductData extends Data
         public string $count,
         public string $nomenclature,
         public ?string $warehouse_code = null,
+        public ?string $code = null,
     ) {}
 }

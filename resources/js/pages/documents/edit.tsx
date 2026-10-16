@@ -23,6 +23,7 @@ interface Product {
     price: number;
     count: string;
     nomenclature: string;
+    code?: string | null;
 }
 interface DocumentProduct {
     id: number;
@@ -31,6 +32,7 @@ interface DocumentProduct {
     quantity: number;
     amount: number;
     nomenclature: string;
+    product_code: string | null;
     warehouse_code: string | null;
     warehouse_name: string | null;
     note: string;
@@ -85,6 +87,7 @@ export default function EditDocument({ document, documentTypes, products, users,
                 quantity: p.quantity,
                 amount: p.amount,
                 nomenclature: p.nomenclature,
+                product_code: p.product_code ?? undefined,
                 warehouse_code: p.warehouse_code ?? undefined,
                 warehouse_name: p.warehouse_name ?? undefined,
                 note: p.note,
