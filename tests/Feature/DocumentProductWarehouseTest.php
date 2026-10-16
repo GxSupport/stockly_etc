@@ -155,3 +155,28 @@ test('line amount is stored as submitted even when selected_product is present',
     expect((float) $row->amount)->toBe(400.0);
     expect((float) $document->total_amount)->toBe(400.0);
 });
+
+test('product ETC code is persisted from selected_product or the row itself (issue #44)', function () {
+    [$user, $type] = createDocProductWarehouseFixtures();
+
+    $this->actingAs($user)->post(route('documents.store'), [
+        'number' => '2026/9992',
+        'document_type_id' => $type->id,
+        'products' => [
+            [
+                'product_name' => 'Кабель FTP',
+                'measure' => 'шт.',
+                'quantity' => 1,
+                'amount' => 100,
+                'selected_product' => ['name' => 'Кабель FTP', 'measure' => 'шт.', 'nomenclature' => 'ETC002623', 'code' => 'ETC002623'],
+            ],
+            ['product_name' => 'Розетка', 'measure' => 'шт.', 'quantity' => 1, 'amount' => 100, 'product_code' => 'ETC000111'],
+            ['product_name' => 'Зонтик', 'measure' => 'шт.', 'quantity' => 1, 'amount' => 100],
+        ],
+    ])->assertRedirect();
+
+    $document = Documents::where('number', '2026/9992')->where('type', $type->id)->first();
+    $codes = DocumentProducts::where('document_id', $document->id)->orderBy('id')->pluck('product_code')->all();
+
+    expect($codes)->toBe(['ETC002623', 'ETC000111', null]);
+});

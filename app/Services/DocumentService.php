@@ -535,11 +535,13 @@ class DocumentService
             $product->title = $data['selected_product']['name'] ?? $data['product_name'] ?? '';
             $product->measure = $data['selected_product']['measure'] ?? $data['measure'] ?? '';
             $product->nomenclature = $data['selected_product']['nomenclature'] ?? $data['nomenclature'] ?? '';
+            $product->product_code = $data['selected_product']['code'] ?? $data['product_code'] ?? null;
         } else {
             // selected_product bo'lmaganda to'g'ridan-to'g'ri maydonlardan olish
             $product->title = $data['product_name'] ?? '';
             $product->measure = $data['measure'] ?? '';
             $product->nomenclature = $data['nomenclature'] ?? '';
+            $product->product_code = $data['product_code'] ?? null;
         }
 
         // amount — klient yuborgan qator summasi (narx × miqdor)

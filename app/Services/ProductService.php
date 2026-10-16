@@ -333,10 +333,11 @@ class ProductService
             $sum = $this->parseOneCNumber($item['СуммаОстаток'] ?? null);
 
             if (! isset($grouped[$name])) {
-                $grouped[$name] = ['quantity' => 0.0, 'sum' => 0.0];
+                $grouped[$name] = ['quantity' => 0.0, 'sum' => 0.0, 'code' => null];
             }
             $grouped[$name]['quantity'] += $quantity;
             $grouped[$name]['sum'] += $sum;
+            $grouped[$name]['code'] ??= $this->productCode($item);
         }
 
         $products = [];
@@ -353,10 +354,23 @@ class ProductService
                 count: $this->formatQuantity($quantity),
                 nomenclature: mb_substr($name, 0, 255),
                 warehouse_code: $warehouseCode,
+                code: $totals['code'],
             );
         }
 
         return $products;
+    }
+
+    /**
+     * Tovarning 1С dagi ETC kodi (issue #44) — `ОсновноеСредствоКод`, 1С probel bilan to'ldirib yuboradi.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    public function productCode(array $item): ?string
+    {
+        $code = trim((string) ($item['ОсновноеСредствоКод'] ?? ''));
+
+        return $code === '' ? null : mb_substr($code, 0, 50);
     }
 
     /**
@@ -404,17 +418,18 @@ class ProductService
     /**
      * Tanlangan sklad bo'yicha ОС (asosiy vositalar) qoldig'ini 1С dan olish.
      * 'Товары' modal (demontaj Место демонтажа) shu ro'yxatni ko'rsatadi.
-     * Endpoint: goodsget_stock_leftover_os?whCode=<sklad kodi> (os/empl emas — u nomenklatura uchun).
+     * Endpoint: goodsget_stock_leftover_os?whCode=<sklad УИД> (os/empl emas — u nomenklatura uchun).
+     * 1С `whCode` da skladning УИД (uid) ini kutadi — Код yuborilsa 500 qaytaradi.
      *
      * @return array<int, ProductData>
      */
-    public function getWarehouseOsList(string $warehouseCode, ?string $date = null): array
+    public function getWarehouseOsList(Warehouse $warehouse, ?string $date = null): array
     {
         $date = date('d.m.Y', strtotime($date ?? date('d.m.Y')));
 
         $baseUrl = config('services.one_c.base_url');
         $endpoint = '/base2/hs/CarData/goods/goodsget_stock_leftover_os';
-        $queryParams = ['whCode' => $warehouseCode, 'date' => $date];
+        $queryParams = ['whCode' => $warehouse->uid, 'date' => $date];
 
         Log::info('1C Warehouse OS Request', ['endpoint' => $endpoint, 'query_params' => $queryParams]);
 
@@ -451,7 +466,8 @@ class ProductService
                     price: $this->numberFromStringForProduct($value['СтоимостьОстаток'] ?? null),
                     count: (string) ($value['КоличествоОстаток'] ?? ''),
                     nomenclature: (string) ($value['ОсновноеСредствоКод'] ?? ''),
-                    warehouse_code: $warehouseCode,
+                    warehouse_code: $warehouse->code,
+                    code: $this->productCode($value),
                 );
             }
 

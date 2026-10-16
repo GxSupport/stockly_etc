@@ -82,7 +82,7 @@ class WarehouseController extends Controller
         try {
             // Sklad ОС (asosiy vositalar) qoldig'i — goodsget_stock_leftover_os?whCode
             $products = $productService->getWarehouseOsList(
-                warehouseCode: $warehouse->code,
+                warehouse: $warehouse,
                 date: $request->input('date')
             );
 

@@ -123,14 +123,14 @@ test('getProductsList throws a readable error when 1C fails', function () {
     app(ProductService::class)->getProductsList(stockWhWarehouse());
 })->throws(Exception::class, 'Ошибка подключения к серверу');
 
-test('getWarehouseOsList maps the OS register and stamps the warehouse code (issue #27)', function () {
+test('getWarehouseOsList sends warehouse uid, maps the OS register and the ETC code (issues #27, #44)', function () {
     config(['services.one_c.base_url' => 'http://one-c.test:8083']);
 
     Http::fake([
         'one-c.test:8083/base2/hs/CarData/goods/goodsget_stock_leftover_os*' => Http::response([
             [
                 'ОсновноеСредство' => 'IAD - 132 на узле10582 "Alfa Profil"',
-                'ОсновноеСредствоКод' => 'ETC002623',
+                'ОсновноеСредствоКод' => 'ETC002623    ',
                 'Склад' => '" ALFA PROFIL" Яшнаб. р-н',
                 'СтоимостьОстаток' => '10 550 000',
                 'КоличествоОстаток' => '0',
@@ -138,12 +138,19 @@ test('getWarehouseOsList maps the OS register and stamps the warehouse code (iss
         ]),
     ]);
 
-    $products = app(ProductService::class)->getWarehouseOsList('ETC005793');
+    $warehouse = new Warehouse(['code' => 'ETC005793', 'uid' => '98e0c995-f46d-11e4-8018-f80f41f554cd', 'title' => 'ALFA PROFIL']);
 
-    Http::assertSent(fn ($request) => str_contains($request->url(), 'whCode=ETC005793') && str_contains($request->url(), 'date='.date('d.m.Y')));
+    $products = app(ProductService::class)->getWarehouseOsList($warehouse);
+
+    Http::assertSent(function ($request) {
+        parse_str(parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return $query['whCode'] === '98e0c995-f46d-11e4-8018-f80f41f554cd' && $query['date'] === date('d.m.Y');
+    });
 
     expect($products)->toHaveCount(1);
-    expect($products[0]->nomenclature)->toBe('ETC002623');
+    expect($products[0]->nomenclature)->toBe('ETC002623    ');
+    expect($products[0]->code)->toBe('ETC002623');
     expect($products[0]->warehouse_code)->toBe('ETC005793');
     expect($products[0]->price)->toBe(10550000.0);
     expect($products[0]->count)->toBe('0');
@@ -156,4 +163,17 @@ test('getProductsList refuses a warehouse without 1C uid and does not call 1C', 
         ->toThrow(Exception::class, 'У склада нет УИД 1С — обновите список складов');
 
     Http::assertNothingSent();
+});
+
+test('mapStockWhItems takes the ETC code when 1C sends ОсновноеСредствоКод and leaves it null otherwise (issue #44)', function () {
+    $products = app(ProductService::class)->mapStockWhItems([
+        ['Субконто1' => 'Кабель FTP cat5e', 'ОсновноеСредствоКод' => ' ETC002623 ', 'СуммаОстаток' => '100', 'КоличествоОстаток' => '1'],
+        ['Субконто1' => 'Кабель FTP cat5e', 'ОсновноеСредствоКод' => 'ETC002623', 'СуммаОстаток' => '100', 'КоличествоОстаток' => '1'],
+        ['Субконто1' => 'Зонтик', 'СуммаОстаток' => '195 000', 'КоличествоОстаток' => '3'],
+    ], '1137', 'Склад');
+
+    expect($products)->toHaveCount(2);
+    expect($products[0]->code)->toBe('ETC002623');
+    expect($products[0]->count)->toBe('2');
+    expect($products[1]->code)->toBeNull();
 });

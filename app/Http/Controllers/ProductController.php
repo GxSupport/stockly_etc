@@ -62,7 +62,7 @@ class ProductController extends Controller
             foreach ($warehouses as $warehouse) {
                 $products = array_merge($products, $fromOsRegister
                     ? $this->productService->getWarehouseOsList(
-                        warehouseCode: $warehouse->code,
+                        warehouse: $warehouse,
                         date: $date
                     )
                     : $this->productService->getProductsList(

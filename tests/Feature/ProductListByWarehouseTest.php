@@ -124,7 +124,7 @@ test('list with source=os loads the warehouse OS register instead of goods (issu
     $mock = $this->mock(ProductService::class);
     $mock->shouldReceive('getWarehouseOsList')
         ->once()
-        ->withArgs(fn ($code) => $code === 'WH-PLT-2')
+        ->withArgs(fn ($warehouse) => $warehouse->code === 'WH-PLT-2')
         ->andReturn([['nomenclature' => 'OS-1', 'warehouse_code' => 'WH-PLT-2']]);
     $mock->shouldNotReceive('getProductsList');
 
