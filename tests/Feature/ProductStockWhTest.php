@@ -177,3 +177,11 @@ test('mapStockWhItems takes the ETC code when 1C sends ОсновноеСред�
     expect($products[0]->count)->toBe('2');
     expect($products[1]->code)->toBeNull();
 });
+
+test('mapStockWhItems also takes the ETC code from НоменклатураКод (issue #44)', function () {
+    $products = app(ProductService::class)->mapStockWhItems([
+        ['Субконто1' => 'Розетка RJ45', 'НоменклатураКод' => 'ETC000111  ', 'СуммаОстаток' => '50', 'КоличествоОстаток' => '5'],
+    ], '1137', 'Склад');
+
+    expect($products[0]->code)->toBe('ETC000111');
+});
