@@ -315,7 +315,8 @@ class ProductService
     /**
      * get_stock_wh javobini ProductData ro'yxatiga aylantiradi.
      * Bir xil tovar Субконто3 (hisob-kitob hujjati) bo'yicha bir necha qator bo'lib keladi —
-     * nom bo'yicha birlashtirilib, soni va summasi qo'shiladi. Narx = summa / soni (birlik narxi).
+     * ETC kodi bo'yicha (kod bo'lmasa nom bo'yicha) birlashtirilib, soni va summasi qo'shiladi.
+     * Nomi bir xil, kodi har xil tovarlar alohida qoladi (issue #44); nomenclature = kod. Narx = summa / soni.
      *
      * @param  array<int, array<string, mixed>>  $items
      * @return array<int, ProductData>
@@ -336,17 +337,19 @@ class ProductService
 
             $quantity = $this->parseOneCNumber($item['КоличествоОстаток'] ?? null);
             $sum = $this->parseOneCNumber($item['СуммаОстаток'] ?? null);
+            $code = $this->productCode($item);
+            $key = $code ?? $name;
 
-            if (! isset($grouped[$name])) {
-                $grouped[$name] = ['quantity' => 0.0, 'sum' => 0.0, 'code' => null];
+            if (! isset($grouped[$key])) {
+                $grouped[$key] = ['name' => $name, 'quantity' => 0.0, 'sum' => 0.0, 'code' => $code];
             }
-            $grouped[$name]['quantity'] += $quantity;
-            $grouped[$name]['sum'] += $sum;
-            $grouped[$name]['code'] ??= $this->productCode($item);
+            $grouped[$key]['quantity'] += $quantity;
+            $grouped[$key]['sum'] += $sum;
         }
 
         $products = [];
-        foreach ($grouped as $name => $totals) {
+        foreach ($grouped as $key => $totals) {
+            $name = $totals['name'];
             $quantity = round($totals['quantity'], 3);
             $sum = round($totals['sum'], 2);
             $unitPrice = $quantity > 0 ? round($sum / $quantity, 2) : $sum;
@@ -357,7 +360,7 @@ class ProductService
                 measure: 'шт.',
                 price: $unitPrice,
                 count: $this->formatQuantity($quantity),
-                nomenclature: mb_substr($name, 0, 255),
+                nomenclature: mb_substr((string) $key, 0, 255),
                 warehouse_code: $warehouseCode,
                 code: $totals['code'],
             );
@@ -367,8 +370,8 @@ class ProductService
     }
 
     /**
-     * Tovarning 1С dagi ETC kodi (issue #44). ОС registri `ОсновноеСредствоКод` beradi; get_stock_wh
-     * hozircha kod bermaydi — 1С qo'shganda `ОсновноеСредствоКод` yoki `НоменклатураКод` dan olinadi.
+     * Tovarning 1С dagi ETC kodi (issue #44). ОС registri `ОсновноеСредствоКод`, get_stock_wh esa
+     * `НоменклатураКод` beradi.
      * 1С kodni probel bilan to'ldirib yuboradi.
      *
      * @param  array<string, mixed>  $item
