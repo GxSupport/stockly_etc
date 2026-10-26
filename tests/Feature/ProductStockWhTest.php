@@ -185,3 +185,27 @@ test('mapStockWhItems also takes the ETC code from НоменклатураКо�
 
     expect($products[0]->code)->toBe('ETC000111');
 });
+
+test('mapStockWhItems keeps same-named products with different ETC codes apart and keys them by code (issue #44)', function () {
+    $products = app(ProductService::class)->mapStockWhItems([
+        ['Субконто1' => 'Пач антенна WM-PAS-12', 'НоменклатураКод' => '901006230', 'СуммаОстаток' => '100', 'КоличествоОстаток' => '1'],
+        ['Субконто1' => 'Пач антенна WM-PAS-12', 'НоменклатураКод' => '901006458', 'СуммаОстаток' => '300', 'КоличествоОстаток' => '2'],
+        ['Субконто1' => 'Пач антенна WM-PAS-12', 'НоменклатураКод' => '901006230', 'СуммаОстаток' => '100', 'КоличествоОстаток' => '1'],
+        ['Субконто1' => 'Зонтик', 'СуммаОстаток' => '195 000', 'КоличествоОстаток' => '3'],
+    ], '1137', 'Склад');
+
+    expect($products)->toHaveCount(3);
+
+    expect($products[0]->code)->toBe('901006230');
+    expect($products[0]->nomenclature)->toBe('901006230');
+    expect($products[0]->name)->toBe('Пач антенна WM-PAS-12');
+    expect($products[0]->count)->toBe('2');
+    expect($products[0]->price)->toBe(100.0);
+
+    expect($products[1]->code)->toBe('901006458');
+    expect($products[1]->count)->toBe('2');
+    expect($products[1]->price)->toBe(150.0);
+
+    expect($products[2]->code)->toBeNull();
+    expect($products[2]->nomenclature)->toBe('Зонтик');
+});

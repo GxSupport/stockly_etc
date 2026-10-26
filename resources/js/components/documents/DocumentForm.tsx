@@ -354,12 +354,21 @@ export default function DocumentForm({
             if (!p.nomenclature) return p;
             const list = productsByWarehouse[getWarehouseKeyForRow(p)];
             if (!list) return p;
-            const fresh = list.find((fp) => fp.nomenclature === p.nomenclature);
+            // Eski aktlarda nomenclature = tovar nomi (kod bo'yicha guruhlashdan oldin) — nom yagona bo'lsa shu bilan bog'lanadi
+            const sameName = list.filter((fp) => fp.name === p.nomenclature);
+            const fresh = list.find((fp) => fp.nomenclature === p.nomenclature) ?? (sameName.length === 1 ? sameName[0] : undefined);
             if (!fresh) return p;
             const maxQty = parseInt(fresh.count);
             if (p.selected_product?.nomenclature === fresh.nomenclature && p.max_quantity === maxQty) return p;
             changed = true;
-            return { ...p, selected_product: fresh, measure: fresh.measure, max_quantity: maxQty, product_code: fresh.code ?? p.product_code };
+            return {
+                ...p,
+                nomenclature: fresh.nomenclature,
+                selected_product: fresh,
+                measure: fresh.measure,
+                max_quantity: maxQty,
+                product_code: fresh.code ?? p.product_code,
+            };
         });
         if (changed) setData('products', updatedProducts);
         // eslint-disable-next-line react-hooks/exhaustive-deps
